@@ -21,7 +21,7 @@ export interface SettlePaymentResult {
 export const x402PaymentMiddleware = () => {
   return async (
     c: Context<{ Bindings: Env }>,
-    next: () => Promise<Response>
+    next: () => Promise<Response | void>
   ) => {
     const config = {
       amountStx: c.env.X402_PAYMENT_AMOUNT_STX,
