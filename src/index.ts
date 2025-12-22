@@ -1,7 +1,6 @@
 import { fromHono } from "chanfana";
 import { Hono } from "hono";
 import { Health } from "./endpoints/health";
-import { TaskList } from "./endpoints/taskList";
 import { GetBnsName } from "./endpoints/getBnsName";
 
 // Start a Hono app
@@ -14,7 +13,6 @@ const openapi = fromHono(app, {
 
 // Register OpenAPI endpoints
 openapi.get("/api/health", Health);
-openapi.get("/api/tasks", TaskList);
 openapi.get("/api/get-bns-name/{address}", GetBnsName);
 
 // You may also register routes for non OpenAPI directly on Hono
