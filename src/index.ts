@@ -1,8 +1,8 @@
 import { fromHono } from "chanfana";
 import { Hono } from "hono";
 import { Health } from "./endpoints/health";
-import { handler as getBnsNameHandler } from "./endpoints/getBnsName";
-import { handler as validateStacksAddressHandler } from "./endpoints/validateStacksAddress";
+import { GetBnsName } from "./endpoints/getBnsName";
+import { ValidateStacksAddress } from "./endpoints/validateStacksAddress";
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 
 // Start a Hono app
@@ -18,11 +18,11 @@ openapi.get("/api/health", Health);
 
 const paymentMiddleware = x402PaymentMiddleware();
 
-openapi.get("/api/get-bns-name/:address", paymentMiddleware, getBnsNameHandler);
+openapi.get("/api/get-bns-name/:address", paymentMiddleware, GetBnsName as any);
 openapi.get(
   "/api/validate-stacks-address/:address",
   paymentMiddleware,
-  validateStacksAddressHandler
+  ValidateStacksAddress as any
 );
 
 // You may also register routes for non OpenAPI directly on Hono
