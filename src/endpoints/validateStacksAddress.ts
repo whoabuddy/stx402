@@ -81,3 +81,5 @@ export class ValidateStacksAddress extends OpenAPIRoute {
     return c.json({ valid: false, error: "Invalid Stacks address" }, 400);
   }
 }
+
+export const handler = new ValidateStacksAddress();
