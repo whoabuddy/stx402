@@ -6,19 +6,26 @@ import type { AppContext } from "../types";
 export class GetBnsName extends OpenAPIRoute {
   schema = {
     tags: ["BNS"],
-    summary: "Get primary BNS name for Stacks address",
+    summary: "Get primary BNSV2 name for Stacks address",
     parameters: [
       {
         name: "address",
         in: "path",
         required: true,
-        schema: { type: "string", example: "SP2QEZ06AGJ3RKJPBV14SY1V5BBFNAW33D96YPGZF" },
+        schema: {
+          type: "string",
+          example: "SP2QEZ06AGJ3RKJPBV14SY1V5BBFNAW33D96YPGZF",
+        },
       },
     ],
     responses: {
       "200": {
         description: "BNS name",
-        content: { "text/plain": { schema: { type: "string", example: "blockstack.btc" } } },
+        content: {
+          "text/plain": {
+            schema: { type: "string", example: "stacks.btc" },
+          },
+        },
       },
       "400": { description: "Invalid address" },
       "404": { description: "No name found" },
@@ -37,7 +44,7 @@ export class GetBnsName extends OpenAPIRoute {
       if (!name) {
         return c.json({ error: "No BNS name found" }, 404);
       }
-      return name;  // Plain text 200
+      return name; // Plain text 200
     } catch (error) {
       return c.json({ error: "Internal server error" }, 500);
     }
