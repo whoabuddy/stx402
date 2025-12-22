@@ -32,3 +32,4 @@ export class Health extends OpenAPIRoute {
       },
     };
   }
+}
