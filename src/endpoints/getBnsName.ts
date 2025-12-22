@@ -13,9 +13,9 @@ export class GetBnsName extends OpenAPIRoute {
         in: "path" as const,
         required: true,
         schema: {
-          type: "string",
+          type: "string" as const,
           example: "SP2QEZ06AGJ3RKJPBV14SY1V5BBFNAW33D96YPGZF",
-        },
+        } as const,
       },
     ],
     responses: {
@@ -23,7 +23,7 @@ export class GetBnsName extends OpenAPIRoute {
         description: "BNS name",
         content: {
           "text/plain": {
-            schema: { type: "string", example: "stacks.btc" },
+            schema: { type: "string" as const, example: "stacks.btc" } as const,
           },
         },
       },
@@ -32,9 +32,9 @@ export class GetBnsName extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: {
-              type: "object",
-              properties: { error: { type: "string" } },
-            },
+              type: "object" as const,
+              properties: { error: { type: "string" as const } as const },
+            } as const,
           },
         },
       },
@@ -43,9 +43,9 @@ export class GetBnsName extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: {
-              type: "object",
-              properties: { error: { type: "string" } },
-            },
+              type: "object" as const,
+              properties: { error: { type: "string" as const } as const },
+            } as const,
           },
         },
       },
@@ -54,9 +54,9 @@ export class GetBnsName extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: {
-              type: "object",
-              properties: { error: { type: "string" } },
-            },
+              type: "object" as const,
+              properties: { error: { type: "string" as const } as const },
+            } as const,
           },
         },
       },

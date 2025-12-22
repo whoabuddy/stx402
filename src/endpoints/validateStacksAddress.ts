@@ -11,7 +11,7 @@ export class ValidateStacksAddress extends OpenAPIRoute {
         name: "address",
         in: "path" as const,
         required: true,
-        schema: { type: "string", example: "SP2QEZ06AGJ3RKJPBV14SY1V5BBFNAW33D96YPGZF" },
+        schema: { type: "string" as const, example: "SP2QEZ06AGJ3RKJPBV14SY1V5BBFNAW33D96YPGZF" } as const,
       },
     ],
     responses: {
@@ -20,11 +20,11 @@ export class ValidateStacksAddress extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: {
-              type: "object",
+              type: "object" as const,
               properties: {
-                valid: { type: "boolean", const: true },
-              },
-            },
+                valid: { type: "boolean" as const, const: true as const },
+              } as const,
+            } as const,
           },
         },
       },
@@ -33,12 +33,12 @@ export class ValidateStacksAddress extends OpenAPIRoute {
         content: {
           "application/json": {
             schema: {
-              type: "object",
+              type: "object" as const,
               properties: {
-                valid: { type: "boolean", const: false },
-                error: { type: "string" },
-              },
-            },
+                valid: { type: "boolean" as const, const: false as const },
+                error: { type: "string" as const },
+              } as const,
+            } as const,
           },
         },
       },
