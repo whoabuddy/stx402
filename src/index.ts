@@ -14,8 +14,8 @@ const openapi = fromHono(app, {
 
 // Register OpenAPI endpoints
 openapi.get("/api/health", Health);
-openapi.get("/api/get-bns-name/{address}", GetBnsName);
-openapi.get("/api/validate-stacks-address/{address}", ValidateStacksAddress);
+openapi.get("/api/get-bns-name/:address", GetBnsName);
+openapi.get("/api/validate-stacks-address/:address", ValidateStacksAddress);
 
 // You may also register routes for non OpenAPI directly on Hono
 // app.get('/test', (c) => c.text('Hono!'))
