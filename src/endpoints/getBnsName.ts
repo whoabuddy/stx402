@@ -81,4 +81,4 @@ export class GetBnsName extends OpenAPIRoute {
   }
 }
 
-export const handler = new GetBnsName();
+export const handler = new GetBnsName({});

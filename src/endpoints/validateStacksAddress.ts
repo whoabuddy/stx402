@@ -82,4 +82,4 @@ export class ValidateStacksAddress extends OpenAPIRoute {
   }
 }
 
-export const handler = new ValidateStacksAddress();
+export const handler = new ValidateStacksAddress({});
