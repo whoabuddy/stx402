@@ -1,5 +1,4 @@
 import { OpenAPIRoute } from "chanfana";
-import { handle } from "hono/cloudflare-pages";
 import z from "zod";
 import { type AppContext } from "../types";
 
@@ -10,14 +9,26 @@ export class Health extends OpenAPIRoute {
     request: {},
     responses: {
       "200": {
-        "application/json": {
-          schema: z.object({}),
+        description: "Service health status",
+        content: {
+          "application/json": {
+            schema: z.object({
+              status: z.literal("ok"),
+              details: z.object({
+                timestamp: z.string(),
+              }),
+            }),
+          },
         },
       },
     },
   };
-}
 
-async handle(c: AppContext) {
-
-}
+  async handle(c: AppContext) {
+    return {
+      status: "ok",
+      details: {
+        timestamp: new Date().toISOString(),
+      },
+    };
+  }
