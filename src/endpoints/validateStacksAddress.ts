@@ -4,7 +4,7 @@ import type { AppContext } from "../types";
 
 export class ValidateStacksAddress extends OpenAPIRoute {
   schema = {
-    tags: ["Stacks"],
+    tags: ["Addresses"],
     summary: "Validate a Stacks address",
     parameters: [
       {
@@ -55,12 +55,25 @@ export class ValidateStacksAddress extends OpenAPIRoute {
                 maxAmountRequired: { type: "string" as const } as const,
                 resource: { type: "string" as const } as const,
                 payTo: { type: "string" as const } as const,
-                network: { type: "string" as const, enum: ["mainnet", "testnet"] as const } as const,
+                network: {
+                  type: "string" as const,
+                  enum: ["mainnet", "testnet"] as const,
+                } as const,
                 nonce: { type: "string" as const } as const,
                 expiresAt: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, enum: ["STX", "sBTC"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  enum: ["STX", "sBTC"] as const,
+                } as const,
               } as const,
-              required: ["maxAmountRequired", "resource", "payTo", "network", "nonce", "expiresAt"] as const,
+              required: [
+                "maxAmountRequired",
+                "resource",
+                "payTo",
+                "network",
+                "nonce",
+                "expiresAt",
+              ] as const,
             } as const,
           } as const,
         } as const,
