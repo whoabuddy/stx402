@@ -9,7 +9,7 @@ export class ValidateStacksAddress extends OpenAPIRoute {
     parameters: [
       {
         name: "address",
-        in: "path",
+        in: "path" as const,
         required: true,
         schema: { type: "string", example: "SP2QEZ06AGJ3RKJPBV14SY1V5BBFNAW33D96YPGZF" },
       },

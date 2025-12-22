@@ -10,7 +10,7 @@ export class GetBnsName extends OpenAPIRoute {
     parameters: [
       {
         name: "address",
-        in: "path",
+        in: "path" as const,
         required: true,
         schema: {
           type: "string",
@@ -27,9 +27,39 @@ export class GetBnsName extends OpenAPIRoute {
           },
         },
       },
-      "400": { description: "Invalid address" },
-      "404": { description: "No name found" },
-      "500": { description: "Fetch error" },
+      "400": {
+        description: "Invalid address",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: { error: { type: "string" } },
+            },
+          },
+        },
+      },
+      "404": {
+        description: "No name found",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: { error: { type: "string" } },
+            },
+          },
+        },
+      },
+      "500": {
+        description: "Fetch error",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: { error: { type: "string" } },
+            },
+          },
+        },
+      },
     },
   };
 
