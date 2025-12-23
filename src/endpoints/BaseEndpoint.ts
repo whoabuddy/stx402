@@ -2,6 +2,7 @@ import { OpenAPIRoute } from "chanfana";
 import { validateStacksAddress } from "@stacks/transactions";
 import { validateTokenType } from "../utils/pricing";
 import type { AppContext } from "../types";
+import { ContentfulStatusCode } from "hono/utils/http-status";
 
 export class BaseEndpoint extends OpenAPIRoute {
   protected getTokenType(c: AppContext): string {
@@ -17,7 +18,7 @@ export class BaseEndpoint extends OpenAPIRoute {
   protected errorResponse(
     c: AppContext,
     error: string,
-    status: number,
+    status: ContentfulStatusCode,
     extra: Record<string, unknown> = {}
   ): Response {
     const tokenType = this.getTokenType(c);
