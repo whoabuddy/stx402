@@ -14,7 +14,7 @@ interface X402PaymentRequired {
   network: "mainnet" | "testnet";
   nonce: string;
   expiresAt: string;
-  tokenType?: "STX" | "sBTC";
+  tokenType: "STX" | "sBTC" | "USDCX";
 }
 
 async function testX402ManualFlow() {
@@ -35,26 +35,35 @@ async function testX402ManualFlow() {
     privateKey: key,
   });
 
-  console.log("1. Initial request (expect 402)...");
-  const initialRes = await fetch(`${X402_WORKER_URL}${X402_ENDPOINT}`);
-  if (initialRes.status !== 402) {
-    throw new Error(`Expected 402, got ${initialRes.status}: ${await initialRes.text()}`);
-  }
+  for (const tokenType of ["STX", "sBTC"] as const) {
+    console.log(`\n--- Testing with tokenType: ${tokenType} ---`);
+    const endpoint = tokenType === "STX" ? X402_ENDPOINT : `${X402_ENDPOINT}?tokenType=${tokenType}`;
 
-  const paymentReq: X402PaymentRequired = await initialRes.json();
-  console.log("  402 Payment req:", paymentReq);
+    console.log("1. Initial request (expect 402)...");
+    const initialRes = await fetch(`${X402_WORKER_URL}${endpoint}`);
+    if (initialRes.status !== 402) {
+      throw new Error(`Expected 402, got ${initialRes.status}: ${await initialRes.text()}`);
+    }
 
-  if (paymentReq.tokenType !== "STX") throw new Error("Test assumes STX");
+    const paymentReq: X402PaymentRequired = await initialRes.json();
+    console.log("  402 Payment req:", paymentReq);
 
-  const signResult = await x402Client.signPayment(paymentReq);
+    if (paymentReq.tokenType !== tokenType) throw new Error(`Expected tokenType ${tokenType}`);
 
-  console.log("3. Retry with X-PAYMENT...");
-  const retryRes = await fetch(`${X402_WORKER_URL}${X402_ENDPOINT}`, {
-    headers: {
-      "X-PAYMENT": signResult.signedTransaction,
-      "X-PAYMENT-TOKEN-TYPE": "STX",
-    },
-  });
+    if (tokenType !== "STX") {
+      console.log("✅ sBTC 402 validated (no signing support yet)");
+      continue;
+    }
+
+    const signResult = await x402Client.signPayment(paymentReq);
+
+    console.log("3. Retry with X-PAYMENT...");
+    const retryRes = await fetch(`${X402_WORKER_URL}${endpoint}`, {
+      headers: {
+        "X-PAYMENT": signResult.signedTransaction,
+        "X-PAYMENT-TOKEN-TYPE": "STX",
+      },
+    });
 
   console.log("Retry status:", retryRes.status);
   if (retryRes.status !== 200) {

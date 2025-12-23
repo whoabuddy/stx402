@@ -55,8 +55,10 @@ export async function getNameFromAddress(address: string): Promise<string> {
     const { name, namespace } = tuple.value;
     const nameBuff = cvToValue(name);
     const namespaceBuff = cvToValue(namespace);
-    const nameAscii = hexToAscii(nameBuff);
-    const namespaceAscii = hexToAscii(namespaceBuff);
+    const nameHex = Buffer.from(nameBuff as Uint8Array).toString("hex");
+    const namespaceHex = Buffer.from(namespaceBuff as Uint8Array).toString("hex");
+    const nameAscii = hexToAscii(nameHex);
+    const namespaceAscii = hexToAscii(namespaceHex);
 
     return `${nameAscii}.${namespaceAscii}`;
   }

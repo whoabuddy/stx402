@@ -4,10 +4,14 @@
  * @param hexString - Hex string or BigInt to convert
  * @returns ASCII string representation
  */
-export function hexToAscii(hexString: string | bigint): string {
+export function hexToAscii(hexString: string | bigint | Uint8Array): string {
   try {
-    // Convert BigInt to hex string if needed
-    const hex = typeof hexString === 'bigint' ? hexString.toString(16) : hexString.replace('0x', '');
+    let hex: string;
+    if (hexString instanceof Uint8Array) {
+      hex = Buffer.from(hexString).toString("hex");
+    } else {
+      hex = typeof hexString === 'bigint' ? hexString.toString(16) : hexString.replace('0x', '');
+    }
     // Convert each pair of hex digits directly to ASCII
     let str = '';
     for (let i = 0; i < hex.length; i += 2) {
@@ -15,9 +19,7 @@ export function hexToAscii(hexString: string | bigint): string {
     }
     return str;
   } catch (error) {
-    Logger.getInstance().error('Failed to convert hex to ASCII', error instanceof Error ? error : new Error(String(error)), {
-      hexString: String(hexString),
-    });
+    console.error('Failed to convert hex to ASCII:', error, { hexString: String(hexString) });
     // Return empty string on error rather than throwing
     // This is more graceful for display purposes
     return '';

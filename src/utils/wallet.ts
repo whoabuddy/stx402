@@ -10,7 +10,7 @@ export async function deriveChildAccount(
   const password = "";
   // create a Stacks wallet with the mnemonic
   let wallet = await generateWallet({
-    secretKey: mnemonic,
+    mnemonic,
     password: password,
   });
   // add a new account to reach the selected index

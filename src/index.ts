@@ -1,5 +1,6 @@
 import { fromHono } from "chanfana";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { Health } from "./endpoints/health";
 import { GetBnsName } from "./endpoints/getBnsName";
 import { ValidateStacksAddress } from "./endpoints/validateStacksAddress";
@@ -7,6 +8,12 @@ import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
+
+app.use("/*", cors({
+  origin: "*",
+  allowMethods: ["GET", "POST", "OPTIONS"],
+  allowHeaders: ["X-PAYMENT", "X-PAYMENT-TOKEN-TYPE"],
+}));
 
 // Setup OpenAPI registry
 const openapi = fromHono(app, {

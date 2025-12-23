@@ -40,8 +40,26 @@ export const x402PaymentMiddleware = () => {
       return c.json({ error: `Unsupported or zero amount for tokenType: ${tokenType}` }, 400);
     }
 
+    // Token-specific unit conversion to smallest units (microSTX/sats/microUSDC)
+    let minAmount: bigint;
+    const amountNum = parseFloat(amountStr);
+    switch (tokenType) {
+      case "STX":
+        minAmount = STXtoMicroSTX(amountStr);
+        break;
+      case "sBTC":
+        minAmount = BigInt(Math.floor(amountNum * 1e8)); // BTC to sats
+        break;
+      case "USDCX":
+        minAmount = BigInt(Math.floor(amountNum * 1e6)); // USD to micro-USD
+        break;
+      default:
+        throw new Error(`Unknown tokenType: ${tokenType}`);
+    }
+
     const config = {
-      amountStx: amountStr,
+      amountStr,
+      minAmount,
       address: c.env.X402_SERVER_ADDRESS,
       network: c.env.X402_NETWORK as "mainnet" | "testnet",
       facilitatorUrl: c.env.X402_FACILITATOR_URL,
@@ -56,7 +74,7 @@ export const x402PaymentMiddleware = () => {
     if (!signedTx) {
       // Respond 402 with payment request
       const paymentRequest: X402PaymentRequired = {
-        maxAmountRequired: STXtoMicroSTX(config.amountStx).toString(),
+        maxAmountRequired: config.minAmount.toString(),
         resource: c.req.path,
         payTo: config.address,
         network: config.network,
@@ -73,7 +91,7 @@ export const x402PaymentMiddleware = () => {
     try {
       settleResult = (await verifier.settlePayment(signedTx, {
         expectedRecipient: config.address,
-        minAmount: STXtoMicroSTX(config.amountStx),
+        minAmount: config.minAmount,
         tokenType,
       })) as SettlePaymentResult;
     } catch (error) {
