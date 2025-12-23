@@ -35,6 +35,7 @@ export class ValidateStacksAddress extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 valid: { type: "boolean" as const, const: true } as const,
+                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
               } as const,
             } as const,
           } as const,
@@ -49,6 +50,7 @@ export class ValidateStacksAddress extends BaseEndpoint {
               properties: {
                 valid: { type: "boolean" as const, const: false } as const,
                 error: { type: "string" as const } as const,
+                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
               } as const,
             } as const,
           } as const,

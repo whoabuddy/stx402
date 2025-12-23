@@ -31,8 +31,14 @@ export class GetBnsName extends BaseEndpoint {
       "200": {
         description: "BNS name",
         content: {
-          "text/plain": {
-            schema: { type: "string" as const, example: "stacks.btc" } as const,
+          "application/json": {
+            schema: {
+              type: "object" as const,
+              properties: {
+                name: { type: "string" as const, example: "stacks.btc" } as const,
+                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+              } as const,
+            } as const,
           },
         },
       },
@@ -42,7 +48,10 @@ export class GetBnsName extends BaseEndpoint {
           "application/json": {
             schema: {
               type: "object" as const,
-              properties: { error: { type: "string" as const } as const },
+              properties: {
+                error: { type: "string" as const } as const,
+                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+              } as const,
             } as const,
           },
         },
@@ -75,7 +84,10 @@ export class GetBnsName extends BaseEndpoint {
           "application/json": {
             schema: {
               type: "object" as const,
-              properties: { error: { type: "string" as const } as const },
+              properties: {
+                error: { type: "string" as const } as const,
+                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+              } as const,
             } as const,
           },
         },
@@ -86,7 +98,10 @@ export class GetBnsName extends BaseEndpoint {
           "application/json": {
             schema: {
               type: "object" as const,
-              properties: { error: { type: "string" as const } as const },
+              properties: {
+                error: { type: "string" as const } as const,
+                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+              } as const,
             } as const,
           },
         },
