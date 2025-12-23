@@ -31,7 +31,7 @@ async function testX402ManualFlow() {
     0
   );
 
-  console.log("Using test address:", address);
+  console.log("  test address:", address);
 
   console.log("1. Initial request (expect 402)...");
   const initialRes = await fetch(`${X402_WORKER_URL}${X402_ENDPOINT}`);
@@ -40,7 +40,7 @@ async function testX402ManualFlow() {
   }
 
   const paymentReq: X402PaymentRequired = await initialRes.json();
-  console.log("402 Payment req:", paymentReq);
+  console.log("  402 Payment req:", paymentReq);
 
   if (paymentReq.tokenType !== "STX") throw new Error("Test assumes STX");
 
