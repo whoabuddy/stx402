@@ -1,5 +1,4 @@
-import { STACKS_MAINNET, STACKS_TESTNET } from "@stacks/network";
-import { makeSTXTokenTransfer } from "@stacks/transactions";
+import { X402PaymentClient } from "x402-stacks";
 import { deriveChildAccount } from "../src/utils/wallet";
 
 
@@ -33,6 +32,11 @@ async function testX402ManualFlow() {
 
   console.log("  test address:", address);
 
+  const x402Client = new X402PaymentClient({
+    network: "testnet",
+    privateKey: key,
+  });
+
   console.log("1. Initial request (expect 402)...");
   const initialRes = await fetch(`${X402_WORKER_URL}${X402_ENDPOINT}`);
   if (initialRes.status !== 402) {
@@ -44,24 +48,12 @@ async function testX402ManualFlow() {
 
   if (paymentReq.tokenType !== "STX") throw new Error("Test assumes STX");
 
-  const network = X402_NETWORK === "mainnet" ? STACKS_MAINNET : STACKS_TESTNET;
-
-  console.log("2. Signing STX transfer...");
-  const tx = await makeSTXTokenTransfer({
-    recipient: paymentReq.payTo,
-    amount: BigInt(paymentReq.maxAmountRequired), // microSTX
-    senderKey: key,
-    network,
-    memo: `x402 ${paymentReq.nonce.slice(0, 8)}`, // Traceable memo
-  });
-
-  const signedHex = tx.serialize();
-  console.log("Signed tx (hex preview):", signedHex.slice(0, 50) + "...");
+  const signResult = await x402Client.signPayment(paymentReq);
 
   console.log("3. Retry with X-PAYMENT...");
   const retryRes = await fetch(`${X402_WORKER_URL}${X402_ENDPOINT}`, {
     headers: {
-      "X-PAYMENT": signedHex,
+      "X-PAYMENT": signResult.signedTransaction,
       "X-PAYMENT-TOKEN-TYPE": "STX",
     },
   });
