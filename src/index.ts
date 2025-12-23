@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { Health } from "./endpoints/health";
 import { GetBnsName } from "./endpoints/getBnsName";
 import { ValidateStacksAddress } from "./endpoints/validateStacksAddress";
+import { ConvertAddressToNetwork } from "./endpoints/convertAddressToNetwork";
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 
 // Start a Hono app
@@ -30,6 +31,12 @@ openapi.get(
   "/api/validate-stacks-address/:address",
   paymentMiddleware,
   ValidateStacksAddress as any
+);
+
+openapi.get(
+  "/api/convert-address-to-network/:address",
+  paymentMiddleware,
+  ConvertAddressToNetwork as any
 );
 
 // You may also register routes for non OpenAPI directly on Hono
