@@ -1,6 +1,7 @@
 import { OpenAPIRoute } from "chanfana";
 import { validateStacksAddress } from "@stacks/transactions";
 import { getNameFromAddress } from "../utils/bns";
+import { validateTokenType } from "../utils/pricing";
 import type { AppContext } from "../types";
 
 export class GetBnsName extends OpenAPIRoute {
@@ -100,6 +101,9 @@ export class GetBnsName extends OpenAPIRoute {
     if (!validateStacksAddress(address)) {
       return c.json({ error: "Invalid Stacks address" }, 400);
     }
+
+    const rawTokenType = c.req.query("tokenType") || "STX";
+    const tokenType = validateTokenType(rawTokenType);
 
     try {
       const name = await getNameFromAddress(address);

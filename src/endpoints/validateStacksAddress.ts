@@ -1,5 +1,6 @@
 import { OpenAPIRoute } from "chanfana";
 import { validateStacksAddress } from "@stacks/transactions";
+import { validateTokenType } from "../utils/pricing";
 import type { AppContext } from "../types";
 
 export class ValidateStacksAddress extends OpenAPIRoute {
@@ -82,6 +83,8 @@ export class ValidateStacksAddress extends OpenAPIRoute {
 
   async handle(c: AppContext) {
     const address = c.req.param("address");
+    const rawTokenType = c.req.query("tokenType") || "STX";
+    const tokenType = validateTokenType(rawTokenType);
     if (validateStacksAddress(address)) {
       return c.json({ valid: true });
     }
