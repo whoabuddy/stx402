@@ -22,7 +22,7 @@ export class ConvertAddressToNetwork extends BaseEndpoint {
         required: false,
         schema: {
           type: "string" as const,
-          enum: ["mainnet", "testnet"] as const,
+          const: ["mainnet", "testnet"] as const,
           default: "mainnet",
         } as const,
       },
@@ -46,10 +46,15 @@ export class ConvertAddressToNetwork extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 convertedAddress: { type: "string" as const } as const,
-                network: { type: "string" as const, enum: ["mainnet", "testnet"] as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                network: {
+                  type: "string" as const,
+                  const: ["mainnet", "testnet"] as const,
+                } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
-              required: ["convertedAddress", "network", "tokenType"] as const,
             } as const,
           } as const,
         } as const,
@@ -81,7 +86,10 @@ export class ConvertAddressToNetwork extends BaseEndpoint {
                 } as const,
                 nonce: { type: "string" as const } as const,
                 expiresAt: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const },
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                },
               } as const,
             } as const,
           } as const,
@@ -110,16 +118,24 @@ export class ConvertAddressToNetwork extends BaseEndpoint {
     const networkRaw = c.req.query("network") || "mainnet";
     const network = networkRaw.toLowerCase() as "mainnet" | "testnet";
     if (!["mainnet", "testnet"].includes(network)) {
-      return this.errorResponse(c, "Invalid network. Must be 'mainnet' or 'testnet'.", 400);
+      return this.errorResponse(
+        c,
+        "Invalid network. Must be 'mainnet' or 'testnet'.",
+        400
+      );
     }
 
     const tokenType = this.getTokenType(c);
 
     try {
       const convertedAddress = convertAddressToNetwork(address, network);
-      return c.json({ convertedAddress, network, tokenType });
+      return c.json({ address, convertedAddress, network, tokenType });
     } catch (error) {
-      return this.errorResponse(c, `Internal server error: ${String(error)}`, 500);
+      return this.errorResponse(
+        c,
+        `Internal server error: ${String(error)}`,
+        500
+      );
     }
   }
 }
