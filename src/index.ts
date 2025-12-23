@@ -11,11 +11,14 @@ import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
 
-app.use("/*", cors({
-  origin: "*",
-  allowMethods: ["GET", "POST", "OPTIONS"],
-  allowHeaders: ["X-PAYMENT", "X-PAYMENT-TOKEN-TYPE"],
-}));
+app.use(
+  "/*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["X-PAYMENT", "X-PAYMENT-TOKEN-TYPE"],
+  })
+);
 
 // Setup OpenAPI registry
 const openapi = fromHono(app, {
@@ -38,7 +41,11 @@ openapi.get(
   paymentMiddleware,
   ConvertAddressToNetwork as any
 );
-openapi.post("/api/decode-clarity-hex", paymentMiddleware, DecodeClarityHex as any);
+openapi.post(
+  "/api/decode-clarity-hex",
+  paymentMiddleware,
+  DecodeClarityHex as any
+);
 
 // You may also register routes for non OpenAPI directly on Hono
 // app.get('/test', (c) => c.text('Hono!'))

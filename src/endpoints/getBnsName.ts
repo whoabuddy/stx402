@@ -35,8 +35,14 @@ export class GetBnsName extends BaseEndpoint {
             schema: {
               type: "object" as const,
               properties: {
-                name: { type: "string" as const, example: "stacks.btc" } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                name: {
+                  type: "string" as const,
+                  example: "stacks.btc",
+                } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },
@@ -50,7 +56,10 @@ export class GetBnsName extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 error: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },
@@ -72,7 +81,10 @@ export class GetBnsName extends BaseEndpoint {
                 } as const,
                 nonce: { type: "string" as const } as const,
                 expiresAt: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const },
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                },
               } as const,
             } as const,
           } as const,
@@ -86,7 +98,10 @@ export class GetBnsName extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 error: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },
@@ -100,7 +115,10 @@ export class GetBnsName extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 error: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },
@@ -124,7 +142,11 @@ export class GetBnsName extends BaseEndpoint {
       }
       return c.json({ name, tokenType });
     } catch (error) {
-      return this.errorResponse(c, `Internal server error: ${String(error)}`, 500);
+      return this.errorResponse(
+        c,
+        `Internal server error: ${String(error)}`,
+        500
+      );
     }
   }
 }

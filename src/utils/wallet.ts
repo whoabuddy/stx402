@@ -1,5 +1,9 @@
 import { StacksNetworkName } from "@stacks/network";
-import { generateNewAccount, generateWallet, getStxAddress } from "@stacks/wallet-sdk";
+import {
+  generateNewAccount,
+  generateWallet,
+  getStxAddress,
+} from "@stacks/wallet-sdk";
 
 export async function deriveChildAccount(
   network: string,

@@ -68,7 +68,10 @@ export class ConvertAddressToNetwork extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 error: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },
@@ -107,7 +110,10 @@ export class ConvertAddressToNetwork extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 error: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },

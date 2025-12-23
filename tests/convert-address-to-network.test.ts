@@ -21,7 +21,9 @@ interface X402PaymentRequired {
 
 async function testX402ManualFlow() {
   if (!X402_CLIENT_PK) {
-    throw new Error("Set X402_CLIENT_PK env var with testnet private key mnemonic");
+    throw new Error(
+      "Set X402_CLIENT_PK env var with testnet private key mnemonic"
+    );
   }
 
   const { address, key } = await deriveChildAccount(
@@ -44,13 +46,16 @@ async function testX402ManualFlow() {
     console.log("1. Initial request (expect 402)...");
     const initialRes = await fetch(`${X402_WORKER_URL}${endpoint}`);
     if (initialRes.status !== 402) {
-      throw new Error(`Expected 402, got ${initialRes.status}: ${await initialRes.text()}`);
+      throw new Error(
+        `Expected 402, got ${initialRes.status}: ${await initialRes.text()}`
+      );
     }
 
     const paymentReq: X402PaymentRequired = await initialRes.json();
     console.log("402 Payment req:", paymentReq);
 
-    if (paymentReq.tokenType !== tokenType) throw new Error(`Expected tokenType ${tokenType}`);
+    if (paymentReq.tokenType !== tokenType)
+      throw new Error(`Expected tokenType ${tokenType}`);
 
     const signResult = await x402Client.signPayment(paymentReq);
 

@@ -35,7 +35,10 @@ export class ValidateStacksAddress extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 valid: { type: "boolean" as const, const: true } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           } as const,
@@ -50,7 +53,10 @@ export class ValidateStacksAddress extends BaseEndpoint {
               properties: {
                 valid: { type: "boolean" as const, const: false } as const,
                 error: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           } as const,
@@ -72,7 +78,10 @@ export class ValidateStacksAddress extends BaseEndpoint {
                 } as const,
                 nonce: { type: "string" as const } as const,
                 expiresAt: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const },
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                },
               } as const,
             } as const,
           } as const,
@@ -87,6 +96,8 @@ export class ValidateStacksAddress extends BaseEndpoint {
       const tokenType = this.getTokenType(c);
       return c.json({ valid: true, tokenType });
     }
-    return this.errorResponse(c, "Invalid Stacks address", 400, { valid: false });
+    return this.errorResponse(c, "Invalid Stacks address", 400, {
+      valid: false,
+    });
   }
 }

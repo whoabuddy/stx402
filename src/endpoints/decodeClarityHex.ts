@@ -19,7 +19,7 @@ export class DecodeClarityHex extends BaseEndpoint {
         } as const,
       },
     ],
-    request: {
+    requestBody: {
       content: {
         "application/json": {
           schema: {
@@ -28,10 +28,9 @@ export class DecodeClarityHex extends BaseEndpoint {
               hex: {
                 type: "string" as const,
                 description: "Hex string representing Clarity value",
-                example: "0x0100000000000000000000000000000001",
+                example: "0x0d0000000a68656c6c6f2078343032",
               } as const,
             } as const,
-            required: ["hex"] as const,
           } as const,
         },
       },
@@ -49,7 +48,10 @@ export class DecodeClarityHex extends BaseEndpoint {
                   additionalProperties: true,
                 } as const,
                 hex: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },
@@ -63,7 +65,10 @@ export class DecodeClarityHex extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 error: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },
@@ -85,7 +90,10 @@ export class DecodeClarityHex extends BaseEndpoint {
                 } as const,
                 nonce: { type: "string" as const } as const,
                 expiresAt: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const },
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                },
               } as const,
             } as const,
           } as const,
@@ -99,7 +107,10 @@ export class DecodeClarityHex extends BaseEndpoint {
               type: "object" as const,
               properties: {
                 error: { type: "string" as const } as const,
-                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const } as const,
+                tokenType: {
+                  type: "string" as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
+                } as const,
               } as const,
             } as const,
           },
@@ -116,7 +127,11 @@ export class DecodeClarityHex extends BaseEndpoint {
       const body = await c.req.json<{ hex: string }>();
       hex = body.hex;
       if (!hex || typeof hex !== "string") {
-        return this.errorResponse(c, "Missing or invalid 'hex' in request body", 400);
+        return this.errorResponse(
+          c,
+          "Missing or invalid 'hex' in request body",
+          400
+        );
       }
     } catch (error) {
       return this.errorResponse(c, "Invalid JSON body", 400);
@@ -126,14 +141,22 @@ export class DecodeClarityHex extends BaseEndpoint {
     try {
       cv = hexToCV(hex);
     } catch (error) {
-      return this.errorResponse(c, `Failed to parse hex as ClarityValue: ${String(error)}`, 400);
+      return this.errorResponse(
+        c,
+        `Failed to parse hex as ClarityValue: ${String(error)}`,
+        400
+      );
     }
 
     try {
       const decoded = decodeClarityValues(cv);
       return c.json({ decoded, hex, tokenType });
     } catch (error) {
-      return this.errorResponse(c, `Failed to decode ClarityValue: ${String(error)}`, 500);
+      return this.errorResponse(
+        c,
+        `Failed to decode ClarityValue: ${String(error)}`,
+        500
+      );
     }
   }
 }

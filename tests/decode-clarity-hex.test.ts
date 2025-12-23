@@ -21,7 +21,9 @@ interface X402PaymentRequired {
 
 async function testX402ManualFlow() {
   if (!X402_CLIENT_PK) {
-    throw new Error("Set X402_CLIENT_PK env var with testnet private key mnemonic");
+    throw new Error(
+      "Set X402_CLIENT_PK env var with testnet private key mnemonic"
+    );
   }
 
   const { address, key } = await deriveChildAccount(
@@ -50,13 +52,16 @@ async function testX402ManualFlow() {
       body: JSON.stringify(requestBody),
     });
     if (initialRes.status !== 402) {
-      throw new Error(`Expected 402, got ${initialRes.status}: ${await initialRes.text()}`);
+      throw new Error(
+        `Expected 402, got ${initialRes.status}: ${await initialRes.text()}`
+      );
     }
 
     const paymentReq: X402PaymentRequired = await initialRes.json();
     console.log("402 Payment req:", paymentReq);
 
-    if (paymentReq.tokenType !== tokenType) throw new Error(`Expected tokenType ${tokenType}`);
+    if (paymentReq.tokenType !== tokenType)
+      throw new Error(`Expected tokenType ${tokenType}`);
 
     const signResult = await x402Client.signPayment(paymentReq);
 
@@ -80,8 +85,14 @@ async function testX402ManualFlow() {
     const data = await retryRes.json();
     console.log("✅ Data:", JSON.stringify(data, null, 2));
 
-    if (data.decoded !== "hello x402" || data.hex !== CLARITY_HEX || data.tokenType !== tokenType) {
-      console.error("Expected decoded: 'hello x402', matching hex, and correct tokenType");
+    if (
+      data.decoded !== "hello x402" ||
+      data.hex !== CLARITY_HEX ||
+      data.tokenType !== tokenType
+    ) {
+      console.error(
+        "Expected decoded: 'hello x402', matching hex, and correct tokenType"
+      );
       return;
     }
 

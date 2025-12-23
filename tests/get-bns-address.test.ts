@@ -1,7 +1,6 @@
 import { TokenType, X402PaymentClient } from "x402-stacks";
 import { deriveChildAccount } from "../src/utils/wallet";
 
-
 const X402_CLIENT_PK = process.env.X402_CLIENT_PK;
 const X402_NETWORK = process.env.X402_NETWORK || "testnet";
 
@@ -9,7 +8,6 @@ const X402_WORKER_URL = "https://stx402.chaos.workers.dev";
 //const X402_WORKER_URL = "http://localhost:8787";
 const X402_TEST_ADDRESS = "SPKH205E1MZMBRSQ07PCZN3A1RJCGSHY5P9CM1DR"; // Has BNS: stacks.btc
 const X402_ENDPOINT = `/api/get-bns-name/${X402_TEST_ADDRESS}`;
-
 
 interface X402PaymentRequired {
   maxAmountRequired: string;
@@ -23,7 +21,9 @@ interface X402PaymentRequired {
 
 async function testX402ManualFlow() {
   if (!X402_CLIENT_PK) {
-    throw new Error("Set X402_CLIENT_PK env var with testnet private key mnemonic");
+    throw new Error(
+      "Set X402_CLIENT_PK env var with testnet private key mnemonic"
+    );
   }
 
   const { address, key } = await deriveChildAccount(
@@ -46,13 +46,16 @@ async function testX402ManualFlow() {
     console.log("1. Initial request (expect 402)...");
     const initialRes = await fetch(`${X402_WORKER_URL}${endpoint}`);
     if (initialRes.status !== 402) {
-      throw new Error(`Expected 402, got ${initialRes.status}: ${await initialRes.text()}`);
+      throw new Error(
+        `Expected 402, got ${initialRes.status}: ${await initialRes.text()}`
+      );
     }
 
     const paymentReq: X402PaymentRequired = await initialRes.json();
     console.log("402 Payment req:", paymentReq);
 
-    if (paymentReq.tokenType !== tokenType) throw new Error(`Expected tokenType ${tokenType}`);
+    if (paymentReq.tokenType !== tokenType)
+      throw new Error(`Expected tokenType ${tokenType}`);
 
     const signResult = await x402Client.signPayment(paymentReq);
 
@@ -73,7 +76,6 @@ async function testX402ManualFlow() {
     const data = await retryRes.text();
     console.log("✅ Data:", data.trim()); // "stacks.btc"
 
-
     const paymentResp = retryRes.headers.get("x-payment-response");
     if (paymentResp) {
       const info = JSON.parse(paymentResp);
@@ -84,4 +86,4 @@ async function testX402ManualFlow() {
   }
 }
 
-testX402ManualFlow().catch(e => console.error("❌ Error:", e));
+testX402ManualFlow().catch((e) => console.error("❌ Error:", e));

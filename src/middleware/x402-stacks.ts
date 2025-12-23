@@ -1,7 +1,11 @@
 import type { Context } from "hono";
 import { X402PaymentVerifier } from "x402-stacks";
 import { replaceBigintWithString } from "../utils/bigint";
-import { getPaymentAmount, type TokenType, validateTokenType } from "../utils/pricing";
+import {
+  getPaymentAmount,
+  type TokenType,
+  validateTokenType,
+} from "../utils/pricing";
 
 export interface X402PaymentRequired {
   maxAmountRequired: string;
@@ -106,7 +110,10 @@ export const x402PaymentMiddleware = () => {
     }
 
     // Add X-PAYMENT-RESPONSE header
-    c.header("X-PAYMENT-RESPONSE", JSON.stringify(settleResult, replaceBigintWithString));
+    c.header(
+      "X-PAYMENT-RESPONSE",
+      JSON.stringify(settleResult, replaceBigintWithString)
+    );
 
     return next();
   };
