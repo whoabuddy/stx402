@@ -23,22 +23,22 @@ type NameResponse = { name: BufferCV; namespace: BufferCV };
 type BnsNameResponse =
   | { type: ClarityType.ResponseErr; value: string }
   | {
-    type: ClarityType.ResponseOk;
-    value: { type: ClarityType.OptionalSome; value: TupleCV<NameResponse> };
-  };
+      type: ClarityType.ResponseOk;
+      value: { type: ClarityType.OptionalSome; value: TupleCV<NameResponse> };
+    };
 
 export async function getNameFromAddress(address: string): Promise<string> {
   const addressCV = principalCV(address);
-  const addressNetwork = getNetworkFromPrincipal(address)
+  const addressNetwork = getNetworkFromPrincipal(address);
 
-  const result = await fetchCallReadOnlyFunction({
+  const result = (await fetchCallReadOnlyFunction({
     contractAddress: BNS_CONTRACT_ADDRESS,
     contractName: BNS_CONTRACT_NAME,
     functionName: "get-primary",
     functionArgs: [addressCV],
     senderAddress: address,
     network: addressNetwork,
-  }) as BnsNameResponse
+  })) as BnsNameResponse;
 
   if (result.type === ClarityType.ResponseErr) {
     return "";
@@ -52,10 +52,8 @@ export async function getNameFromAddress(address: string): Promise<string> {
     const { name, namespace } = tuple.value;
     const nameBuff = cvToValue(name);
     const namespaceBuff = cvToValue(namespace);
-    const nameHex = Buffer.from(nameBuff as Uint8Array).toString("hex");
-    const namespaceHex = Buffer.from(namespaceBuff as Uint8Array).toString("hex");
-    const nameAscii = hexToAscii(nameHex);
-    const namespaceAscii = hexToAscii(namespaceHex);
+    const nameAscii = hexToAscii(nameBuff);
+    const namespaceAscii = hexToAscii(namespaceBuff);
 
     return `${nameAscii}.${namespaceAscii}`;
   }
