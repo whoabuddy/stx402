@@ -23,7 +23,7 @@ export class GetBnsName extends OpenAPIRoute {
         required: false,
         schema: {
           type: "string" as const,
-          enum: ["STX", "sBTC", "USDCX"] as const,
+          const: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         } as const,
       },
@@ -64,7 +64,7 @@ export class GetBnsName extends OpenAPIRoute {
                 } as const,
                 nonce: { type: "string" as const } as const,
                 expiresAt: { type: "string" as const } as const,
-                tokenType: "STX" | "sBTC" | "USDCX",
+                tokenType: { type: "string" as const, const: ["STX", "sBTC", "USDCx"] as const },
               } as const,
             } as const,
           } as const,

@@ -4,7 +4,6 @@ import {
   cvToValue,
   fetchCallReadOnlyFunction,
   principalCV,
-  serializeCV,
   TupleCV,
 } from "@stacks/transactions";
 import { getFetchOptions, setFetchOptions } from "@stacks/common";
@@ -13,8 +12,6 @@ import { hexToAscii } from "./hex-to-ascii";
 
 const BNS_CONTRACT_ADDRESS = "SP2QEZ06AGJ3RKJPBV14SY1V5BBFNAW33D96YPGZF";
 const BNS_CONTRACT_NAME = "BNS-V2";
-const API_URL =
-  "https://stacks-node-api.mainnet.stacks.co/v2/contracts/call-read";
 
 // Top-level: Fix stacks.js fetch for Workers (runs once/module)
 type StacksRequestInit = RequestInit & { referrerPolicy?: string };
