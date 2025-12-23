@@ -31,7 +31,6 @@ type BnsNameResponse =
   };
 
 export async function getNameFromAddress(address: string): Promise<string> {
-  console.log("getNameFromAddress:", address);
   const addressCV = principalCV(address);
   const addressNetwork = getNetworkFromPrincipal(address)
 

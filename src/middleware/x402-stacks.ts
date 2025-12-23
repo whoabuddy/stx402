@@ -54,15 +54,6 @@ export const x402PaymentMiddleware = () => {
       return c.json(paymentRequest, 402);
     }
 
-    console.log("=== X402 DEBUG START ===");
-    console.log("Path:", c.req.path);
-    console.log("SignedTx preview:", signedTx.slice(0, 100) + "...");
-    console.log("SignedTx length:", signedTx.length);
-    console.log("TokenType:", tokenType);
-    console.log("Config amountStx:", config.amountStx);
-    console.log("Config address:", config.address);
-    console.log("Config network:", config.network);
-
     // Verify/settle payment
     let settleResult: SettlePaymentResult;
     try {
@@ -73,19 +64,13 @@ export const x402PaymentMiddleware = () => {
       })) as SettlePaymentResult;
     } catch (error) {
       console.error("settlePayment error:", error);
-      console.log("=== X402 DEBUG END (ERROR) ===");
       return c.json({ error: "Payment settlement failed", details: String(error) }, 402);
     }
 
-    console.log("SettleResult:", JSON.stringify(settleResult, replaceBigintWithString, 2));
 
     if (!settleResult.isValid) {
-      console.log("Payment invalid details:", settleResult);
-      console.log("=== X402 DEBUG END (INVALID) ===");
       return c.json({ error: "Payment invalid or unconfirmed", details: settleResult }, 402);
     }
-
-    console.log("=== X402 DEBUG END (SUCCESS) ===");
 
     // Add X-PAYMENT-RESPONSE header
     c.header("X-PAYMENT-RESPONSE", JSON.stringify(settleResult, replaceBigintWithString));
