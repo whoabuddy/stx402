@@ -6,6 +6,9 @@ import { GetBnsName } from "./endpoints/getBnsName";
 import { ValidateStacksAddress } from "./endpoints/validateStacksAddress";
 import { ConvertAddressToNetwork } from "./endpoints/convertAddressToNetwork";
 import { DecodeClarityHex } from "./endpoints/decodeClarityHex";
+import { DeepThought } from "./endpoints/deepThought";
+import { CoinToss } from "./endpoints/coinToss";
+import { DadJoke } from "./endpoints/dadJoke";
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 
 // Start a Hono app
@@ -46,6 +49,10 @@ openapi.post(
   paymentMiddleware,
   DecodeClarityHex as any
 );
+
+openapi.get("/api/deep-thought", paymentMiddleware, DeepThought as any);
+openapi.get("/api/coin-toss", paymentMiddleware, CoinToss as any);
+openapi.get("/api/dad-joke", paymentMiddleware, DadJoke as any);
 
 // You may also register routes for non OpenAPI directly on Hono
 // app.get('/test', (c) => c.text('Hono!'))
