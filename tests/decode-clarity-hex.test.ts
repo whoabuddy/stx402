@@ -15,7 +15,7 @@ interface X402PaymentRequired {
   tokenType: TokenType;
 }
 
-export async function testX402ManualFlow() {
+export async function testX402ManualFlow(verbose = false) {
   if (!X402_CLIENT_PK) {
     throw new Error(
       "Set X402_CLIENT_PK env var with testnet private key mnemonic"
@@ -28,7 +28,7 @@ export async function testX402ManualFlow() {
     0
   );
 
-  const logger = createTestLogger("decode-clarity-hex");
+  const logger = createTestLogger("decode-clarity-hex", verbose);
   logger.info(`Test wallet address: ${address}`);
 
   const x402Client = new X402PaymentClient({
@@ -56,12 +56,13 @@ export async function testX402ManualFlow() {
     }
 
     const paymentReq: X402PaymentRequired = await initialRes.json();
-    logger.info(`402 Payment req: ${JSON.stringify(paymentReq)}`);
+    logger.debug("402 Payment req", paymentReq);
 
     if (paymentReq.tokenType !== tokenType)
       throw new Error(`Expected tokenType ${tokenType}`);
 
     const signResult = await x402Client.signPayment(paymentReq);
+    logger.debug("Signed payment", signResult);
 
     logger.info("2. Retry with X-PAYMENT...");
     const retryRes = await fetch(`${X402_WORKER_URL}${endpoint}`, {
@@ -76,19 +77,22 @@ export async function testX402ManualFlow() {
 
     logger.info(`Retry status: ${retryRes.status}`);
     if (retryRes.status !== 200) {
-      logger.error(`Retry failed for ${tokenType}: ${await retryRes.text()}`);
+      const errText = await retryRes.text();
+      logger.error(`Retry failed for ${tokenType} (${retryRes.status}): ${errText}`);
+      logger.debug("Payment req", paymentReq);
       continue;
     }
 
     const data = await retryRes.json();
-    logger.success(`Data for ${tokenType}: ${JSON.stringify(data, null, 2)}`);
+    logger.success(`Decoded "${data.decoded}" (${data.hex}) for ${tokenType}`);
 
     if (
       data.decoded !== "hello x402" ||
       data.hex !== CLARITY_HEX ||
       data.tokenType !== tokenType
     ) {
-      logger.error(`Validation failed for ${tokenType}`);
+      logger.error(`Validation failed for ${tokenType}: decoded="${data.decoded ?? 'null'}", hex match=${data.hex === CLARITY_HEX}, token match=${data.tokenType === tokenType}`);
+      logger.debug("Full response", data);
       continue;
     }
     successCount++;
@@ -96,7 +100,7 @@ export async function testX402ManualFlow() {
     const paymentResp = retryRes.headers.get("x-payment-response");
     if (paymentResp) {
       const info = JSON.parse(paymentResp);
-      logger.info(`Payment confirmed: ${JSON.stringify(info)}`);
+      logger.debug("Payment confirmed", info);
     }
   }
   logger.summary(successCount, TEST_TOKENS.length);
