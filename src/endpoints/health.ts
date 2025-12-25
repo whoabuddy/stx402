@@ -19,6 +19,10 @@ export class Health extends BaseEndpoint {
                   type: "object" as const,
                   properties: {
                     timestamp: { type: "string" as const } as const,
+                    network: {
+                      type: "string" as const,
+                      enum: ["mainnet", "testnet"] as const,
+                    } as const,
                   } as const,
                 } as const,
               } as const,
@@ -34,6 +38,7 @@ export class Health extends BaseEndpoint {
       status: "ok",
       details: {
         timestamp: new Date().toISOString(),
+        network: c.env.X402_NETWORK,
       },
     });
   }
