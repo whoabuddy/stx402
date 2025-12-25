@@ -80,14 +80,14 @@ export async function testX402ManualFlow(verbose = false) {
 
     const data = await retryRes.json();
     const name = data.name;
-    logger.success(`BNS "${name}" for ${tokenType}`);
-
-    if (name !== "stacks.btc") {
-      logger.error(`Expected "stacks.btc", got "${name}" for ${tokenType}`);
+    if (name === "stacks.btc" && data.tokenType === tokenType) {
+      logger.success(`BNS "${name}" for ${tokenType}`);
+      tokenResults[tokenType] = true;
+    } else {
+      logger.error(`Validation failed for ${tokenType}: name="${name}" (exp "stacks.btc"), token match=${data.tokenType === tokenType}`);
       logger.debug("Full response", data);
       continue;
     }
-    tokenResults[tokenType] = true;
 
     const paymentResp = retryRes.headers.get("x-payment-response");
     if (paymentResp) {

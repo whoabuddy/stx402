@@ -79,14 +79,14 @@ export async function testX402ManualFlow(verbose = false) {
     }
 
     const data = await retryRes.json();
-    logger.success(`Converted ${data.convertedAddress} (${data.network}) for ${tokenType}`);
-
-    if (!data.convertedAddress || !data.network || data.network !== "testnet") {
-      logger.error(`Validation failed for ${tokenType}: address=${!!data.convertedAddress}, network="${data.network ?? 'none'}" (expected "testnet")`);
+    if (data.address === X402_TEST_ADDRESS && data.convertedAddress && data.network === "testnet" && data.tokenType === tokenType) {
+      logger.success(`Converted ${data.convertedAddress} (${data.network}) for ${tokenType}`);
+      tokenResults[tokenType] = true;
+    } else {
+      logger.error(`Validation failed for ${tokenType}: address match=${data.address === X402_TEST_ADDRESS}, converted=${!!data.convertedAddress}, network="${data.network ?? 'none'}" (exp "testnet"), token match=${data.tokenType === tokenType}`);
       logger.debug("Full response", data);
       continue;
     }
-    tokenResults[tokenType] = true;
 
     const paymentResp = retryRes.headers.get("x-payment-response");
     if (paymentResp) {

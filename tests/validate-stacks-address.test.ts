@@ -79,14 +79,14 @@ export async function testX402ManualFlow(verbose = false) {
     }
 
     const data = await retryRes.json();
-    logger.success(`Address valid: ${data.valid} for ${tokenType}`);
-
-    if (!data.valid) {
-      logger.error(`Expected valid: true, got ${data.valid} for ${tokenType}`);
+    if (data.valid && data.tokenType === tokenType) {
+      logger.success(`Address valid: true for ${tokenType}`);
+      tokenResults[tokenType] = true;
+    } else {
+      logger.error(`Validation failed for ${tokenType}: valid=${!!data.valid}, token match=${data.tokenType === tokenType}`);
       logger.debug("Full response", data);
       continue;
     }
-    tokenResults[tokenType] = true;
 
     const paymentResp = retryRes.headers.get("x-payment-response");
     if (paymentResp) {
