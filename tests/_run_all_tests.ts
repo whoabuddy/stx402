@@ -2,6 +2,9 @@ import { testX402ManualFlow as testDecodeClarity } from "./decode-clarity-hex.te
 import { testX402ManualFlow as testConvertAddress } from "./convert-address-to-network.test.js";
 import { testX402ManualFlow as testGetBns } from "./get-bns-address.test.js";
 import { testX402ManualFlow as testValidateAddress } from "./validate-stacks-address.test.js";
+import { testX402ManualFlow as testDadJoke } from "./dad-joke.test.js";
+import { testX402ManualFlow as testDeepThought } from "./deep-thought.test.js";
+import { testX402ManualFlow as testCoinToss } from "./coin-toss.test.js";
 
 import { COLORS, TEST_TOKENS } from "./_shared_utils.js";
 
@@ -18,6 +21,9 @@ async function runAllTests() {
     { name: "convert-address-to-network", fn: testConvertAddress },
     { name: "get-bns-address", fn: testGetBns },
     { name: "validate-stacks-address", fn: testValidateAddress },
+    { name: "dad-joke", fn: testDadJoke },
+    { name: "deep-thought", fn: testDeepThought },
+    { name: "coin-toss", fn: testCoinToss },
   ];
 
   interface TokenStats {

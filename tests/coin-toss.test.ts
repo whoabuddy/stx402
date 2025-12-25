@@ -2,8 +2,7 @@ import { TokenType, X402PaymentClient } from "x402-stacks";
 import { deriveChildAccount } from "../src/utils/wallet";
 import { TEST_TOKENS, X402_CLIENT_PK, X402_NETWORK, X402_WORKER_URL, createTestLogger } from "./_shared_utils";
 
-const X402_TEST_ADDRESS = "SPKH205E1MZMBRSQ07PCZN3A1RJCGSHY5P9CM1DR"; // Mainnet address for conversion test
-const X402_ENDPOINT = `/api/convert-address-to-network/${X402_TEST_ADDRESS}`;
+const X402_ENDPOINT = `/api/coin-toss`;
 
 interface X402PaymentRequired {
   maxAmountRequired: string;
@@ -28,7 +27,7 @@ export async function testX402ManualFlow(verbose = false) {
     0
   );
 
-  const logger = createTestLogger("convert-address-to-network", verbose);
+  const logger = createTestLogger("coin-toss", verbose);
   logger.info(`Test wallet address: ${address}`);
 
   const x402Client = new X402PaymentClient({
@@ -43,7 +42,7 @@ export async function testX402ManualFlow(verbose = false) {
 
   for (const tokenType of TEST_TOKENS) {
     logger.info(`--- Testing ${tokenType} ---`);
-    const endpoint = `${X402_ENDPOINT}?tokenType=${tokenType}&network=testnet`;
+    const endpoint = `${X402_ENDPOINT}?tokenType=${tokenType}`;
 
     logger.info("1. Initial request (expect 402)...");
     const initialRes = await fetch(`${X402_WORKER_URL}${endpoint}`);
@@ -79,13 +78,13 @@ export async function testX402ManualFlow(verbose = false) {
     }
 
     const data = await retryRes.json();
-    if (data.address === X402_TEST_ADDRESS && data.convertedAddress && data.network === "testnet" && data.tokenType === tokenType) {
-      logger.success(`Converted ${data.convertedAddress} (${data.network}) for ${tokenType}`);
+    const result = data.result;
+    if (["heads", "tails"].includes(result) && data.tokenType === tokenType) {
+      logger.success(`Tossed ${result.toUpperCase()} for ${tokenType}`);
       tokenResults[tokenType] = true;
     } else {
-      logger.error(`Validation failed for ${tokenType}: address match=${data.address === X402_TEST_ADDRESS}, converted=${!!data.convertedAddress}, network="${data.network ?? 'none'}" (exp "testnet"), token match=${data.tokenType === tokenType}`);
+      logger.error(`Validation failed for ${tokenType}: result="${result}", token match=${data.tokenType === tokenType}`);
       logger.debug("Full response", data);
-      continue;
     }
 
     const paymentResp = retryRes.headers.get("x-payment-response");
