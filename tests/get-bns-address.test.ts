@@ -78,13 +78,13 @@ export async function testX402ManualFlow(verbose = false) {
       continue;
     }
 
-    const data = await retryRes.text();
-    const trimmedData = data.trim();
-    logger.success(`BNS "${trimmedData}" for ${tokenType}`);
+    const data = await retryRes.json();
+    const name = data.name;
+    logger.success(`BNS "${name}" for ${tokenType}`);
 
-    if (trimmedData !== "stacks.btc") {
-      logger.error(`Expected "stacks.btc", got "${trimmedData}" for ${tokenType}`);
-      logger.debug("Raw response", data);
+    if (name !== "stacks.btc") {
+      logger.error(`Expected "stacks.btc", got "${name}" for ${tokenType}`);
+      logger.debug("Full response", data);
       continue;
     }
     tokenResults[tokenType] = true;
