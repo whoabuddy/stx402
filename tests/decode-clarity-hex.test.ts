@@ -63,7 +63,7 @@ export async function testX402ManualFlow() {
 
     const signResult = await x402Client.signPayment(paymentReq);
 
-    logger.info("3. Retry with X-PAYMENT...");
+    logger.info("2. Retry with X-PAYMENT...");
     const retryRes = await fetch(`${X402_WORKER_URL}${endpoint}`, {
       method: "POST",
       headers: {
