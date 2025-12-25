@@ -15,7 +15,7 @@ interface X402PaymentRequired {
   tokenType: TokenType;
 }
 
-async function testX402ManualFlow() {
+export async function testX402ManualFlow() {
   if (!X402_CLIENT_PK) {
     throw new Error(
       "Set X402_CLIENT_PK env var with testnet private key mnemonic"
@@ -89,5 +89,3 @@ async function testX402ManualFlow() {
   }
   logger.summary(successCount, TEST_TOKENS.length);
 }
-
-testX402ManualFlow().catch((e) => console.error("❌ Error:", e));

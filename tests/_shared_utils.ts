@@ -17,7 +17,7 @@ export interface TestLogger {
 
 export function createTestLogger(testName: string): TestLogger {
   return {
-    info: (msg) => console.log(`ℹ️  [${testName}] ${msg}`),
+    info: (msg) => console.log(`ℹ️ [${testName}] ${msg}`),
     success: (msg) => console.log(`✅ [${testName}] ${msg}`),
     error: (msg) => console.log(`❌ [${testName}] ${msg}`),
     summary: (successCount, total) => console.log(`📊 [${testName}] ${successCount}/${total} succeeded`),
