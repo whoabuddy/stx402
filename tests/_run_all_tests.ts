@@ -13,7 +13,7 @@ import { testX402ManualFlow as testSummarize } from "./summarize.test.ts";
 import { testX402ManualFlow as testImageDescribe } from "./image-describe.test.ts";
 import { testX402ManualFlow as testGenerateImage } from "./generate-image.test.ts";
 
-import { COLORS, TEST_TOKENS } from "./_shared_utils.js";
+import { COLORS, TEST_TOKENS } from "./_shared_utils.ts";
 
 async function runAllTests() {
   const verbose = process.env.VERBOSE === "1";

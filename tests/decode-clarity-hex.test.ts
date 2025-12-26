@@ -88,18 +88,17 @@ export async function testX402ManualFlow(verbose = false) {
     }
 
     const data = await retryRes.json();
-    logger.success(`Decoded "${data.decoded}" (${data.hex}) for ${tokenType}`);
-
     if (
-      data.decoded !== "hello x402" ||
-      data.hex !== CLARITY_HEX ||
-      data.tokenType !== tokenType
+      data.decoded === "hello x402" &&
+      data.hex === CLARITY_HEX &&
+      data.tokenType === tokenType
     ) {
+      logger.success(`Decoded "${data.decoded}" (${data.hex}) for ${tokenType}`);
+      tokenResults[tokenType] = true;
+    } else {
       logger.error(`Validation failed for ${tokenType}: decoded="${data.decoded ?? 'null'}", hex match=${data.hex === CLARITY_HEX}, token match=${data.tokenType === tokenType}`);
       logger.debug("Full response", data);
-      continue;
     }
-    tokenResults[tokenType] = true;
 
     const paymentResp = retryRes.headers.get("x-payment-response");
     if (paymentResp) {

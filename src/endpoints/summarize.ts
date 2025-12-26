@@ -141,7 +141,7 @@ export class Summarize extends BaseEndpoint {
         temperature: 0.3,
       });
       return c.json({
-        summary: output,
+        summary: output.response,
         original_length: body.text.length,
         tokenType,
       });
