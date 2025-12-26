@@ -12,7 +12,7 @@ export class GenerateImage extends BaseEndpoint {
         required: false,
         schema: {
           type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
+          const: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         } as const,
       },
@@ -25,7 +25,6 @@ export class GenerateImage extends BaseEndpoint {
             properties: {
               prompt: { type: "string" as const } as const,
             } as const,
-            required: ["prompt"] as const,
           } as const,
         } as const,
       } as const,
