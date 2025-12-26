@@ -1,4 +1,5 @@
 import { BaseEndpoint } from "./BaseEndpoint";
+import { DEFAULT_AMOUNTS } from "../utils/pricing";
 import type { AppContext } from "../types";
 
 export class BetDice extends BaseEndpoint {
@@ -158,7 +159,7 @@ export class BetDice extends BaseEndpoint {
     const roll = ((hashArray[0] * 256 + hashArray[1]) % 100) + 1;
     const won = roll <= body.maxRoll;
     const multiplier = won ? (99 / body.maxRoll) : 0;
-    const baseStake = 0.001;
+    const baseStake = parseFloat(DEFAULT_AMOUNTS[tokenType as keyof typeof DEFAULT_AMOUNTS]);
     const virtualPayout = `${(multiplier * baseStake).toFixed(6)} ${tokenType}`;
 
     return c.json({

@@ -3,7 +3,7 @@ import { BTCtoSats, STXtoMicroSTX } from "x402-stacks";
 export type TokenType = "STX" | "sBTC" | "USDCx";
 
 const DEFAULT_AMOUNTS: Record<TokenType, string> = {
-  STX: "0.003",
+  STX: "0.001",
   sBTC: "0.000001",
   USDCx: "0.001",
 };

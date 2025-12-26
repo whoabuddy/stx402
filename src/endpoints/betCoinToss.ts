@@ -1,4 +1,5 @@
 import { BaseEndpoint } from "./BaseEndpoint";
+import { DEFAULT_AMOUNTS } from "../utils/pricing";
 import type { AppContext } from "../types";
 
 export class BetCoinToss extends BaseEndpoint {
@@ -164,7 +165,7 @@ export class BetCoinToss extends BaseEndpoint {
     const outcome = outcomeIndex === 0 ? "heads" : "tails";
     const won = body.side === outcome;
     const multiplier = won ? 1.9 : 0;
-    const baseStake = 0.001;
+    const baseStake = parseFloat(DEFAULT_AMOUNTS[tokenType as keyof typeof DEFAULT_AMOUNTS]);
     const virtualPayout = `${(multiplier * baseStake).toFixed(6)} ${tokenType}`;
     const verifyHashMod = outcomeIndex;
 
