@@ -5,6 +5,8 @@ import { testX402ManualFlow as testValidateAddress } from "./validate-stacks-add
 import { testX402ManualFlow as testDadJoke } from "./dad-joke.test.js";
 import { testX402ManualFlow as testDeepThought } from "./deep-thought.test.js";
 import { testX402ManualFlow as testCoinToss } from "./coin-toss.test.js";
+import { testX402ManualFlow as testBetCoinToss } from "./bet-coin-toss.test.js";
+import { testX402ManualFlow as testBetDice } from "./bet-dice.test.js";
 
 import { COLORS, TEST_TOKENS } from "./_shared_utils.js";
 
@@ -24,6 +26,8 @@ async function runAllTests() {
     { name: "dad-joke", fn: testDadJoke },
     { name: "deep-thought", fn: testDeepThought },
     { name: "coin-toss", fn: testCoinToss },
+    { name: "bet-coin-toss", fn: testBetCoinToss },
+    { name: "bet-dice", fn: testBetDice },
   ];
 
   interface TokenStats {

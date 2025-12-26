@@ -3,7 +3,7 @@ import type { AppContext } from "../types";
 
 export class DadJoke extends BaseEndpoint {
   schema = {
-    tags: ["AI"],
+    tags: ["Games"],
     summary: "(paid) Generate a dad joke using AI inference",
     parameters: [
       {

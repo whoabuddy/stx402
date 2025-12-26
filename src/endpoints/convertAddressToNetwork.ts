@@ -4,7 +4,7 @@ import type { AppContext } from "../types";
 
 export class ConvertAddressToNetwork extends BaseEndpoint {
   schema = {
-    tags: ["Addresses"],
+    tags: ["Stacks"],
     summary: "(paid) Convert Stacks address to specified network",
     parameters: [
       {

@@ -3,7 +3,7 @@ import type { AppContext } from "../types";
 
 export class ValidateStacksAddress extends BaseEndpoint {
   schema = {
-    tags: ["Addresses"],
+    tags: ["Stacks"],
     summary: "(paid) Validate a Stacks address",
     parameters: [
       {

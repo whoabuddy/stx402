@@ -3,7 +3,7 @@ import type { AppContext } from "../types";
 
 export class CoinToss extends BaseEndpoint {
   schema = {
-    tags: ["AI"],
+    tags: ["Games"],
     summary: "(paid) Toss a coin using AI inference",
     parameters: [
       {

@@ -3,7 +3,7 @@ import type { AppContext } from "../types";
 
 export class DeepThought extends BaseEndpoint {
   schema = {
-    tags: ["AI"],
+    tags: ["Games"],
     summary: "(paid) Generate a random deep thought using AI inference",
     parameters: [
       {

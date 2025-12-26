@@ -4,7 +4,7 @@ import type { AppContext } from "../types";
 
 export class GetBnsName extends BaseEndpoint {
   schema = {
-    tags: ["BNS"],
+    tags: ["Stacks"],
     summary: "(paid) Get primary BNSV2 name for Stacks address",
     parameters: [
       {

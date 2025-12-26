@@ -1,12 +1,11 @@
 import { BaseEndpoint } from "./BaseEndpoint";
-import { hexToCV } from "@stacks/transactions";
-import { decodeClarityValues } from "../utils/clarity";
+import { DEFAULT_AMOUNTS } from "../utils/pricing";
 import type { AppContext } from "../types";
 
-export class DecodeClarityHex extends BaseEndpoint {
+export class BetDice extends BaseEndpoint {
   schema = {
-    tags: ["Stacks"],
-    summary: "(paid) Decode Clarity value from hex string",
+    tags: ["Betting"],
+    summary: "(paid) Bet on provably fair dice roll (1-100) using x402 payment txId",
     parameters: [
       {
         name: "tokenType",
@@ -25,29 +24,33 @@ export class DecodeClarityHex extends BaseEndpoint {
           schema: {
             type: "object" as const,
             properties: {
-              hex: {
-                type: "string" as const,
-                description: "Hex string representing Clarity value",
-                example: "0x0d0000000a68656c6c6f2078343032",
+              maxRoll: {
+                type: "integer" as const,
+                minimum: 1,
+                maximum: 99,
+                description: "Win if roll <= maxRoll (1-99)",
               } as const,
             } as const,
+            required: ["maxRoll"] as const,
           } as const,
         },
       },
     },
     responses: {
       "200": {
-        description: "Decoded Clarity value",
+        description: "Bet result",
         content: {
           "application/json": {
             schema: {
               type: "object" as const,
               properties: {
-                decoded: {
-                  type: "object" as const,
-                  additionalProperties: true,
-                } as const,
-                hex: { type: "string" as const } as const,
+                maxRoll: { type: "integer" as const } as const,
+                roll: { type: "integer" as const, minimum: 1, maximum: 100 } as const,
+                won: { type: "boolean" as const } as const,
+                multiplier: { type: "number" as const } as const,
+                virtualPayout: { type: "string" as const } as const,
+                txId: { type: "string" as const } as const,
+                verify: { type: "string" as const } as const,
                 tokenType: {
                   type: "string" as const,
                   const: ["STX", "sBTC", "USDCx"] as const,
@@ -121,42 +124,53 @@ export class DecodeClarityHex extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
+    const settleHeader = c.req.header("X-PAYMENT-RESPONSE");
+    if (!settleHeader) {
+      return this.errorResponse(c, "No payment response header", 400);
+    }
 
-    let hex: string;
+    let body;
     try {
-      const body = await c.req.json<{ hex: string }>();
-      hex = body.hex;
-      if (!hex || typeof hex !== "string") {
-        return this.errorResponse(
-          c,
-          "Missing or invalid 'hex' in request body",
-          400
-        );
+      body = await c.req.json<{ maxRoll: number }>();
+      if (!body.maxRoll || typeof body.maxRoll !== "number" || body.maxRoll < 1 || body.maxRoll > 99) {
+        return this.errorResponse(c, "Invalid maxRoll: must be integer 1-99", 400);
       }
     } catch (error) {
       return this.errorResponse(c, "Invalid JSON body", 400);
     }
 
-    let cv;
+    let settleResult;
     try {
-      cv = hexToCV(hex);
+      settleResult = JSON.parse(settleHeader);
     } catch (error) {
-      return this.errorResponse(
-        c,
-        `Failed to parse hex as ClarityValue: ${String(error)}`,
-        400
-      );
+      return this.errorResponse(c, "Invalid payment response header", 400);
     }
 
-    try {
-      const decoded = decodeClarityValues(cv);
-      return c.json({ decoded, hex, tokenType });
-    } catch (error) {
-      return this.errorResponse(
-        c,
-        `Failed to decode ClarityValue: ${String(error)}`,
-        500
-      );
+    const txId = settleResult.txId;
+    if (!txId) {
+      return this.errorResponse(c, "No txId in payment response", 400);
     }
+
+    const seed = `${txId}${body.maxRoll}`;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(seed);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const roll = ((hashArray[0] * 256 + hashArray[1]) % 100) + 1;
+    const won = roll <= body.maxRoll;
+    const multiplier = won ? (99 / body.maxRoll) : 0;
+    const baseStake = parseFloat(DEFAULT_AMOUNTS[tokenType as keyof typeof DEFAULT_AMOUNTS]);
+    const virtualPayout = `${(multiplier * baseStake).toFixed(6)} ${tokenType}`;
+
+    return c.json({
+      maxRoll: body.maxRoll,
+      roll,
+      won,
+      multiplier: Number(multiplier.toFixed(2)),
+      virtualPayout,
+      txId,
+      verify: `SHA256("${txId}${body.maxRoll}") % 100 + 1 = ${roll} (<= ${body.maxRoll} = win)`,
+      tokenType,
+    });
   }
 }
