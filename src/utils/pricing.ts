@@ -1,4 +1,4 @@
-import { BTCtoSats, STXtoMicroSTX } from "x402-stacks";
+import { BTCtoSats, STXtoMicroSTX, USDCxToMicroUSDCx } from "x402-stacks";
 
 export type TokenType = "STX" | "sBTC" | "USDCx";
 
@@ -33,7 +33,7 @@ export function getPaymentAmount(tokenType: TokenType): bigint {
     case "sBTC":
       return BTCtoSats(amountNum);
     case "USDCx":
-      return BigInt(Math.floor(amountNum * 1e6)); // to micro-USD
+      return USDCxToMicroUSDCx(amountStr);
     default:
       throw new Error(`Unknown tokenType: ${tokenType}`);
   }
