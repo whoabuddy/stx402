@@ -21,7 +21,7 @@ export class Health extends BaseEndpoint {
                     timestamp: { type: "string" as const } as const,
                     network: {
                       type: "string" as const,
-                      enum: ["mainnet", "testnet"] as const,
+                      const: ["mainnet", "testnet"] as const,
                     } as const,
                   } as const,
                 } as const,

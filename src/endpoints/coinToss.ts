@@ -27,7 +27,7 @@ export class CoinToss extends BaseEndpoint {
               properties: {
                 result: {
                   type: "string" as const,
-                  enum: ["heads", "tails"] as const,
+                  const: ["heads", "tails"] as const,
                 } as const,
                 tokenType: {
                   type: "string" as const,
@@ -104,7 +104,7 @@ export class CoinToss extends BaseEndpoint {
     const tokenType = this.getTokenType(c);
 
     try {
-      const output = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+      const output = await c.env.AI.run("@cf/meta/llama-3-8b-instruct", {
         prompt: "Toss a fair coin once and respond ONLY with 'heads' or 'tails' in lowercase, nothing else.",
         max_tokens: 10,
         temperature: 0,

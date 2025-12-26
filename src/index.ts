@@ -57,8 +57,6 @@ openapi.get("/api/deep-thought", paymentMiddleware, DeepThought as any);
 openapi.get("/api/coin-toss", paymentMiddleware, CoinToss as any);
 openapi.get("/api/dad-joke", paymentMiddleware, DadJoke as any);
 
-const paymentMiddleware = x402PaymentMiddleware();
-
 openapi.post("/api/ai/image-describe", paymentMiddleware, ImageDescribe as any);
 openapi.post("/api/ai/tts", paymentMiddleware, Tts as any);
 openapi.post("/api/ai/summarize", paymentMiddleware, Summarize as any);

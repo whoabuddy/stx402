@@ -12,7 +12,7 @@ export class Summarize extends BaseEndpoint {
         required: false,
         schema: {
           type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
+          const: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         } as const,
       },
@@ -33,7 +33,6 @@ export class Summarize extends BaseEndpoint {
                 default: 100,
               } as const,
             } as const,
-            required: ["text"] as const,
           } as const,
         },
       },
@@ -50,7 +49,7 @@ export class Summarize extends BaseEndpoint {
                 original_length: { type: "number" as const } as const,
                 tokenType: {
                   type: "string" as const,
-                  enum: ["STX", "sBTC", "USDCx"] as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
                 } as const,
               } as const,
             } as const,
@@ -67,7 +66,7 @@ export class Summarize extends BaseEndpoint {
                 error: { type: "string" as const } as const,
                 tokenType: {
                   type: "string" as const,
-                  enum: ["STX", "sBTC", "USDCx"] as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
                 } as const,
               } as const,
             } as const,
@@ -86,13 +85,13 @@ export class Summarize extends BaseEndpoint {
                 payTo: { type: "string" as const } as const,
                 network: {
                   type: "string" as const,
-                  enum: ["mainnet", "testnet"] as const,
+                  const: ["mainnet", "testnet"] as const,
                 } as const,
                 nonce: { type: "string" as const } as const,
                 expiresAt: { type: "string" as const } as const,
                 tokenType: {
                   type: "string" as const,
-                  enum: ["STX", "sBTC", "USDCx"] as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
                 },
               } as const,
             } as const,
@@ -109,7 +108,7 @@ export class Summarize extends BaseEndpoint {
                 error: { type: "string" as const } as const,
                 tokenType: {
                   type: "string" as const,
-                  enum: ["STX", "sBTC", "USDCx"] as const,
+                  const: ["STX", "sBTC", "USDCx"] as const,
                 } as const,
               } as const,
             } as const,
@@ -142,7 +141,7 @@ export class Summarize extends BaseEndpoint {
         temperature: 0.3,
       });
       return c.json({
-        summary: output.response.trim(),
+        summary: output,
         original_length: body.text.length,
         tokenType,
       });

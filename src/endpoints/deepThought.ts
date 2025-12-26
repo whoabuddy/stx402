@@ -101,7 +101,7 @@ export class DeepThought extends BaseEndpoint {
     const tokenType = this.getTokenType(c);
 
     try {
-      const output = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+      const output = await c.env.AI.run("@cf/meta/llama-3-8b-instruct", {
         prompt: "Generate one random deep philosophical thought in a single sentence. Respond only with the thought, no extra text.",
         max_tokens: 100,
         temperature: 0.9,

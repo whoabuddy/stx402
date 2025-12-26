@@ -101,7 +101,7 @@ export class DadJoke extends BaseEndpoint {
     const tokenType = this.getTokenType(c);
 
     try {
-      const output = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+      const output = await c.env.AI.run("@cf/meta/llama-3-8b-instruct", {
         prompt: "Tell me one dad joke. Respond only with the joke itself, no extra text or explanation.",
         max_tokens: 100,
         temperature: 0.8,
