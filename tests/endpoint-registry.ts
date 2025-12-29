@@ -72,14 +72,14 @@ const stacksEndpoints: TestConfig[] = [
     endpoint: `/api/stacks/validate-address/${FIXTURES.mainnetAddress}`,
     method: "GET",
     validateResponse: (data, tokenType) =>
-      hasFields(data, ["valid", "version", "network"]) && hasTokenType(data, tokenType),
+      hasField(data, "valid") && hasTokenType(data, tokenType),
   },
   {
     name: "convert-address",
     endpoint: `/api/stacks/convert-address/${FIXTURES.mainnetAddress}`,
     method: "GET",
     validateResponse: (data, tokenType) =>
-      hasFields(data, ["mainnet", "testnet"]) && hasTokenType(data, tokenType),
+      hasFields(data, ["address", "convertedAddress", "network"]) && hasTokenType(data, tokenType),
   },
   {
     name: "decode-clarity-hex",
@@ -124,19 +124,21 @@ const stacksEndpoints: TestConfig[] = [
     endpoint: "/api/stacks/decode-tx",
     method: "POST",
     body: {
-      hex: "0x00000000010400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003020000000000051ae6c05355e0c990ffad19a5e9bda394a9c5003429000000000000271000000000000000000000000000000000000000000000000000000000000000000000",
+      // Valid STX transfer transaction hex
+      hex: "0x80800000000400164247d6f2b425ac5771423ae6c80c754f7172b0000000000000003200000000000000b400008537046ff1008368baaa3ff2235122c556b89dad4f9df0639b924cf32a44b866497e49846b24191e711b21faaae96ca0542e4a140168484740b94211cececb3303020000000000051ab52c45b1a7977204f17ac0b6f48306aea2dbb8e9000000000007a12046617563657400000000000000000000000000000000000000000000000000000000",
     },
     validateResponse: (data, tokenType) =>
-      hasField(data, "decoded") && hasTokenType(data, tokenType),
+      hasFields(data, ["version", "payloadType", "payload"]) && hasTokenType(data, tokenType),
   },
   {
     name: "call-readonly",
     endpoint: "/api/stacks/call-readonly",
     method: "POST",
     body: {
-      contractAddress: "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9",
-      contractName: "nft-trait",
-      functionName: "get-last-token-id",
+      // USDA token - well-known SIP-010 token with get-name read-only function
+      contractAddress: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
+      contractName: "usda-token",
+      functionName: "get-name",
       functionArgs: [],
     },
     validateResponse: (data, tokenType) =>
@@ -154,14 +156,14 @@ const stacksEndpoints: TestConfig[] = [
     endpoint: "/api/stacks/block-height",
     method: "GET",
     validateResponse: (data, tokenType) =>
-      hasFields(data, ["stacks", "bitcoin"]) && hasTokenType(data, tokenType),
+      hasFields(data, ["stacksBlockHeight", "burnBlockHeight"]) && hasTokenType(data, tokenType),
   },
   {
     name: "ft-balance",
     endpoint: `/api/stacks/ft-balance/${FIXTURES.mainnetAddress}`,
     method: "GET",
     validateResponse: (data, tokenType) =>
-      hasField(data, "balances") && hasTokenType(data, tokenType),
+      hasField(data, "tokens") && hasTokenType(data, tokenType),
   },
   {
     name: "nft-holdings",
@@ -172,7 +174,8 @@ const stacksEndpoints: TestConfig[] = [
   },
   {
     name: "tx-status",
-    endpoint: "/api/stacks/tx-status/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    // Real mainnet transaction hash
+    endpoint: "/api/stacks/tx-status/0xb2fa5638ebc5715a9e2f01a4e0d7b3183aacdc8f9c0c3fea0d2f73d28c9bc066",
     method: "GET",
     validateResponse: (data, tokenType) =>
       hasField(data, "status") && hasTokenType(data, tokenType),

@@ -1,62 +1,36 @@
-import {
-  BufferCV,
-  ClarityType,
-  cvToValue,
-  fetchCallReadOnlyFunction,
-  principalCV,
-  TupleCV,
-} from "@stacks/transactions";
-import { getFetchOptions, setFetchOptions } from "@stacks/common";
 import { getNetworkFromPrincipal } from "./network";
-import { hexToAscii } from "./hex-to-ascii";
 
-const BNS_CONTRACT_ADDRESS = "SP2QEZ06AGJ3RKJPBV14SY1V5BBFNAW33D96YPGZF";
-const BNS_CONTRACT_NAME = "BNS-V2";
+const API_URLS: Record<string, string> = {
+  mainnet: "https://api.mainnet.hiro.so",
+  testnet: "https://api.testnet.hiro.so",
+};
 
-// Top-level: Fix stacks.js fetch for Workers (runs once/module)
-type StacksRequestInit = RequestInit & { referrerPolicy?: string };
-const fetchOptions: StacksRequestInit = getFetchOptions();
-delete fetchOptions.referrerPolicy;
-setFetchOptions(fetchOptions);
+interface BnsNamesResponse {
+  names: string[];
+}
 
-type NameResponse = { name: BufferCV; namespace: BufferCV };
-type BnsNameResponse =
-  | { type: ClarityType.ResponseErr; value: string }
-  | {
-      type: ClarityType.ResponseOk;
-      value: { type: ClarityType.OptionalSome; value: TupleCV<NameResponse> };
-    };
-
+/**
+ * Get BNS name for a Stacks address using Hiro API
+ * Returns the first/primary name or empty string if none found
+ */
 export async function getNameFromAddress(address: string): Promise<string> {
-  const addressCV = principalCV(address);
-  const addressNetwork = getNetworkFromPrincipal(address);
+  const network = getNetworkFromPrincipal(address);
+  const apiUrl = API_URLS[network];
 
-  const result = (await fetchCallReadOnlyFunction({
-    contractAddress: BNS_CONTRACT_ADDRESS,
-    contractName: BNS_CONTRACT_NAME,
-    functionName: "get-primary",
-    functionArgs: [addressCV],
-    senderAddress: address,
-    network: addressNetwork,
-  })) as BnsNameResponse;
+  const response = await fetch(
+    `${apiUrl}/v1/addresses/stacks/${address}`,
+    { headers: { Accept: "application/json" } }
+  );
 
-  if (result.type === ClarityType.ResponseErr) {
-    return "";
+  if (!response.ok) {
+    if (response.status === 404) {
+      return "";
+    }
+    throw new Error(`BNS API error: ${response.status}`);
   }
 
-  if (
-    result.type === ClarityType.ResponseOk &&
-    result.value?.type === ClarityType.OptionalSome
-  ) {
-    const tuple = result.value.value as TupleCV<NameResponse>;
-    const { name, namespace } = tuple.value;
-    const nameBuff = cvToValue(name);
-    const namespaceBuff = cvToValue(namespace);
-    const nameAscii = hexToAscii(nameBuff);
-    const namespaceAscii = hexToAscii(namespaceBuff);
+  const data = await response.json() as BnsNamesResponse;
 
-    return `${nameAscii}.${namespaceAscii}`;
-  }
-
-  return "";
+  // Return the first name (primary) or empty string
+  return data.names?.[0] || "";
 }
