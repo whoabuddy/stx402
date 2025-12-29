@@ -11,6 +11,10 @@ import { GetBnsName } from "./endpoints/getBnsName";
 import { ValidateStacksAddress } from "./endpoints/validateStacksAddress";
 import { ConvertAddressToNetwork } from "./endpoints/convertAddressToNetwork";
 import { DecodeClarityHex } from "./endpoints/decodeClarityHex";
+import { StacksContractSource } from "./endpoints/stacksContractSource";
+import { StacksContractAbi } from "./endpoints/stacksContractAbi";
+import { StacksToConsensusBuff } from "./endpoints/stacksToConsensusBuff";
+import { StacksFromConsensusBuff } from "./endpoints/stacksFromConsensusBuff";
 
 // AI endpoints
 import { DadJoke } from "./endpoints/dadJoke";
@@ -18,6 +22,7 @@ import { ImageDescribe } from "./endpoints/imageDescribe";
 import { Tts } from "./endpoints/tts";
 import { Summarize } from "./endpoints/summarize";
 import { GenerateImage } from "./endpoints/generateImage";
+import { AiExplainContract } from "./endpoints/aiExplainContract";
 
 // Random endpoints
 import { RandomUuid } from "./endpoints/randomUuid";
@@ -84,6 +89,20 @@ openapi.post(
   trackMetrics,
   DecodeClarityHex as any
 );
+openapi.get(
+  "/api/stacks/contract-source/:contract_id",
+  paymentMiddleware,
+  trackMetrics,
+  StacksContractSource as any
+);
+openapi.get(
+  "/api/stacks/contract-abi/:contract_id",
+  paymentMiddleware,
+  trackMetrics,
+  StacksContractAbi as any
+);
+openapi.post("/api/stacks/to-consensus-buff", paymentMiddleware, trackMetrics, StacksToConsensusBuff as any);
+openapi.post("/api/stacks/from-consensus-buff", paymentMiddleware, trackMetrics, StacksFromConsensusBuff as any);
 
 // AI endpoints (paid)
 openapi.get("/api/ai/dad-joke", paymentMiddleware, trackMetrics, DadJoke as any);
@@ -91,6 +110,7 @@ openapi.post("/api/ai/image-describe", paymentMiddleware, trackMetrics, ImageDes
 openapi.post("/api/ai/tts", paymentMiddleware, trackMetrics, Tts as any);
 openapi.post("/api/ai/summarize", paymentMiddleware, trackMetrics, Summarize as any);
 openapi.post("/api/ai/generate-image", paymentMiddleware, trackMetrics, GenerateImage as any);
+openapi.get("/api/ai/explain-contract/:contract_id", paymentMiddleware, trackMetrics, AiExplainContract as any);
 
 // Random endpoints (paid)
 openapi.get("/api/random/uuid", paymentMiddleware, trackMetrics, RandomUuid as any);
