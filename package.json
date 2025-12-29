@@ -15,6 +15,7 @@
     "@stacks/wallet-sdk": "^7.2.0",
     "chanfana": "^2.8.3",
     "hono": "^4.11.2",
+    "qrcode": "^1.5.4",
     "x402-stacks": "^1.1.0",
     "zod": "^4.2.1"
   },

@@ -15,6 +15,10 @@ import { StacksContractSource } from "./endpoints/stacksContractSource";
 import { StacksContractAbi } from "./endpoints/stacksContractAbi";
 import { StacksToConsensusBuff } from "./endpoints/stacksToConsensusBuff";
 import { StacksFromConsensusBuff } from "./endpoints/stacksFromConsensusBuff";
+import { StacksDecodeTx } from "./endpoints/stacksDecodeTx";
+import { StacksCallReadonly } from "./endpoints/stacksCallReadonly";
+import { StacksStxBalance } from "./endpoints/stacksStxBalance";
+import { StacksBlockHeight } from "./endpoints/stacksBlockHeight";
 
 // AI endpoints
 import { DadJoke } from "./endpoints/dadJoke";
@@ -23,6 +27,7 @@ import { Tts } from "./endpoints/tts";
 import { Summarize } from "./endpoints/summarize";
 import { GenerateImage } from "./endpoints/generateImage";
 import { AiExplainContract } from "./endpoints/aiExplainContract";
+import { AiTranslate } from "./endpoints/aiTranslate";
 
 // Random endpoints
 import { RandomUuid } from "./endpoints/randomUuid";
@@ -39,6 +44,9 @@ import { TextHash160 } from "./endpoints/textHash160";
 
 // Utility endpoints
 import { UtilTimestamp } from "./endpoints/utilTimestamp";
+import { UtilDnsLookup } from "./endpoints/utilDnsLookup";
+import { UtilIpInfo } from "./endpoints/utilIpInfo";
+import { UtilQrGenerate } from "./endpoints/utilQrGenerate";
 
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 import { metricsMiddleware } from "./middleware/metrics";
@@ -103,6 +111,10 @@ openapi.get(
 );
 openapi.post("/api/stacks/to-consensus-buff", paymentMiddleware, trackMetrics, StacksToConsensusBuff as any);
 openapi.post("/api/stacks/from-consensus-buff", paymentMiddleware, trackMetrics, StacksFromConsensusBuff as any);
+openapi.post("/api/stacks/decode-tx", paymentMiddleware, trackMetrics, StacksDecodeTx as any);
+openapi.post("/api/stacks/call-readonly", paymentMiddleware, trackMetrics, StacksCallReadonly as any);
+openapi.get("/api/stacks/stx-balance/:address", paymentMiddleware, trackMetrics, StacksStxBalance as any);
+openapi.get("/api/stacks/block-height", paymentMiddleware, trackMetrics, StacksBlockHeight as any);
 
 // AI endpoints (paid)
 openapi.get("/api/ai/dad-joke", paymentMiddleware, trackMetrics, DadJoke as any);
@@ -111,6 +123,7 @@ openapi.post("/api/ai/tts", paymentMiddleware, trackMetrics, Tts as any);
 openapi.post("/api/ai/summarize", paymentMiddleware, trackMetrics, Summarize as any);
 openapi.post("/api/ai/generate-image", paymentMiddleware, trackMetrics, GenerateImage as any);
 openapi.get("/api/ai/explain-contract/:contract_id", paymentMiddleware, trackMetrics, AiExplainContract as any);
+openapi.post("/api/ai/translate", paymentMiddleware, trackMetrics, AiTranslate as any);
 
 // Random endpoints (paid)
 openapi.get("/api/random/uuid", paymentMiddleware, trackMetrics, RandomUuid as any);
@@ -127,6 +140,9 @@ openapi.post("/api/text/hash160", paymentMiddleware, trackMetrics, TextHash160 a
 
 // Utility endpoints (paid)
 openapi.get("/api/util/timestamp", paymentMiddleware, trackMetrics, UtilTimestamp as any);
+openapi.get("/api/util/dns-lookup", paymentMiddleware, trackMetrics, UtilDnsLookup as any);
+openapi.get("/api/util/ip-info", paymentMiddleware, trackMetrics, UtilIpInfo as any);
+openapi.post("/api/util/qr-generate", paymentMiddleware, trackMetrics, UtilQrGenerate as any);
 
 // Export the Hono app
 export default app;
