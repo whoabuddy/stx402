@@ -76,6 +76,11 @@ import { TextWordCount } from "./endpoints/textWordCount";
 import { TextReverse } from "./endpoints/textReverse";
 import { TextTruncate } from "./endpoints/textTruncate";
 import { TextRegexTest } from "./endpoints/textRegexTest";
+import { TextRot13 } from "./endpoints/textRot13";
+import { TextLoremIpsum } from "./endpoints/textLoremIpsum";
+import { TextValidateUrl } from "./endpoints/textValidateUrl";
+import { TextDiff } from "./endpoints/textDiff";
+import { TextUnicodeInfo } from "./endpoints/textUnicodeInfo";
 
 // Data endpoints
 import { DataCsvToJson } from "./endpoints/dataCsvToJson";
@@ -101,6 +106,11 @@ import { UtilColorConvert } from "./endpoints/utilColorConvert";
 import { UtilMarkdownToHtml } from "./endpoints/utilMarkdownToHtml";
 import { UtilHttpStatus } from "./endpoints/utilHttpStatus";
 import { UtilValidateEmail } from "./endpoints/utilValidateEmail";
+import { UtilUrlBuild } from "./endpoints/utilUrlBuild";
+import { UtilHtmlToText } from "./endpoints/utilHtmlToText";
+import { UtilBase64Image } from "./endpoints/utilBase64Image";
+import { UtilBytesFormat } from "./endpoints/utilBytesFormat";
+import { UtilSlugify } from "./endpoints/utilSlugify";
 
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 import { metricsMiddleware } from "./middleware/metrics";
@@ -226,6 +236,11 @@ openapi.post("/api/text/word-count", paymentMiddleware, trackMetrics, TextWordCo
 openapi.post("/api/text/reverse", paymentMiddleware, trackMetrics, TextReverse as any);
 openapi.post("/api/text/truncate", paymentMiddleware, trackMetrics, TextTruncate as any);
 openapi.post("/api/text/regex-test", paymentMiddleware, trackMetrics, TextRegexTest as any);
+openapi.post("/api/text/rot13", paymentMiddleware, trackMetrics, TextRot13 as any);
+openapi.get("/api/text/lorem-ipsum", paymentMiddleware, trackMetrics, TextLoremIpsum as any);
+openapi.get("/api/text/validate-url", paymentMiddleware, trackMetrics, TextValidateUrl as any);
+openapi.post("/api/text/diff", paymentMiddleware, trackMetrics, TextDiff as any);
+openapi.get("/api/text/unicode-info", paymentMiddleware, trackMetrics, TextUnicodeInfo as any);
 
 // Data endpoints (paid)
 openapi.post("/api/data/csv-to-json", paymentMiddleware, trackMetrics, DataCsvToJson as any);
@@ -251,6 +266,11 @@ openapi.get("/api/util/color-convert", paymentMiddleware, trackMetrics, UtilColo
 openapi.post("/api/util/markdown-to-html", paymentMiddleware, trackMetrics, UtilMarkdownToHtml as any);
 openapi.get("/api/util/http-status", paymentMiddleware, trackMetrics, UtilHttpStatus as any);
 openapi.get("/api/util/validate-email", paymentMiddleware, trackMetrics, UtilValidateEmail as any);
+openapi.post("/api/util/url-build", paymentMiddleware, trackMetrics, UtilUrlBuild as any);
+openapi.post("/api/util/html-to-text", paymentMiddleware, trackMetrics, UtilHtmlToText as any);
+openapi.get("/api/util/base64-image", paymentMiddleware, trackMetrics, UtilBase64Image as any);
+openapi.get("/api/util/bytes-format", paymentMiddleware, trackMetrics, UtilBytesFormat as any);
+openapi.post("/api/util/slugify", paymentMiddleware, trackMetrics, UtilSlugify as any);
 
 // Export the Hono app
 export default app;
