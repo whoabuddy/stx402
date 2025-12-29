@@ -7,15 +7,13 @@
   "name": "stx402",
   "main": "src/index.ts",
   "compatibility_date": "2025-12-21",
-  "compatibility_flags": [
-    "nodejs_compat_v2"
-  ],
+  "compatibility_flags": ["nodejs_compat_v2"],
   "workers_dev": true,
   "routes": [
     {
       "pattern": "stx402.com",
       "custom_domain": true
-    },
+    }
   ],
   "observability": {
     "enabled": true
@@ -26,8 +24,8 @@
   "kv_namespaces": [
     {
       "binding": "METRICS",
-      "id": "METRICS_KV_ID", // Run: wrangler kv namespace create METRICS
-      "preview_id": "METRICS_KV_PREVIEW_ID" // Run: wrangler kv namespace create METRICS --preview
+      "id": "fc344acd7f724b2a85ad0c961e9eb5a4",
+      "preview_id": "f17f2a7478934003adcc7afc1a8418f4"
     }
   ],
   "vars": {
