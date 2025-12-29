@@ -32,6 +32,11 @@ import { GenerateImage } from "./endpoints/generateImage";
 import { AiExplainContract } from "./endpoints/aiExplainContract";
 import { AiTranslate } from "./endpoints/aiTranslate";
 import { AiSentiment } from "./endpoints/aiSentiment";
+import { AiKeywords } from "./endpoints/aiKeywords";
+import { AiLanguageDetect } from "./endpoints/aiLanguageDetect";
+import { AiParaphrase } from "./endpoints/aiParaphrase";
+import { AiGrammarCheck } from "./endpoints/aiGrammarCheck";
+import { AiQuestionAnswer } from "./endpoints/aiQuestionAnswer";
 
 // Random endpoints
 import { RandomUuid } from "./endpoints/randomUuid";
@@ -75,6 +80,11 @@ import { TextRegexTest } from "./endpoints/textRegexTest";
 // Data endpoints
 import { DataCsvToJson } from "./endpoints/dataCsvToJson";
 import { DataJsonToCsv } from "./endpoints/dataJsonToCsv";
+import { DataJsonFormat } from "./endpoints/dataJsonFormat";
+import { DataJsonMinify } from "./endpoints/dataJsonMinify";
+import { DataJsonValidate } from "./endpoints/dataJsonValidate";
+import { DataJsonPath } from "./endpoints/dataJsonPath";
+import { DataJsonFlatten } from "./endpoints/dataJsonFlatten";
 
 // Utility endpoints
 import { UtilTimestamp } from "./endpoints/utilTimestamp";
@@ -172,6 +182,11 @@ openapi.post("/api/ai/generate-image", paymentMiddleware, trackMetrics, Generate
 openapi.get("/api/ai/explain-contract/:contract_id", paymentMiddleware, trackMetrics, AiExplainContract as any);
 openapi.post("/api/ai/translate", paymentMiddleware, trackMetrics, AiTranslate as any);
 openapi.post("/api/ai/sentiment", paymentMiddleware, trackMetrics, AiSentiment as any);
+openapi.post("/api/ai/keywords", paymentMiddleware, trackMetrics, AiKeywords as any);
+openapi.post("/api/ai/language-detect", paymentMiddleware, trackMetrics, AiLanguageDetect as any);
+openapi.post("/api/ai/paraphrase", paymentMiddleware, trackMetrics, AiParaphrase as any);
+openapi.post("/api/ai/grammar-check", paymentMiddleware, trackMetrics, AiGrammarCheck as any);
+openapi.post("/api/ai/question-answer", paymentMiddleware, trackMetrics, AiQuestionAnswer as any);
 
 // Random endpoints (paid)
 openapi.get("/api/random/uuid", paymentMiddleware, trackMetrics, RandomUuid as any);
@@ -215,6 +230,11 @@ openapi.post("/api/text/regex-test", paymentMiddleware, trackMetrics, TextRegexT
 // Data endpoints (paid)
 openapi.post("/api/data/csv-to-json", paymentMiddleware, trackMetrics, DataCsvToJson as any);
 openapi.post("/api/data/json-to-csv", paymentMiddleware, trackMetrics, DataJsonToCsv as any);
+openapi.post("/api/data/json-format", paymentMiddleware, trackMetrics, DataJsonFormat as any);
+openapi.post("/api/data/json-minify", paymentMiddleware, trackMetrics, DataJsonMinify as any);
+openapi.post("/api/data/json-validate", paymentMiddleware, trackMetrics, DataJsonValidate as any);
+openapi.post("/api/data/json-path", paymentMiddleware, trackMetrics, DataJsonPath as any);
+openapi.post("/api/data/json-flatten", paymentMiddleware, trackMetrics, DataJsonFlatten as any);
 
 // Utility endpoints (paid)
 openapi.get("/api/util/timestamp", paymentMiddleware, trackMetrics, UtilTimestamp as any);
