@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-STX402 is a Cloudflare Workers API providing OpenAPI 3.1-documented endpoints for Stacks/BNS blockchain queries and AI-powered features. All paid endpoints require X402 micropayments (~0.003 STX | 100 sats sBTC | 0.001 USDCx).
+STX402 is a Cloudflare Workers API providing **100 useful endpoints** via X402 micropayments. Currently at 26 endpoints, scaling to 100+.
+
+**Vision**: A marketplace of useful API endpoints where the best ones surface to the top based on usage and earnings. Each endpoint is simple, composable, and pays for itself through micropayments.
 
 ## Commands
 
@@ -16,49 +18,65 @@ npm run cf-typegen   # Regenerate Env types from wrangler bindings
 
 ### Running Tests
 
-Tests are E2E integration tests run with Bun against a local dev server:
-
 ```bash
 # Start dev server first
 npm run dev
 
-# In another terminal, run individual tests
-bun run tests/get-bns-address.test.ts
-bun run tests/validate-stacks-address.test.ts
-
-# Run all tests
+# Run all tests (requires .env with X402_CLIENT_PK testnet mnemonic)
 bun run tests/_run_all_tests.ts
-```
 
-Tests require `.env` with `X402_CLIENT_PK` (testnet mnemonic) for payment signing.
+# Run individual test
+bun run tests/get-bns-address.test.ts
+```
 
 ## Architecture
 
+### Endpoint Categories
+
+| Category | Count | Path Pattern | Description |
+|----------|-------|--------------|-------------|
+| Health | 2 | `/api/health`, `/dashboard` | Free monitoring endpoints |
+| Stacks | 8 | `/api/stacks/*` | Blockchain queries, Clarity utilities |
+| AI | 6 | `/api/ai/*` | AI-powered analysis and generation |
+| Random | 3 | `/api/random/*` | Cryptographically secure generation |
+| Text | 6 | `/api/text/*` | Encoding, hashing, transformation |
+| Utility | 1 | `/api/util/*` | General utilities |
+
+### Pricing Tiers
+
+Defined in `src/utils/pricing.ts`:
+
+| Tier | STX | sBTC | USDCx | Use Case |
+|------|-----|------|-------|----------|
+| `simple` | 0.001 | 0.000001 | 0.001 | Fast utilities, no external calls |
+| `ai` | 0.003 | 0.000003 | 0.003 | Light AI inference |
+| `heavy_ai` | 0.01 | 0.00001 | 0.01 | Image generation, heavy compute |
+
 ### Endpoint Pattern
 
-All endpoints extend `BaseEndpoint` (which extends chanfana's `OpenAPIRoute`) and implement:
-- `schema` object defining OpenAPI spec (tags, summary, parameters, responses)
-- `async handle(c: AppContext)` method for request handling
+All endpoints extend `BaseEndpoint` and implement:
+- `schema` - OpenAPI spec (tags, summary, parameters, responses)
+- `handle(c: AppContext)` - Request handler
 
+```typescript
+import { BaseEndpoint } from "./BaseEndpoint";
+import type { AppContext } from "../types";
+
+export class MyEndpoint extends BaseEndpoint {
+  schema = {
+    tags: ["Category"],
+    summary: "(paid) Description",
+    parameters: [...],
+    responses: { "200": {...}, "402": {...} },
+  };
+
+  async handle(c: AppContext) {
+    const tokenType = this.getTokenType(c);
+    // ... logic
+    return c.json({ result, tokenType });
+  }
+}
 ```
-src/endpoints/
-├── BaseEndpoint.ts      # Shared methods: getTokenType(), validateAddress(), errorResponse()
-├── health.ts            # Free endpoint (no payment required)
-├── [Stacks]             # getBnsName, validateStacksAddress, convertAddressToNetwork, decodeClarityHex
-├── [Games]              # deepThought, coinToss, dadJoke
-├── [AI]                 # summarize, imageDescribe, tts, generateImage
-└── [Betting]            # betCoinToss, betDice
-```
-
-### X402 Payment Flow
-
-1. Request without `X-PAYMENT` header → 402 response with `X402PaymentRequired` object
-2. Client signs payment using X402PaymentClient
-3. Retry with `X-PAYMENT` header (+ optional `X-PAYMENT-TOKEN-TYPE`)
-4. Server verifies via X402PaymentVerifier, settles payment
-5. If valid, adds `X-PAYMENT-RESPONSE` header and continues to endpoint
-
-Middleware location: `src/middleware/x402-stacks.ts`
 
 ### Adding a New Endpoint
 
@@ -66,26 +84,43 @@ Middleware location: `src/middleware/x402-stacks.ts`
 2. Import and register in `src/index.ts`:
    ```typescript
    import { NewEndpoint } from "./endpoints/NewEndpoint";
-   openapi.get("/api/new/:id", paymentMiddleware, NewEndpoint as any);
+   openapi.post("/api/category/endpoint", paymentMiddleware, trackMetrics, NewEndpoint as any);
    ```
-3. Run `npm run cf-typegen` if using new env bindings
+3. Add to `ENDPOINT_TIERS` in `src/utils/pricing.ts` if non-default tier
+4. Run `npm run cf-typegen` if using new env bindings
 
-### Utilities
+### Key Files
 
-- `utils/bns.ts` - BNS contract queries (get-primary function)
-- `utils/clarity.ts` - Recursive Clarity value decoder
-- `utils/pricing.ts` - Token conversion & payment amounts
-- `utils/wallet.ts` - Account derivation from mnemonics
-- `utils/addresses.ts` - Mainnet/testnet address conversion
-- `utils/bigint.ts` - BigInt JSON serialization helper
+**Endpoints:**
+- `src/endpoints/BaseEndpoint.ts` - Shared methods: `getTokenType()`, `validateAddress()`, `errorResponse()`
+- `src/endpoints/stacks*.ts` - Stacks/Clarity endpoints (BNS, contracts, consensus buffers)
+- `src/endpoints/ai*.ts` - AI endpoints (summarize, TTS, image generation, contract analysis)
+- `src/endpoints/text*.ts` - Hashing (SHA, Keccak, Hash160), encoding (base64)
+- `src/endpoints/random*.ts` - Secure random (UUID, numbers, strings)
 
-## Key Dependencies
+**Middleware:**
+- `src/middleware/x402-stacks.ts` - X402 payment verification/settlement
+- `src/middleware/metrics.ts` - Usage tracking to KV
 
-- **Hono** - HTTP routing framework for Workers
-- **chanfana** - OpenAPI 3.1 documentation generator
-- **@stacks/transactions** - Stacks blockchain utilities
-- **x402-stacks** - X402 payment verification/signing
-- **Zod** - Schema validation
+**Utilities:**
+- `src/utils/pricing.ts` - Tier definitions and `ENDPOINT_TIERS` mapping
+- `src/utils/network.ts` - Network detection from address prefix
+- `src/utils/bns.ts` - BNS contract queries
+- `src/utils/clarity.ts` - Clarity value decoder
+
+### X402 Payment Flow
+
+1. Request without `X-PAYMENT` header → 402 with payment requirements
+2. Client signs payment using X402PaymentClient
+3. Retry with `X-PAYMENT` header (+ `X-PAYMENT-TOKEN-TYPE`)
+4. Server verifies via X402PaymentVerifier, settles payment
+5. If valid, adds `X-PAYMENT-RESPONSE` header, continues to endpoint
+
+### Crypto Libraries
+
+- **SubtleCrypto** (Web Crypto API) - SHA-256, SHA-512, random generation
+- **@noble/hashes** - Keccak-256, RIPEMD160, SHA512/256 (for Clarity compatibility)
+- **@stacks/transactions** - Clarity value serialization, address utilities
 
 ## Environment Variables
 
@@ -95,9 +130,47 @@ Configured in `wrangler.jsonc`:
 - `X402_SERVER_ADDRESS` - Payment recipient address
 - `X402_FACILITATOR_URL` - X402 facilitator endpoint
 
-## Token Types
+KV Namespaces:
+- `METRICS` - Usage tracking (calls, earnings, latency)
 
-API supports `?tokenType=STX|sBTC|USDCx` (case-insensitive):
-- STX: microSTX (1 STX = 1,000,000 microSTX)
-- sBTC: sats (1 BTC = 100,000,000 sats)
-- USDCx: microUSDCx (testnet USDC)
+AI Bindings:
+- `AI` - Cloudflare Workers AI
+
+## Roadmap to 100 Endpoints
+
+### Next Priority Endpoints
+
+**Text utilities (simple tier):**
+- url-encode/decode, html-encode/decode
+- jwt-decode, regex-test, regex-extract
+- markdown-to-html, slugify, word-count
+
+**Data transformation (simple tier):**
+- json-format, json-minify, json-validate
+- csv-to-json, json-to-csv
+- yaml-to-json, xml-to-json
+
+**More random (simple tier):**
+- password (with requirements)
+- color (hex/rgb/hsl)
+- dice, shuffle
+
+**Utilities (simple tier):**
+- timestamp-convert, date-diff
+- dns-lookup, ip-info
+- qr-generate, url-parse
+
+**More AI (ai/heavy_ai tier):**
+- sentiment analysis
+- language detection
+- translate
+- code-explain
+
+### Design Principles
+
+1. **One thing well** - Each endpoint has a single, clear purpose
+2. **Composable** - Output from one endpoint can feed into another
+3. **Minimal deps** - Prefer SubtleCrypto and @noble/hashes over external APIs
+4. **Clarity compatible** - Hash functions match Clarity built-ins
+5. **Cacheable** - Immutable data (contract source/ABI) can be cached forever
+6. **Usage-driven** - Metrics track which endpoints are most valuable
