@@ -1,5 +1,4 @@
 import {
-  serializeCV,
   intCV,
   uintCV,
   bufferCV,
@@ -16,8 +15,8 @@ import {
   responseOkCV,
   responseErrorCV,
   ClarityValue,
+  cvToHex,
 } from "@stacks/transactions";
-import { bytesToHex } from "@noble/hashes/utils";
 import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
 
@@ -157,12 +156,14 @@ export class StacksToConsensusBuff extends BaseEndpoint {
 
     try {
       const cv = buildClarityValue(body.value);
-      const serialized = serializeCV(cv);
-      const hex = "0x" + bytesToHex(serialized);
+      // Use cvToHex for better Workers compatibility
+      const hex = cvToHex(cv);
+      // Calculate bytes from hex (remove 0x, divide by 2)
+      const bytes = (hex.startsWith("0x") ? hex.slice(2) : hex).length / 2;
 
       return c.json({
-        hex,
-        bytes: serialized.length,
+        hex: hex.startsWith("0x") ? hex : "0x" + hex,
+        bytes,
         tokenType,
       });
     } catch (error) {

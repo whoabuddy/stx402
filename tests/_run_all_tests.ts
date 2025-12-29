@@ -30,6 +30,60 @@ import {
 } from "./_shared_utils";
 
 // =============================================================================
+// Error Types (mirror server-side types for parsing)
+// =============================================================================
+
+type PaymentErrorCode =
+  | "FACILITATOR_UNAVAILABLE"
+  | "FACILITATOR_ERROR"
+  | "PAYMENT_INVALID"
+  | "INSUFFICIENT_FUNDS"
+  | "PAYMENT_EXPIRED"
+  | "AMOUNT_TOO_LOW"
+  | "NETWORK_ERROR"
+  | "UNKNOWN_ERROR";
+
+interface PaymentErrorResponse {
+  error: string;
+  code: PaymentErrorCode;
+  retryAfter?: number;
+  tokenType: TokenType;
+  resource: string;
+}
+
+function isPaymentErrorResponse(obj: unknown): obj is PaymentErrorResponse {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "error" in obj &&
+    "code" in obj &&
+    typeof (obj as PaymentErrorResponse).error === "string" &&
+    typeof (obj as PaymentErrorResponse).code === "string"
+  );
+}
+
+function formatErrorResponse(status: number, body: string, retryAfter: string | null): string {
+  // Try to parse as structured error
+  try {
+    const parsed = JSON.parse(body);
+    if (isPaymentErrorResponse(parsed)) {
+      let msg = `[${parsed.code}] ${parsed.error}`;
+      if (parsed.retryAfter || retryAfter) {
+        msg += ` (retry after ${parsed.retryAfter || retryAfter}s)`;
+      }
+      return msg;
+    }
+    // Legacy error format with just 'error' field
+    if (parsed.error) {
+      return parsed.error.slice(0, 80);
+    }
+  } catch {
+    // Not JSON, return truncated text
+  }
+  return body.slice(0, 80);
+}
+
+// =============================================================================
 // Configuration
 // =============================================================================
 
@@ -143,7 +197,9 @@ async function testEndpointWithToken(
 
     if (retryRes.status !== 200) {
       const errText = await retryRes.text();
-      return { passed: false, error: `Retry failed (${retryRes.status}): ${errText.slice(0, 100)}` };
+      const retryAfter = retryRes.headers.get("Retry-After");
+      const formattedError = formatErrorResponse(retryRes.status, errText, retryAfter);
+      return { passed: false, error: `(${retryRes.status}) ${formattedError}` };
     }
 
     // Step 4: Validate response

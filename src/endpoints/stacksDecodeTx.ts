@@ -5,7 +5,6 @@ import {
   AddressHashMode,
   cvToJSON,
 } from "@stacks/transactions";
-import { hexToBytes } from "@noble/hashes/utils";
 import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
 
@@ -113,11 +112,10 @@ export class StacksDecodeTx extends BaseEndpoint {
     }
 
     try {
-      // Remove 0x prefix if present
+      // Remove 0x prefix if present - deserializeTransaction accepts hex strings directly
       const cleanHex = hex.startsWith("0x") ? hex.slice(2) : hex;
-      const bytes = hexToBytes(cleanHex);
 
-      const tx = deserializeTransaction(bytes);
+      const tx = deserializeTransaction(cleanHex);
 
       // Build payload info based on type
       let payloadInfo: Record<string, unknown> = {};

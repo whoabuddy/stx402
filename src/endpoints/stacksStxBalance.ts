@@ -117,18 +117,33 @@ export class StacksStxBalance extends BaseEndpoint {
 
       const data = await response.json() as AccountBalance;
 
+      // Defensive check for API response structure
+      if (!data || !data.stx) {
+        return c.json({
+          address,
+          balance: "0",
+          balanceFormatted: "0.000000",
+          locked: "0",
+          totalSent: "0",
+          totalReceived: "0",
+          nonce: 0,
+          network,
+          tokenType,
+        });
+      }
+
       // Format balance to STX (6 decimal places)
-      const balanceMicro = BigInt(data.stx.balance);
+      const balanceMicro = BigInt(data.stx.balance || "0");
       const balanceStx = Number(balanceMicro) / 1_000_000;
 
       return c.json({
         address,
-        balance: data.stx.balance,
+        balance: data.stx.balance || "0",
         balanceFormatted: balanceStx.toFixed(6),
-        locked: data.stx.locked,
-        totalSent: data.stx.total_sent,
-        totalReceived: data.stx.total_received,
-        nonce: data.nonce,
+        locked: data.stx.locked || "0",
+        totalSent: data.stx.total_sent || "0",
+        totalReceived: data.stx.total_received || "0",
+        nonce: data.nonce || 0,
         lockHeight: data.stx.lock_height || null,
         network,
         tokenType,
