@@ -90,6 +90,11 @@ import { DataJsonMinify } from "./endpoints/dataJsonMinify";
 import { DataJsonValidate } from "./endpoints/dataJsonValidate";
 import { DataJsonPath } from "./endpoints/dataJsonPath";
 import { DataJsonFlatten } from "./endpoints/dataJsonFlatten";
+import { DataJsonMerge } from "./endpoints/dataJsonMerge";
+
+// Crypto endpoints
+import { CryptoRipemd160 } from "./endpoints/cryptoRipemd160";
+import { CryptoRandomBytes } from "./endpoints/cryptoRandomBytes";
 
 // Utility endpoints
 import { UtilTimestamp } from "./endpoints/utilTimestamp";
@@ -111,6 +116,9 @@ import { UtilHtmlToText } from "./endpoints/utilHtmlToText";
 import { UtilBase64Image } from "./endpoints/utilBase64Image";
 import { UtilBytesFormat } from "./endpoints/utilBytesFormat";
 import { UtilSlugify } from "./endpoints/utilSlugify";
+import { UtilMimeType } from "./endpoints/utilMimeType";
+import { UtilRegexEscape } from "./endpoints/utilRegexEscape";
+import { UtilStringDistance } from "./endpoints/utilStringDistance";
 
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 import { metricsMiddleware } from "./middleware/metrics";
@@ -250,6 +258,11 @@ openapi.post("/api/data/json-minify", paymentMiddleware, trackMetrics, DataJsonM
 openapi.post("/api/data/json-validate", paymentMiddleware, trackMetrics, DataJsonValidate as any);
 openapi.post("/api/data/json-path", paymentMiddleware, trackMetrics, DataJsonPath as any);
 openapi.post("/api/data/json-flatten", paymentMiddleware, trackMetrics, DataJsonFlatten as any);
+openapi.post("/api/data/json-merge", paymentMiddleware, trackMetrics, DataJsonMerge as any);
+
+// Crypto endpoints (paid)
+openapi.post("/api/crypto/ripemd160", paymentMiddleware, trackMetrics, CryptoRipemd160 as any);
+openapi.get("/api/crypto/random-bytes", paymentMiddleware, trackMetrics, CryptoRandomBytes as any);
 
 // Utility endpoints (paid)
 openapi.get("/api/util/timestamp", paymentMiddleware, trackMetrics, UtilTimestamp as any);
@@ -271,6 +284,9 @@ openapi.post("/api/util/html-to-text", paymentMiddleware, trackMetrics, UtilHtml
 openapi.get("/api/util/base64-image", paymentMiddleware, trackMetrics, UtilBase64Image as any);
 openapi.get("/api/util/bytes-format", paymentMiddleware, trackMetrics, UtilBytesFormat as any);
 openapi.post("/api/util/slugify", paymentMiddleware, trackMetrics, UtilSlugify as any);
+openapi.get("/api/util/mime-type", paymentMiddleware, trackMetrics, UtilMimeType as any);
+openapi.post("/api/util/regex-escape", paymentMiddleware, trackMetrics, UtilRegexEscape as any);
+openapi.post("/api/util/string-distance", paymentMiddleware, trackMetrics, UtilStringDistance as any);
 
 // Export the Hono app
 export default app;
