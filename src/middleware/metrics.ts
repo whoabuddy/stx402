@@ -78,27 +78,32 @@ export async function getAllMetrics(
   kv: KVNamespace,
   paths: string[]
 ): Promise<EndpointMetrics[]> {
-  const metrics: EndpointMetrics[] = [];
-
-  for (const path of paths) {
+  // Build all KV read promises upfront for parallel execution
+  const readPromises = paths.map((path) => {
     const prefix = `metrics:endpoint:${path}`;
+    return Promise.all([
+      kv.get(`${prefix}:calls`),
+      kv.get(`${prefix}:success`),
+      kv.get(`${prefix}:latency_sum`),
+      kv.get(`${prefix}:earnings:STX`),
+      kv.get(`${prefix}:earnings:sBTC`),
+      kv.get(`${prefix}:earnings:USDCx`),
+      kv.get(`${prefix}:last_call`),
+    ]);
+  });
 
-    const [calls, success, latencySum, earningsSTX, earningsBTC, earningsUSDC, lastCall] =
-      await Promise.all([
-        kv.get(`${prefix}:calls`),
-        kv.get(`${prefix}:success`),
-        kv.get(`${prefix}:latency_sum`),
-        kv.get(`${prefix}:earnings:STX`),
-        kv.get(`${prefix}:earnings:sBTC`),
-        kv.get(`${prefix}:earnings:USDCx`),
-        kv.get(`${prefix}:last_call`),
-      ]);
+  // Execute all reads in parallel
+  const results = await Promise.all(readPromises);
+
+  // Process results
+  return paths.map((path, index) => {
+    const [calls, success, latencySum, earningsSTX, earningsBTC, earningsUSDC, lastCall] = results[index];
 
     const totalCalls = parseInt(calls || "0");
     const successfulCalls = parseInt(success || "0");
     const totalLatency = parseInt(latencySum || "0");
 
-    metrics.push({
+    return {
       path,
       tier: getEndpointTier(path),
       totalCalls,
@@ -114,10 +119,8 @@ export async function getAllMetrics(
         USDCx: earningsUSDC || "0",
       },
       lastCall: lastCall || "Never",
-    });
-  }
-
-  return metrics;
+    };
+  });
 }
 
 // Get daily stats
@@ -125,21 +128,28 @@ export async function getDailyStats(
   kv: KVNamespace,
   days: number = 7
 ): Promise<{ date: string; calls: number }[]> {
-  const stats: { date: string; calls: number }[] = [];
   const today = new Date();
+  const dates: string[] = [];
 
+  // Build date list
   for (let i = 0; i < days; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split("T")[0];
-    const calls = await kv.get(`metrics:daily:${dateStr}:calls`);
-    stats.push({
-      date: dateStr,
-      calls: parseInt(calls || "0"),
-    });
+    dates.push(date.toISOString().split("T")[0]);
   }
 
-  return stats.reverse();
+  // Fetch all daily stats in parallel
+  const results = await Promise.all(
+    dates.map((dateStr) => kv.get(`metrics:daily:${dateStr}:calls`))
+  );
+
+  // Build stats array (reversed to show oldest first)
+  return dates
+    .map((date, index) => ({
+      date,
+      calls: parseInt(results[index] || "0"),
+    }))
+    .reverse();
 }
 
 // Metrics middleware - tracks calls after payment is verified
