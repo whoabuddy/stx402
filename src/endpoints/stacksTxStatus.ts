@@ -1,10 +1,6 @@
 import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
-
-const API_URLS: Record<string, string> = {
-  mainnet: "https://api.mainnet.hiro.so",
-  testnet: "https://api.testnet.hiro.so",
-};
+import { hiroFetch, getHiroApiUrl, isHiroRateLimitError } from "../utils/hiro";
 
 interface TxResponse {
   tx_id: string;
@@ -92,13 +88,14 @@ export class StacksTxStatus extends BaseEndpoint {
       return this.errorResponse(c, "Invalid txid format", 400);
     }
 
-    const apiUrl = API_URLS[network as keyof typeof API_URLS];
-    if (!apiUrl) {
+    if (network !== "mainnet" && network !== "testnet") {
       return this.errorResponse(c, "Invalid network", 400);
     }
 
+    const apiUrl = getHiroApiUrl(network);
+
     try {
-      const response = await fetch(`${apiUrl}/extended/v1/tx/${normalizedTxid}`, {
+      const response = await hiroFetch(`${apiUrl}/extended/v1/tx/${normalizedTxid}`, {
         headers: { Accept: "application/json" },
       });
 
@@ -127,6 +124,15 @@ export class StacksTxStatus extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
+      if (isHiroRateLimitError(error)) {
+        c.header("Retry-After", String(error.rateLimitError.retryAfter));
+        return c.json({
+          error: error.rateLimitError.error,
+          code: error.rateLimitError.code,
+          retryAfter: error.rateLimitError.retryAfter,
+          tokenType,
+        }, 503);
+      }
       return this.errorResponse(c, `Failed to fetch tx: ${String(error)}`, 500);
     }
   }

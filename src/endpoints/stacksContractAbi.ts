@@ -1,11 +1,7 @@
 import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
 import { getNetworkFromPrincipal } from "../utils/network";
-
-const API_URLS: Record<string, string> = {
-  mainnet: "https://api.mainnet.hiro.so",
-  testnet: "https://api.testnet.hiro.so",
-};
+import { hiroFetch, getHiroApiUrl, isHiroRateLimitError } from "../utils/hiro";
 
 interface ClarityAbiFunction {
   name: string;
@@ -105,10 +101,10 @@ export class StacksContractAbi extends BaseEndpoint {
       return this.errorResponse(c, "Invalid contract address", 400);
     }
 
-    const apiUrl = API_URLS[network];
+    const apiUrl = getHiroApiUrl(network as "mainnet" | "testnet");
 
     try {
-      const response = await fetch(
+      const response = await hiroFetch(
         `${apiUrl}/v2/contracts/interface/${address}/${contractName}`,
         { headers: { Accept: "application/json" } }
       );
@@ -142,6 +138,15 @@ export class StacksContractAbi extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
+      if (isHiroRateLimitError(error)) {
+        c.header("Retry-After", String(error.rateLimitError.retryAfter));
+        return c.json({
+          error: error.rateLimitError.error,
+          code: error.rateLimitError.code,
+          retryAfter: error.rateLimitError.retryAfter,
+          tokenType,
+        }, 503);
+      }
       return this.errorResponse(c, `Failed to fetch contract ABI: ${String(error)}`, 500);
     }
   }

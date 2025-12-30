@@ -1,5 +1,6 @@
 import { BaseEndpoint } from "./BaseEndpoint";
 import { getNameFromAddress } from "../utils/bns";
+import { isHiroRateLimitError } from "../utils/hiro";
 import type { AppContext } from "../types";
 
 export class GetBnsName extends BaseEndpoint {
@@ -142,6 +143,15 @@ export class GetBnsName extends BaseEndpoint {
       }
       return c.json({ name, tokenType });
     } catch (error) {
+      if (isHiroRateLimitError(error)) {
+        c.header("Retry-After", String(error.rateLimitError.retryAfter));
+        return c.json({
+          error: error.rateLimitError.error,
+          code: error.rateLimitError.code,
+          retryAfter: error.rateLimitError.retryAfter,
+          tokenType,
+        }, 503);
+      }
       return this.errorResponse(
         c,
         `Internal server error: ${String(error)}`,
