@@ -220,14 +220,22 @@ export const x402PaymentMiddleware = () => {
 
     // Verify/settle payment
     let settleResult: SettlePaymentResult;
+    console.log("settlePayment starting:", {
+      facilitatorUrl: config.facilitatorUrl,
+      expectedRecipient: config.address,
+      minAmount: config.minAmount.toString(),
+      tokenType,
+      signedTxLength: signedTx.length,
+    });
     try {
       settleResult = (await verifier.settlePayment(signedTx, {
         expectedRecipient: config.address,
         minAmount: config.minAmount,
         tokenType,
       })) as SettlePaymentResult;
+      console.log("settlePayment result:", JSON.stringify(settleResult));
     } catch (error) {
-      console.error("settlePayment exception:", error);
+      console.error("settlePayment exception:", error, "Type:", typeof error, "Message:", (error as Error)?.message);
 
       // Classify the error and return appropriate response
       const classified = classifyPaymentError(error);
