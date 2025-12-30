@@ -619,7 +619,7 @@ const cryptoEndpoints: TestConfig[] = [
     name: "ripemd160",
     endpoint: "/api/crypto/ripemd160",
     method: "POST",
-    body: { text: "test" },
+    body: { data: "test" },
     validateResponse: (data, tokenType) =>
       hasFields(data, ["hash", "algorithm"]) && hasTokenType(data, tokenType),
   },
