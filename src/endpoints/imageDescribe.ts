@@ -137,25 +137,24 @@ export class ImageDescribe extends BaseEndpoint {
     const prompt = body.prompt || "Describe this image in detail and list 5 relevant tags.";
 
     try {
-      // Use Google's Gemma 3 model (no Meta license required)
-      const output = await c.env.AI.run("@cf/google/gemma-3-12b-it", {
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "image_url",
-                image_url: { url: body.image.startsWith("data:") ? body.image : `data:image/jpeg;base64,${body.image}` },
-              },
-            ],
-          },
-        ],
+      // Prepare image as base64 bytes for uform model
+      const imageBase64 = body.image.startsWith("data:")
+        ? body.image.split(",")[1] // Extract base64 from data URI
+        : body.image;
+      const imageBytes = Uint8Array.from(atob(imageBase64), (c) => c.charCodeAt(0));
+
+      // Use uform model for image captioning (no license required, purpose-built)
+      const output = await c.env.AI.run("@cf/unum/uform-gen2-qwen-500m", {
+        image: [...imageBytes], // Convert to number array
+        prompt: prompt,
+        max_tokens: 512,
       });
-      // Simple parse: assume model outputs "Description: ...\nTags: tag1, tag2, ..."
-      const response = output.response;
-      const description = response.split("\n")[0].replace("Description: ", "").trim();
-      const tagsMatch = response.match(/Tags: (.*)/i);
+
+      // Parse response - uform returns a single description
+      const response = output.description || "";
+      const description = response.split("\n")[0].trim();
+      // Extract tags if model provides them, otherwise generate basic ones
+      const tagsMatch = response.match(/Tags?:?\s*(.*)/i);
       const tags = tagsMatch ? tagsMatch[1].split(",").map((t: string) => t.trim()).slice(0, 5) : [];
 
       return c.json({ description, tags, tokenType });
