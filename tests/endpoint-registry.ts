@@ -119,16 +119,17 @@ const stacksEndpoints: TestConfig[] = [
     validateResponse: (data, tokenType) =>
       hasField(data, "value") && hasTokenType(data, tokenType),
   },
-  // NOTE: decode-tx is disabled due to @stacks/transactions TextDecoder incompatibility
-  // with Cloudflare Workers. Use tx-status endpoint for on-chain transaction lookups.
-  // {
-  //   name: "decode-tx",
-  //   endpoint: "/api/stacks/decode-tx",
-  //   method: "POST",
-  //   body: { hex: "0x..." },
-  //   validateResponse: (data, tokenType) =>
-  //     hasFields(data, ["version", "payloadType", "payload"]) && hasTokenType(data, tokenType),
-  // },
+  {
+    name: "decode-tx",
+    endpoint: "/api/stacks/decode-tx",
+    method: "POST",
+    body: {
+      // Valid STX transfer transaction hex
+      hex: "0x80800000000400164247d6f2b425ac5771423ae6c80c754f7172b0000000000000003200000000000000b400008537046ff1008368baaa3ff2235122c556b89dad4f9df0639b924cf32a44b866497e49846b24191e711b21faaae96ca0542e4a140168484740b94211cececb3303020000000000051ab52c45b1a7977204f17ac0b6f48306aea2dbb8e9000000000007a12046617563657400000000000000000000000000000000000000000000000000000000",
+    },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["version", "payloadType", "payload"]) && hasTokenType(data, tokenType),
+  },
   {
     name: "call-readonly",
     endpoint: "/api/stacks/call-readonly",

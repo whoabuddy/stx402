@@ -3,8 +3,9 @@ import {
   PayloadType,
   AuthType,
   AddressHashMode,
-  cvToJSON,
+  cvToValue,
 } from "@stacks/transactions";
+import { hexToBytes } from "@stacks/common";
 import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
 
@@ -112,10 +113,11 @@ export class StacksDecodeTx extends BaseEndpoint {
     }
 
     try {
-      // Remove 0x prefix if present - deserializeTransaction accepts hex strings directly
+      // Remove 0x prefix if present and convert to bytes using @stacks/common
       const cleanHex = hex.startsWith("0x") ? hex.slice(2) : hex;
+      const txBytes = hexToBytes(cleanHex);
 
-      const tx = deserializeTransaction(cleanHex);
+      const tx = deserializeTransaction(txBytes);
 
       // Build payload info based on type
       let payloadInfo: Record<string, unknown> = {};
@@ -126,7 +128,13 @@ export class StacksDecodeTx extends BaseEndpoint {
           payloadInfo = {
             recipient: payload.recipient,
             amount: payload.amount.toString(),
-            memo: payload.memo ? new TextDecoder().decode(payload.memo.content).replace(/\0/g, "") : "",
+            // Safely decode memo - it's a 34-byte buffer with ASCII content
+            memo: payload.memo?.content
+              ? Array.from(payload.memo.content)
+                  .map((b) => (b >= 32 && b < 127 ? String.fromCharCode(b) : ""))
+                  .join("")
+                  .trim()
+              : "",
           };
           break;
 
@@ -135,7 +143,7 @@ export class StacksDecodeTx extends BaseEndpoint {
             contractAddress: payload.contractAddress,
             contractName: payload.contractName.content,
             functionName: payload.functionName.content,
-            functionArgs: payload.functionArgs.map((arg) => cvToJSON(arg)),
+            functionArgs: payload.functionArgs.map((arg) => cvToValue(arg, true)),
           };
           break;
 
