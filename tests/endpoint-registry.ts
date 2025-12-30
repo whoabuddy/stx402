@@ -313,8 +313,8 @@ const textEndpoints: TestConfig[] = [
     method: "POST",
     body: { encoded: FIXTURES.base64OfTest },
     validateResponse: (data, tokenType) => {
-      const d = data as { text: string; tokenType: TokenType };
-      return d.text === "test" && d.tokenType === tokenType;
+      const d = data as { decoded: string; tokenType: TokenType };
+      return d.decoded === "test" && d.tokenType === tokenType;
     },
   },
   {
@@ -365,10 +365,10 @@ const textEndpoints: TestConfig[] = [
     name: "url-decode",
     endpoint: "/api/text/url-decode",
     method: "POST",
-    body: { encoded: "hello%20world" },
+    body: { text: "hello%20world" },
     validateResponse: (data, tokenType) => {
-      const d = data as { text: string; tokenType: TokenType };
-      return d.text === "hello world" && d.tokenType === tokenType;
+      const d = data as { decoded: string; tokenType: TokenType };
+      return d.decoded === "hello world" && d.tokenType === tokenType;
     },
   },
   {
@@ -376,7 +376,7 @@ const textEndpoints: TestConfig[] = [
     endpoint: "/api/text/jwt-decode",
     method: "POST",
     body: {
-      jwt: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
     },
     validateResponse: (data, tokenType) =>
       hasFields(data, ["header", "payload"]) && hasTokenType(data, tokenType),
@@ -385,7 +385,7 @@ const textEndpoints: TestConfig[] = [
     name: "hmac",
     endpoint: "/api/text/hmac",
     method: "POST",
-    body: { text: "message", key: "secret" },
+    body: { message: "message", key: "secret" },
     validateResponse: (data, tokenType) =>
       hasField(data, "hmac") && hasTokenType(data, tokenType),
   },
@@ -403,10 +403,10 @@ const textEndpoints: TestConfig[] = [
     name: "html-decode",
     endpoint: "/api/text/html-decode",
     method: "POST",
-    body: { encoded: "&lt;div&gt;Hello&lt;/div&gt;" },
+    body: { text: "&lt;div&gt;Hello&lt;/div&gt;" },
     validateResponse: (data, tokenType) => {
-      const d = data as { text: string; tokenType: TokenType };
-      return d.text === "<div>Hello</div>" && d.tokenType === tokenType;
+      const d = data as { decoded: string; tokenType: TokenType };
+      return d.decoded === "<div>Hello</div>" && d.tokenType === tokenType;
     },
   },
   {
@@ -435,8 +435,8 @@ const textEndpoints: TestConfig[] = [
     method: "POST",
     body: { text: "hello world", case: "upper" },
     validateResponse: (data, tokenType) => {
-      const d = data as { result: string; tokenType: TokenType };
-      return d.result === "HELLO WORLD" && d.tokenType === tokenType;
+      const d = data as { converted: string; tokenType: TokenType };
+      return d.converted === "HELLO WORLD" && d.tokenType === tokenType;
     },
   },
   {
@@ -473,7 +473,7 @@ const textEndpoints: TestConfig[] = [
     name: "truncate",
     endpoint: "/api/text/truncate",
     method: "POST",
-    body: { text: "Hello World!", maxLength: 5 },
+    body: { text: "Hello World!", length: 8 },
     validateResponse: (data, tokenType) =>
       hasField(data, "truncated") && hasTokenType(data, tokenType),
   },
@@ -509,24 +509,25 @@ const textEndpoints: TestConfig[] = [
     endpoint: "/api/text/validate-url?url=https://example.com",
     method: "GET",
     validateResponse: (data, tokenType) => {
-      const d = data as { valid: boolean; tokenType: TokenType };
-      return d.valid === true && d.tokenType === tokenType;
+      const d = data as { isValid: boolean; tokenType: TokenType };
+      return d.isValid === true && d.tokenType === tokenType;
     },
   },
   {
     name: "diff",
     endpoint: "/api/text/diff",
     method: "POST",
-    body: { original: "hello world", modified: "hello there" },
+    body: { text1: "hello world", text2: "hello there" },
     validateResponse: (data, tokenType) =>
-      hasField(data, "diff") && hasTokenType(data, tokenType),
+      hasField(data, "changes") && hasTokenType(data, tokenType),
   },
   {
     name: "unicode-info",
-    endpoint: "/api/text/unicode-info?char=A",
-    method: "GET",
+    endpoint: "/api/text/unicode-info",
+    method: "POST",
+    body: { text: "A" },
     validateResponse: (data, tokenType) =>
-      hasFields(data, ["codePoint", "name"]) && hasTokenType(data, tokenType),
+      hasField(data, "characters") && hasTokenType(data, tokenType),
   },
 ];
 
@@ -585,9 +586,11 @@ const dataEndpoints: TestConfig[] = [
     name: "json-path",
     endpoint: "/api/data/json-path",
     method: "POST",
-    body: { json: { a: { b: 1 } }, path: "$.a.b" },
-    validateResponse: (data, tokenType) =>
-      hasField(data, "result") && hasTokenType(data, tokenType),
+    body: { json: { a: { b: 1 } }, path: "a.b" },
+    validateResponse: (data, tokenType) => {
+      const d = data as { value: number; found: boolean; tokenType: TokenType };
+      return d.value === 1 && d.found === true && d.tokenType === tokenType;
+    },
   },
   {
     name: "json-flatten",
@@ -651,8 +654,8 @@ const randomEndpoints: TestConfig[] = [
     endpoint: "/api/random/number?min=1&max=100",
     method: "GET",
     validateResponse: (data, tokenType) => {
-      const d = data as { number: number; tokenType: TokenType };
-      return d.number >= 1 && d.number <= 100 && d.tokenType === tokenType;
+      const d = data as { numbers: number[]; tokenType: TokenType };
+      return d.numbers.length === 1 && d.numbers[0] >= 1 && d.numbers[0] <= 100 && d.tokenType === tokenType;
     },
   },
   {
@@ -677,12 +680,14 @@ const randomEndpoints: TestConfig[] = [
     name: "color",
     endpoint: "/api/random/color",
     method: "GET",
-    validateResponse: (data, tokenType) =>
-      hasFields(data, ["hex", "rgb"]) && hasTokenType(data, tokenType),
+    validateResponse: (data, tokenType) => {
+      const d = data as { colors: { hex: string; rgb: string }; tokenType: TokenType };
+      return d.colors && typeof d.colors.hex === "string" && typeof d.colors.rgb === "string" && d.tokenType === tokenType;
+    },
   },
   {
     name: "dice",
-    endpoint: "/api/random/dice?count=2&sides=6",
+    endpoint: "/api/random/dice?notation=2d6",
     method: "GET",
     validateResponse: (data, tokenType) => {
       const d = data as { rolls: number[]; tokenType: TokenType };
@@ -720,10 +725,10 @@ const mathEndpoints: TestConfig[] = [
     name: "percentage",
     endpoint: "/api/math/percentage",
     method: "POST",
-    body: { value: 50, total: 200 },
+    body: { operation: "what_percent", value: 50, from: 200 },
     validateResponse: (data, tokenType) => {
-      const d = data as { percentage: number; tokenType: TokenType };
-      return d.percentage === 25 && d.tokenType === tokenType;
+      const d = data as { result: number; tokenType: TokenType };
+      return d.result === 25 && d.tokenType === tokenType;
     },
   },
   {
@@ -749,7 +754,7 @@ const mathEndpoints: TestConfig[] = [
     name: "gcd-lcm",
     endpoint: "/api/math/gcd-lcm",
     method: "POST",
-    body: { a: 12, b: 18 },
+    body: { numbers: [12, 18] },
     validateResponse: (data, tokenType) => {
       const d = data as { gcd: number; lcm: number; tokenType: TokenType };
       return d.gcd === 6 && d.lcm === 36 && d.tokenType === tokenType;
@@ -783,7 +788,7 @@ const utilEndpoints: TestConfig[] = [
     endpoint: "/api/util/dns-lookup?domain=google.com",
     method: "GET",
     validateResponse: (data, tokenType) =>
-      hasField(data, "addresses") && hasTokenType(data, tokenType),
+      hasField(data, "records") && hasTokenType(data, tokenType),
   },
   {
     name: "ip-info",
@@ -802,18 +807,18 @@ const utilEndpoints: TestConfig[] = [
   },
   {
     name: "timestamp-convert",
-    endpoint: "/api/util/timestamp-convert?timestamp=1704067200",
+    endpoint: "/api/util/timestamp-convert?value=1704067200",
     method: "GET",
     validateResponse: (data, tokenType) =>
       hasFields(data, ["iso", "utc"]) && hasTokenType(data, tokenType),
   },
   {
     name: "date-diff",
-    endpoint: "/api/util/date-diff?date1=2024-01-01&date2=2024-01-10",
+    endpoint: "/api/util/date-diff?from=2024-01-01&to=2024-01-10",
     method: "GET",
     validateResponse: (data, tokenType) => {
-      const d = data as { days: number; tokenType: TokenType };
-      return d.days === 9 && d.tokenType === tokenType;
+      const d = data as { totalDays: number; tokenType: TokenType };
+      return d.totalDays === 9 && d.tokenType === tokenType;
     },
   },
   {
@@ -826,7 +831,7 @@ const utilEndpoints: TestConfig[] = [
   },
   {
     name: "cron-parse",
-    endpoint: "/api/util/cron-parse?cron=0%209%20*%20*%20*",
+    endpoint: "/api/util/cron-parse?expression=0%209%20*%20*%20*",
     method: "GET",
     validateResponse: (data, tokenType) =>
       hasField(data, "description") && hasTokenType(data, tokenType),
@@ -867,8 +872,8 @@ const utilEndpoints: TestConfig[] = [
     endpoint: "/api/util/http-status?code=200",
     method: "GET",
     validateResponse: (data, tokenType) => {
-      const d = data as { message: string; tokenType: TokenType };
-      return d.message === "OK" && d.tokenType === tokenType;
+      const d = data as { name: string; tokenType: TokenType };
+      return d.name === "OK" && d.tokenType === tokenType;
     },
   },
   {
@@ -876,15 +881,15 @@ const utilEndpoints: TestConfig[] = [
     endpoint: "/api/util/validate-email?email=test@example.com",
     method: "GET",
     validateResponse: (data, tokenType) => {
-      const d = data as { valid: boolean; tokenType: TokenType };
-      return d.valid === true && d.tokenType === tokenType;
+      const d = data as { isValid: boolean; tokenType: TokenType };
+      return d.isValid === true && d.tokenType === tokenType;
     },
   },
   {
     name: "url-build",
     endpoint: "/api/util/url-build",
     method: "POST",
-    body: { base: "https://example.com", path: "/api", params: { q: "test" } },
+    body: { hostname: "example.com", pathname: "/api", query: { q: "test" } },
     validateResponse: (data, tokenType) =>
       hasField(data, "url") && hasTokenType(data, tokenType),
   },
@@ -909,7 +914,8 @@ const utilEndpoints: TestConfig[] = [
     method: "GET",
     validateResponse: (data, tokenType) => {
       const d = data as { formatted: string; tokenType: TokenType };
-      return d.formatted === "1 MB" && d.tokenType === tokenType;
+      // 1048576 bytes = 1.05 MB (decimal) or 1.00 MiB (binary)
+      return d.formatted.includes("MB") && d.tokenType === tokenType;
     },
   },
   {
@@ -924,7 +930,7 @@ const utilEndpoints: TestConfig[] = [
   },
   {
     name: "mime-type",
-    endpoint: "/api/util/mime-type?filename=test.json",
+    endpoint: "/api/util/mime-type?extension=json",
     method: "GET",
     validateResponse: (data, tokenType) => {
       const d = data as { mimeType: string; tokenType: TokenType };

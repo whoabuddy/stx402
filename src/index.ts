@@ -248,7 +248,7 @@ openapi.post("/api/text/rot13", paymentMiddleware, trackMetrics, TextRot13 as an
 openapi.get("/api/text/lorem-ipsum", paymentMiddleware, trackMetrics, TextLoremIpsum as any);
 openapi.get("/api/text/validate-url", paymentMiddleware, trackMetrics, TextValidateUrl as any);
 openapi.post("/api/text/diff", paymentMiddleware, trackMetrics, TextDiff as any);
-openapi.get("/api/text/unicode-info", paymentMiddleware, trackMetrics, TextUnicodeInfo as any);
+openapi.post("/api/text/unicode-info", paymentMiddleware, trackMetrics, TextUnicodeInfo as any);
 
 // Data endpoints (paid)
 openapi.post("/api/data/csv-to-json", paymentMiddleware, trackMetrics, DataCsvToJson as any);

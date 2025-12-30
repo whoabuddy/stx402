@@ -5,7 +5,7 @@ import type { AppContext } from "../types";
 export class UtilQrGenerate extends BaseEndpoint {
   schema = {
     tags: ["Utility"],
-    summary: "(paid) Generate QR code as PNG or SVG",
+    summary: "(paid) Generate QR code as SVG or base64",
     requestBody: {
       required: true,
       content: {
@@ -21,16 +21,16 @@ export class UtilQrGenerate extends BaseEndpoint {
               },
               format: {
                 type: "string" as const,
-                enum: ["png", "svg", "base64"] as const,
-                default: "png",
-                description: "Output format",
+                enum: ["svg", "base64"] as const,
+                default: "svg",
+                description: "Output format (svg or base64-encoded SVG)",
               },
               size: {
                 type: "integer" as const,
                 default: 200,
                 minimum: 50,
                 maximum: 1000,
-                description: "Size in pixels (for PNG)",
+                description: "Size in pixels",
               },
               margin: {
                 type: "integer" as const,
@@ -70,9 +70,6 @@ export class UtilQrGenerate extends BaseEndpoint {
       "200": {
         description: "QR code image",
         content: {
-          "image/png": {
-            schema: { type: "string" as const, format: "binary" as const },
-          },
           "image/svg+xml": {
             schema: { type: "string" as const },
           },
@@ -117,7 +114,7 @@ export class UtilQrGenerate extends BaseEndpoint {
 
     const {
       data,
-      format = "png",
+      format = "svg",
       size = 200,
       margin = 2,
       dark = "#000000",
@@ -132,7 +129,7 @@ export class UtilQrGenerate extends BaseEndpoint {
       return this.errorResponse(c, "data exceeds maximum length of 2048 characters", 400);
     }
 
-    const validFormats = ["png", "svg", "base64"];
+    const validFormats = ["svg", "base64"];
     if (!validFormats.includes(format)) {
       return this.errorResponse(c, `Invalid format. Valid: ${validFormats.join(", ")}`, 400);
     }
@@ -147,17 +144,18 @@ export class UtilQrGenerate extends BaseEndpoint {
     const clampedMargin = Math.max(0, Math.min(10, margin));
 
     try {
-      const options = {
+      // Generate SVG - works in Cloudflare Workers without canvas
+      const svg = await QRCode.toString(data, {
+        type: "svg",
         width: clampedSize,
         margin: clampedMargin,
         color: {
           dark,
           light,
         },
-      };
+      });
 
       if (format === "svg") {
-        const svg = await QRCode.toString(data, { ...options, type: "svg" });
         return new Response(svg, {
           headers: {
             "Content-Type": "image/svg+xml",
@@ -166,23 +164,15 @@ export class UtilQrGenerate extends BaseEndpoint {
         });
       }
 
-      if (format === "base64") {
-        const dataUrl = await QRCode.toDataURL(data, options);
-        return c.json({
-          base64: dataUrl,
-          mimeType: "image/png",
-          size: clampedSize,
-          tokenType,
-        });
-      }
+      // base64 format - encode SVG as base64 data URL
+      const base64Svg = btoa(svg);
+      const dataUrl = `data:image/svg+xml;base64,${base64Svg}`;
 
-      // PNG format - return as buffer
-      const buffer = await QRCode.toBuffer(data, options);
-      return new Response(buffer, {
-        headers: {
-          "Content-Type": "image/png",
-          "X-Token-Type": tokenType,
-        },
+      return c.json({
+        base64: dataUrl,
+        mimeType: "image/svg+xml",
+        size: clampedSize,
+        tokenType,
       });
     } catch (error) {
       return this.errorResponse(c, `QR generation failed: ${String(error)}`, 500);
