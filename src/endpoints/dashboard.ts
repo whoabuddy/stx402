@@ -114,6 +114,7 @@ export class Dashboard extends OpenAPIRoute {
       },
       tierCounts,
       categoryStats,
+      activeEndpoints,
       kvConfigured: !!c.env.METRICS,
     });
 
@@ -134,9 +135,10 @@ function generateDashboardHTML(data: {
   };
   tierCounts: { simple: number; ai: number; heavy_ai: number };
   categoryStats: Record<string, { count: number; calls: number; stx: number }>;
+  activeEndpoints: EndpointMetrics[];
   kvConfigured: boolean;
 }): string {
-  const { metrics, dailyStats, totals, tierCounts, categoryStats, kvConfigured } = data;
+  const { metrics, dailyStats, totals, tierCounts, categoryStats, activeEndpoints, kvConfigured } = data;
 
   // Sort by total calls descending
   const sortedMetrics = [...metrics].sort((a, b) => b.totalCalls - a.totalCalls);
