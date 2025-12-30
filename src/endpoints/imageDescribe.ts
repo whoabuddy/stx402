@@ -137,7 +137,8 @@ export class ImageDescribe extends BaseEndpoint {
     const prompt = body.prompt || "Describe this image in detail and list 5 relevant tags.";
 
     try {
-      const output = await c.env.AI.run("@cf/meta/llama-3.2-11b-vision-instruct", {
+      // Use Google's Gemma 3 model (no Meta license required)
+      const output = await c.env.AI.run("@cf/google/gemma-3-12b-it", {
         messages: [
           {
             role: "user",

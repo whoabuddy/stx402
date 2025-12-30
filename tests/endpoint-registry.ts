@@ -206,7 +206,8 @@ const aiEndpoints: TestConfig[] = [
     name: "image-describe",
     endpoint: "/api/ai/image-describe",
     method: "POST",
-    body: { imageUrl: "https://picsum.photos/200" },
+    // 1x1 red pixel PNG for minimal test image
+    body: { image: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==" },
     validateResponse: (data, tokenType) =>
       hasField(data, "description") && hasTokenType(data, tokenType),
   },
@@ -222,7 +223,7 @@ const aiEndpoints: TestConfig[] = [
     name: "generate-image",
     endpoint: "/api/ai/generate-image",
     method: "POST",
-    body: { prompt: "a simple red circle" },
+    body: { prompt: "a peaceful mountain landscape with blue sky and green trees" },
     expectedContentType: "image",
     validateResponse: () => true, // Image content validated by content-type
   },
@@ -237,9 +238,9 @@ const aiEndpoints: TestConfig[] = [
     name: "translate",
     endpoint: "/api/ai/translate",
     method: "POST",
-    body: { text: "Hello world", targetLanguage: "es" },
+    body: { text: "Hello world", target: "es" },
     validateResponse: (data, tokenType) =>
-      hasField(data, "translation") && hasTokenType(data, tokenType),
+      hasField(data, "translated") && hasTokenType(data, tokenType),
   },
   {
     name: "sentiment",
