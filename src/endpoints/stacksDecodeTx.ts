@@ -171,7 +171,7 @@ export class StacksDecodeTx extends BaseEndpoint {
       const spendingCondition = auth.spendingCondition;
 
       return c.json({
-        version: tx.version,
+        version: tx.transactionVersion,  // v7: renamed from 'version' to 'transactionVersion'
         chainId: tx.chainId,
         authType: AUTH_TYPE_NAMES[auth.authType] || `unknown_${auth.authType}`,
         payloadType: PAYLOAD_TYPE_NAMES[payload.payloadType] || `unknown_${payload.payloadType}`,
