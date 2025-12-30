@@ -3,6 +3,15 @@ import type { AppContext } from "../types";
 import { ENDPOINT_TIERS } from "../utils/pricing";
 import { getAllMetrics, getDailyStats, type EndpointMetrics } from "../middleware/metrics";
 
+// Extract category from path (e.g., /api/stacks/... → Stacks)
+function getCategoryFromPath(path: string): string {
+  const match = path.match(/^\/api\/([^/]+)/);
+  if (!match) return "Other";
+  const cat = match[1];
+  // Capitalize first letter
+  return cat.charAt(0).toUpperCase() + cat.slice(1);
+}
+
 export class Dashboard extends OpenAPIRoute {
   schema = {
     tags: ["System"],
@@ -80,6 +89,18 @@ export class Dashboard extends OpenAPIRoute {
       heavy_ai: metrics.filter((m) => m.tier === "heavy_ai").length,
     };
 
+    // Count by category with calls
+    const categoryStats: Record<string, { count: number; calls: number; stx: number }> = {};
+    for (const m of metrics) {
+      const cat = getCategoryFromPath(m.path);
+      if (!categoryStats[cat]) {
+        categoryStats[cat] = { count: 0, calls: 0, stx: 0 };
+      }
+      categoryStats[cat].count++;
+      categoryStats[cat].calls += m.totalCalls;
+      categoryStats[cat].stx += parseFloat(m.earnings.STX);
+    }
+
     const html = generateDashboardHTML({
       metrics,
       dailyStats,
@@ -92,6 +113,7 @@ export class Dashboard extends OpenAPIRoute {
         avgSuccessRate,
       },
       tierCounts,
+      categoryStats,
       kvConfigured: !!c.env.METRICS,
     });
 
@@ -111,12 +133,33 @@ function generateDashboardHTML(data: {
     avgSuccessRate: string;
   };
   tierCounts: { simple: number; ai: number; heavy_ai: number };
+  categoryStats: Record<string, { count: number; calls: number; stx: number }>;
   kvConfigured: boolean;
 }): string {
-  const { metrics, dailyStats, totals, tierCounts, kvConfigured } = data;
+  const { metrics, dailyStats, totals, tierCounts, categoryStats, kvConfigured } = data;
 
   // Sort by total calls descending
   const sortedMetrics = [...metrics].sort((a, b) => b.totalCalls - a.totalCalls);
+
+  // Calculate max for daily chart (use at least 1 to avoid division by zero)
+  const maxDailyCalls = Math.max(...dailyStats.map((d) => d.calls), 1);
+
+  // Sort categories by calls for the chart
+  const sortedCategories = Object.entries(categoryStats)
+    .sort((a, b) => b[1].calls - a[1].calls);
+  const maxCategoryCalls = Math.max(...sortedCategories.map(([, s]) => s.calls), 1);
+
+  // Category colors
+  const categoryColors: Record<string, string> = {
+    Stacks: "#5865f2",
+    Ai: "#f472b6",
+    Text: "#4ade80",
+    Data: "#facc15",
+    Crypto: "#f7931a",
+    Random: "#60a5fa",
+    Math: "#a78bfa",
+    Util: "#2dd4bf",
+  };
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -152,7 +195,7 @@ function generateDashboardHTML(data: {
     }
     .summary {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 16px;
       margin-bottom: 32px;
     }
@@ -170,7 +213,7 @@ function generateDashboardHTML(data: {
       margin-bottom: 8px;
     }
     .card .value {
-      font-size: 32px;
+      font-size: 28px;
       font-weight: 700;
       color: #fff;
     }
@@ -182,6 +225,7 @@ function generateDashboardHTML(data: {
       display: flex;
       gap: 8px;
       margin-top: 12px;
+      flex-wrap: wrap;
     }
     .tier-badge {
       font-size: 11px;
@@ -198,26 +242,35 @@ function generateDashboardHTML(data: {
       margin-bottom: 16px;
       color: #fff;
     }
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 900px) {
+      .charts-row { grid-template-columns: 1fr; }
+    }
     .chart-container {
       background: #18181b;
       border: 1px solid #27272a;
       border-radius: 12px;
       padding: 20px;
-      margin-bottom: 32px;
     }
     .bar-chart {
       display: flex;
       align-items: flex-end;
       gap: 8px;
-      height: 120px;
-      padding-top: 20px;
+      height: 140px;
     }
     .bar-day {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
     }
     .bar {
       width: 100%;
@@ -231,8 +284,53 @@ function generateDashboardHTML(data: {
       color: #71717a;
     }
     .bar-value {
-      font-size: 10px;
+      font-size: 11px;
       color: #a1a1aa;
+      font-weight: 500;
+    }
+    .horiz-bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .horiz-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .horiz-bar-label {
+      width: 60px;
+      font-size: 12px;
+      color: #a1a1aa;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .horiz-bar-track {
+      flex: 1;
+      height: 24px;
+      background: #27272a;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .horiz-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+    }
+    .horiz-bar-value {
+      font-size: 11px;
+      color: #fff;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .horiz-bar-count {
+      font-size: 11px;
+      color: #71717a;
+      margin-left: 8px;
     }
     table {
       width: 100%;
@@ -280,6 +378,14 @@ function generateDashboardHTML(data: {
     .tier-simple { color: #4ade80; }
     .tier-ai { color: #60a5fa; }
     .tier-heavy_ai { color: #f472b6; }
+    .cat-stacks { color: #5865f2; }
+    .cat-ai { color: #f472b6; }
+    .cat-text { color: #4ade80; }
+    .cat-data { color: #facc15; }
+    .cat-crypto { color: #f7931a; }
+    .cat-random { color: #60a5fa; }
+    .cat-math { color: #a78bfa; }
+    .cat-util { color: #2dd4bf; }
     .success-high { color: #4ade80; }
     .success-med { color: #facc15; }
     .success-low { color: #f87171; }
@@ -301,6 +407,29 @@ function generateDashboardHTML(data: {
     }
     .footer a { color: #f7931a; text-decoration: none; }
     .footer a:hover { text-decoration: underline; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .stat-item {
+      background: #27272a;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-item .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .stat-item .stat-label {
+      font-size: 10px;
+      color: #71717a;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
@@ -347,20 +476,97 @@ function generateDashboardHTML(data: {
       </div>
     </div>
 
-    <div class="chart-container">
-      <h2 class="section-title">Last 7 Days</h2>
-      <div class="bar-chart">
-        ${dailyStats.map((day) => {
-          const maxCalls = Math.max(...dailyStats.map((d) => d.calls), 1);
-          const height = (day.calls / maxCalls) * 100;
-          return `
-            <div class="bar-day">
-              <div class="bar-value">${day.calls}</div>
-              <div class="bar" style="height: ${Math.max(height, 4)}%"></div>
-              <div class="bar-label">${day.date.slice(5)}</div>
-            </div>
-          `;
-        }).join("")}
+    <div class="charts-row">
+      <div class="chart-container">
+        <h2 class="section-title">Last 7 Days</h2>
+        <div class="bar-chart">
+          ${dailyStats.map((day) => {
+            const heightPx = Math.max((day.calls / maxDailyCalls) * 100, 4);
+            return `
+              <div class="bar-day">
+                <div class="bar-value">${day.calls.toLocaleString()}</div>
+                <div class="bar" style="height: ${heightPx}px"></div>
+                <div class="bar-label">${day.date.slice(5)}</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h2 class="section-title">Calls by Category</h2>
+        <div class="horiz-bar-chart">
+          ${sortedCategories.map(([cat, stats]) => {
+            const widthPct = Math.max((stats.calls / maxCategoryCalls) * 100, 2);
+            const color = categoryColors[cat] || "#71717a";
+            return `
+              <div class="horiz-bar-row">
+                <div class="horiz-bar-label">${cat}</div>
+                <div class="horiz-bar-track">
+                  <div class="horiz-bar-fill" style="width: ${widthPct}%; background: ${color};">
+                    <span class="horiz-bar-value">${stats.calls.toLocaleString()}</span>
+                  </div>
+                </div>
+                <span class="horiz-bar-count">${stats.count} endpoints</span>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-container">
+        <h2 class="section-title">Earnings by Category (STX)</h2>
+        <div class="horiz-bar-chart">
+          ${sortedCategories
+            .sort((a, b) => b[1].stx - a[1].stx)
+            .map(([cat, stats]) => {
+              const maxStx = Math.max(...sortedCategories.map(([, s]) => s.stx), 0.0001);
+              const widthPct = Math.max((stats.stx / maxStx) * 100, 2);
+              const color = categoryColors[cat] || "#71717a";
+              return `
+                <div class="horiz-bar-row">
+                  <div class="horiz-bar-label">${cat}</div>
+                  <div class="horiz-bar-track">
+                    <div class="horiz-bar-fill" style="width: ${widthPct}%; background: ${color};">
+                      <span class="horiz-bar-value">${stats.stx.toFixed(4)} STX</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h2 class="section-title">Quick Stats</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">${activeEndpoints.length}</div>
+            <div class="stat-label">Active Endpoints</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${totals.endpoints - activeEndpoints.length}</div>
+            <div class="stat-label">Unused</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${sortedCategories.length}</div>
+            <div class="stat-label">Categories</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${dailyStats.length > 0 ? Math.round(dailyStats.reduce((s, d) => s + d.calls, 0) / dailyStats.length) : 0}</div>
+            <div class="stat-label">Avg Daily Calls</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${activeEndpoints.length > 0 ? Math.round(activeEndpoints.reduce((s, m) => s + m.avgLatencyMs, 0) / activeEndpoints.length) : 0}ms</div>
+            <div class="stat-label">Avg Latency</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${(totals.stx / Math.max(totals.calls, 1) * 1000).toFixed(2)}</div>
+            <div class="stat-label">mSTX/Call</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -371,18 +577,19 @@ function generateDashboardHTML(data: {
           <thead>
             <tr>
               <th data-sort="path">Endpoint <span class="sort-icon">↕</span></th>
+              <th data-sort="category">Category <span class="sort-icon">↕</span></th>
               <th data-sort="tier">Tier <span class="sort-icon">↕</span></th>
               <th data-sort="calls" class="sorted">Calls <span class="sort-icon">↓</span></th>
-              <th data-sort="success">Success Rate <span class="sort-icon">↕</span></th>
-              <th data-sort="latency">Avg Latency <span class="sort-icon">↕</span></th>
+              <th data-sort="success">Success <span class="sort-icon">↕</span></th>
+              <th data-sort="latency">Latency <span class="sort-icon">↕</span></th>
               <th data-sort="stx">STX <span class="sort-icon">↕</span></th>
               <th data-sort="sbtc">sBTC <span class="sort-icon">↕</span></th>
-              <th data-sort="usdcx">USDCx <span class="sort-icon">↕</span></th>
               <th data-sort="lastcall">Last Call <span class="sort-icon">↕</span></th>
             </tr>
           </thead>
           <tbody>
             ${sortedMetrics.map((m) => {
+              const category = getCategoryFromPath(m.path);
               const successClass =
                 m.successRate === "N/A"
                   ? ""
@@ -398,15 +605,15 @@ function generateDashboardHTML(data: {
                   : new Date(m.lastCall).toLocaleString();
               const successNum = m.successRate === "N/A" ? -1 : parseFloat(m.successRate);
               return `
-                <tr data-path="${m.path}" data-tier="${m.tier}" data-calls="${m.totalCalls}" data-success="${successNum}" data-latency="${m.avgLatencyMs}" data-stx="${m.earnings.STX}" data-sbtc="${m.earnings.sBTC}" data-usdcx="${m.earnings.USDCx}" data-lastcall="${lastCallTs}">
+                <tr data-path="${m.path}" data-category="${category}" data-tier="${m.tier}" data-calls="${m.totalCalls}" data-success="${successNum}" data-latency="${m.avgLatencyMs}" data-stx="${m.earnings.STX}" data-sbtc="${m.earnings.sBTC}" data-lastcall="${lastCallTs}">
                   <td><code>${m.path}</code></td>
+                  <td class="cat-${category.toLowerCase()}">${category}</td>
                   <td class="tier-${m.tier}">${m.tier}</td>
                   <td>${m.totalCalls.toLocaleString()}</td>
                   <td class="${successClass}">${m.successRate}%</td>
                   <td>${m.avgLatencyMs}ms</td>
                   <td>${m.earnings.STX}</td>
                   <td>${m.earnings.sBTC}</td>
-                  <td>${m.earnings.USDCx}</td>
                   <td>${lastCallDisplay}</td>
                 </tr>
               `;
@@ -424,13 +631,14 @@ function generateDashboardHTML(data: {
   </div>
   <script>
     (function() {
+      const activeEndpointsCount = ${activeEndpoints.length};
       let currentSort = { key: 'calls', dir: 'desc' };
       const tbody = document.querySelector('table tbody');
       const headers = document.querySelectorAll('th[data-sort]');
 
       function sortTable(key) {
         const rows = Array.from(tbody.querySelectorAll('tr'));
-        const isNumeric = ['calls', 'success', 'latency', 'stx', 'sbtc', 'usdcx', 'lastcall'].includes(key);
+        const isNumeric = ['calls', 'success', 'latency', 'stx', 'sbtc', 'lastcall'].includes(key);
 
         // Toggle direction if same column
         if (currentSort.key === key) {
@@ -478,4 +686,11 @@ function generateDashboardHTML(data: {
   </script>
 </body>
 </html>`;
+}
+
+function getCategoryFromPath(path: string): string {
+  const match = path.match(/^\/api\/([^/]+)/);
+  if (!match) return "Other";
+  const cat = match[1];
+  return cat.charAt(0).toUpperCase() + cat.slice(1);
 }
