@@ -9,11 +9,15 @@
  *   bun run tests/_run_all_tests.ts --token=sBTC       # All endpoints, specific token
  *   bun run tests/_run_all_tests.ts --category=stacks  # Single category
  *   bun run tests/_run_all_tests.ts --filter=sha256    # Filter by name
+ *   bun run tests/_run_all_tests.ts --delay=1000       # 1s delay between tests
+ *   bun run tests/_run_all_tests.ts --retries=3        # 3 retries for rate limits
  *
  * Environment:
- *   X402_CLIENT_PK  - Testnet mnemonic for payments (required)
- *   X402_NETWORK    - Network (default: testnet)
- *   VERBOSE=1       - Enable verbose logging
+ *   X402_CLIENT_PK      - Testnet mnemonic for payments (required)
+ *   X402_NETWORK        - Network (default: testnet)
+ *   VERBOSE=1           - Enable verbose logging
+ *   TEST_DELAY_MS=500   - Delay between tests in ms (default: 500)
+ *   TEST_MAX_RETRIES=2  - Max retries for rate-limited requests (default: 2)
  */
 
 import type { TokenType, NetworkType } from "x402-stacks";
@@ -93,6 +97,8 @@ interface RunConfig {
   filter: string | null;
   maxConsecutiveFailures: number;
   verbose: boolean;
+  delayMs: number;        // Delay between tests (ms)
+  maxRetries: number;     // Max retries for rate-limited requests
 }
 
 function parseArgs(): RunConfig {
@@ -103,6 +109,8 @@ function parseArgs(): RunConfig {
     filter: null,
     maxConsecutiveFailures: 5,
     verbose: process.env.VERBOSE === "1",
+    delayMs: parseInt(process.env.TEST_DELAY_MS || "500", 10),  // Default 500ms between tests
+    maxRetries: parseInt(process.env.TEST_MAX_RETRIES || "2", 10),  // Default 2 retries for rate limits
   };
 
   for (const arg of args) {
@@ -119,12 +127,31 @@ function parseArgs(): RunConfig {
       config.filter = arg.split("=")[1].toLowerCase();
     } else if (arg.startsWith("--max-failures=")) {
       config.maxConsecutiveFailures = parseInt(arg.split("=")[1], 10);
+    } else if (arg.startsWith("--delay=")) {
+      config.delayMs = parseInt(arg.split("=")[1], 10);
+    } else if (arg.startsWith("--retries=")) {
+      config.maxRetries = parseInt(arg.split("=")[1], 10);
     } else if (arg === "--verbose" || arg === "-v") {
       config.verbose = true;
     }
   }
 
   return config;
+}
+
+// =============================================================================
+// Helpers
+// =============================================================================
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Check if error is retryable (rate limit or transient)
+function isRetryableError(status: number, errorCode?: string): boolean {
+  // HTTP status codes that indicate rate limiting or transient errors
+  if ([429, 502, 503, 504].includes(status)) return true;
+  // Our custom error codes that are retryable
+  if (errorCode && ["NETWORK_ERROR", "FACILITATOR_UNAVAILABLE", "FACILITATOR_ERROR"].includes(errorCode)) return true;
+  return false;
 }
 
 // =============================================================================
@@ -145,7 +172,8 @@ async function testEndpointWithToken(
   config: TestConfig,
   tokenType: TokenType,
   x402Client: X402PaymentClient,
-  verbose: boolean
+  verbose: boolean,
+  maxRetries: number = 2
 ): Promise<{ passed: boolean; error?: string }> {
   const logger = createTestLogger(config.name, verbose);
   const endpoint = config.endpoint.includes("?")
@@ -181,25 +209,63 @@ async function testEndpointWithToken(
     logger.debug("2. Signing payment...");
     const signResult = await x402Client.signPayment(paymentReq);
 
-    // Step 3: Retry with X-PAYMENT header
-    logger.debug("3. Retry with payment...");
+    // Step 3: Retry with X-PAYMENT header (with retry logic for rate limits)
+    let retryRes: Response | null = null;
+    let lastError = "";
 
-    const retryRes = await fetch(fullUrl, {
-      method: config.method,
-      headers: {
-        ...(config.body ? { "Content-Type": "application/json" } : {}),
-        ...config.headers,
-        "X-PAYMENT": signResult.signedTransaction,
-        "X-PAYMENT-TOKEN-TYPE": tokenType,
-      },
-      body: config.body ? JSON.stringify(config.body) : undefined,
-    });
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      if (attempt > 0) {
+        logger.debug(`3. Retry attempt ${attempt}/${maxRetries}...`);
+      } else {
+        logger.debug("3. Retry with payment...");
+      }
 
-    if (retryRes.status !== 200) {
+      retryRes = await fetch(fullUrl, {
+        method: config.method,
+        headers: {
+          ...(config.body ? { "Content-Type": "application/json" } : {}),
+          ...config.headers,
+          "X-PAYMENT": signResult.signedTransaction,
+          "X-PAYMENT-TOKEN-TYPE": tokenType,
+        },
+        body: config.body ? JSON.stringify(config.body) : undefined,
+      });
+
+      // Success - break out of retry loop
+      if (retryRes.status === 200) {
+        break;
+      }
+
+      // Check if we should retry
       const errText = await retryRes.text();
-      const retryAfter = retryRes.headers.get("Retry-After");
-      const formattedError = formatErrorResponse(retryRes.status, errText, retryAfter);
-      return { passed: false, error: `(${retryRes.status}) ${formattedError}` };
+      const retryAfterHeader = retryRes.headers.get("Retry-After");
+
+      // Parse error to check if retryable
+      let errorCode: string | undefined;
+      try {
+        const parsed = JSON.parse(errText);
+        errorCode = parsed.code;
+      } catch { /* not JSON */ }
+
+      if (isRetryableError(retryRes.status, errorCode) && attempt < maxRetries) {
+        // Calculate delay: use Retry-After header or exponential backoff
+        const retryAfterSecs = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 0;
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000); // Max 10s
+        const delayMs = retryAfterSecs > 0 ? retryAfterSecs * 1000 : backoffMs;
+
+        logger.debug(`Rate limited (${retryRes.status}), waiting ${delayMs}ms before retry...`);
+        await sleep(delayMs);
+        continue;
+      }
+
+      // Not retryable or out of retries
+      const formattedError = formatErrorResponse(retryRes.status, errText, retryAfterHeader);
+      lastError = `(${retryRes.status}) ${formattedError}`;
+      break;
+    }
+
+    if (!retryRes || retryRes.status !== 200) {
+      return { passed: false, error: lastError || "Request failed" };
     }
 
     // Step 4: Validate response
@@ -297,6 +363,8 @@ async function runTests(runConfig: RunConfig): Promise<RunStats> {
   console.log(`  Endpoints:  ${endpoints.length}`);
   console.log(`  Tokens:     ${runConfig.tokens.join(", ")}`);
   console.log(`  Total runs: ${endpoints.length * runConfig.tokens.length}`);
+  console.log(`  Delay:      ${runConfig.delayMs}ms between tests`);
+  console.log(`  Retries:    ${runConfig.maxRetries} for rate-limited requests`);
   console.log(`${COLORS.bright}${"═".repeat(70)}${COLORS.reset}\n`);
 
   // Track consecutive failures
@@ -330,7 +398,8 @@ async function runTests(runConfig: RunConfig): Promise<RunStats> {
         endpoint,
         token,
         x402Client,
-        runConfig.verbose
+        runConfig.verbose,
+        runConfig.maxRetries
       );
 
       if (result.passed) {
@@ -352,6 +421,11 @@ async function runTests(runConfig: RunConfig): Promise<RunStats> {
 
     // Print token results
     console.log(`    ${tokenResults.join("  ")}`);
+
+    // Delay between tests to avoid rate limiting
+    if (runConfig.delayMs > 0 && i < endpoints.length - 1) {
+      await sleep(runConfig.delayMs);
+    }
 
     // Update consecutive failure count
     if (allPassed) {
