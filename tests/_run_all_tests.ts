@@ -129,7 +129,7 @@ function parseArgs(): RunConfig {
     maxConsecutiveFailures: 5,
     verbose: process.env.VERBOSE === "1",
     delayMs: parseInt(process.env.TEST_DELAY_MS || "500", 10),  // Default 500ms between tests
-    maxRetries: parseInt(process.env.TEST_MAX_RETRIES || "2", 10),  // Default 2 retries for rate limits
+    maxRetries: parseInt(process.env.TEST_MAX_RETRIES || "3", 10),  // Default 3 retries for transient errors
     order: "default",
   };
 
@@ -180,11 +180,35 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 // Check if error is retryable (rate limit or transient)
-function isRetryableError(status: number, errorCode?: string): boolean {
+function isRetryableError(status: number, errorCode?: string, errorMessage?: string): boolean {
   // HTTP status codes that indicate rate limiting or transient errors
-  if ([429, 502, 503, 504].includes(status)) return true;
+  if ([429, 500, 502, 503, 504].includes(status)) return true;
+
   // Our custom error codes that are retryable
-  if (errorCode && ["NETWORK_ERROR", "FACILITATOR_UNAVAILABLE", "FACILITATOR_ERROR"].includes(errorCode)) return true;
+  const retryableCodes = [
+    "NETWORK_ERROR",
+    "FACILITATOR_UNAVAILABLE",
+    "FACILITATOR_ERROR",
+    "UNKNOWN_ERROR",  // Often transient payment processing issues
+  ];
+  if (errorCode && retryableCodes.includes(errorCode)) return true;
+
+  // Check error message for rate limit / transient patterns
+  if (errorMessage) {
+    const lowerMsg = errorMessage.toLowerCase();
+    const retryablePatterns = [
+      "429",
+      "rate limit",
+      "too many requests",
+      "settle",
+      "failed",
+      "timeout",
+      "temporarily",
+      "try again",
+    ];
+    if (retryablePatterns.some(pattern => lowerMsg.includes(pattern))) return true;
+  }
+
   return false;
 }
 
@@ -276,12 +300,14 @@ async function testEndpointWithToken(
 
       // Parse error to check if retryable
       let errorCode: string | undefined;
+      let errorMessage: string | undefined;
       try {
         const parsed = JSON.parse(errText);
         errorCode = parsed.code;
+        errorMessage = parsed.error || parsed.details?.exceptionMessage || parsed.details?.settleError;
       } catch { /* not JSON */ }
 
-      if (isRetryableError(retryRes.status, errorCode) && attempt < maxRetries) {
+      if (isRetryableError(retryRes.status, errorCode, errorMessage || errText) && attempt < maxRetries) {
         // Calculate delay: use Retry-After header or exponential backoff
         const retryAfterSecs = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 0;
         const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000); // Max 10s

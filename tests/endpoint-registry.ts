@@ -628,8 +628,8 @@ const cryptoEndpoints: TestConfig[] = [
     endpoint: "/api/crypto/random-bytes?length=16",
     method: "GET",
     validateResponse: (data, tokenType) => {
-      const d = data as { hex: string; tokenType: TokenType };
-      return d.hex.length === 32 && d.tokenType === tokenType; // 16 bytes = 32 hex chars
+      const d = data as { bytes: string; tokenType: TokenType };
+      return d.bytes.length === 32 && d.tokenType === tokenType; // 16 bytes = 32 hex chars
     },
   },
 ];
