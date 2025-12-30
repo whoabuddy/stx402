@@ -151,16 +151,17 @@ function generateDashboardHTML(data: {
     .sort((a, b) => b[1].calls - a[1].calls);
   const maxCategoryCalls = Math.max(...sortedCategories.map(([, s]) => s.calls), 1);
 
-  // Category colors
+  // Simplified category colors (A11Y compliant, 4 color groups)
+  // Orange: blockchain, Purple: AI, Cyan: utilities, Blue: structured data
   const categoryColors: Record<string, string> = {
-    Stacks: "#5865f2",
-    Ai: "#f472b6",
-    Text: "#4ade80",
-    Data: "#facc15",
-    Crypto: "#f7931a",
-    Random: "#60a5fa",
-    Math: "#a78bfa",
-    Util: "#2dd4bf",
+    Stacks: "#f7931a",  // Orange - blockchain
+    Crypto: "#fb923c",  // Light orange - blockchain
+    Ai: "#a855f7",      // Purple - AI premium
+    Text: "#06b6d4",    // Cyan - utilities
+    Util: "#22d3ee",    // Light cyan - utilities
+    Random: "#0ea5e9",  // Sky blue - utilities
+    Data: "#3b82f6",    // Blue - structured
+    Math: "#6366f1",    // Indigo - structured
   };
 
   return `<!DOCTYPE html>
@@ -219,9 +220,9 @@ function generateDashboardHTML(data: {
       font-weight: 700;
       color: #fff;
     }
-    .card .value.stx { color: #5865f2; }
+    .card .value.stx { color: #06b6d4; }
     .card .value.sbtc { color: #f7931a; }
-    .card .value.usdcx { color: #2563eb; }
+    .card .value.usdcx { color: #3b82f6; }
     .card .value.success { color: #22c55e; }
     .tier-badges {
       display: flex;
@@ -235,9 +236,9 @@ function generateDashboardHTML(data: {
       border-radius: 4px;
       font-weight: 500;
     }
-    .tier-badge.simple { background: #166534; color: #86efac; }
-    .tier-badge.ai { background: #1e40af; color: #93c5fd; }
-    .tier-badge.heavy_ai { background: #831843; color: #f9a8d4; }
+    .tier-badge.simple { background: #164e63; color: #22d3ee; }
+    .tier-badge.ai { background: #581c87; color: #c4b5fd; }
+    .tier-badge.heavy_ai { background: #7c2d12; color: #fdba74; }
     .section-title {
       font-size: 18px;
       font-weight: 600;
@@ -276,7 +277,7 @@ function generateDashboardHTML(data: {
     }
     .bar {
       width: 100%;
-      background: linear-gradient(180deg, #5865f2 0%, #3b4fd1 100%);
+      background: linear-gradient(180deg, #f7931a 0%, #c2410c 100%);
       border-radius: 4px 4px 0 0;
       min-height: 4px;
       transition: height 0.3s;
@@ -362,7 +363,7 @@ function generateDashboardHTML(data: {
       opacity: 0.3;
       transition: opacity 0.15s;
     }
-    th.sorted .sort-icon { opacity: 1; }
+    th.sorted .sort-icon { opacity: 1; color: #f7931a; }
     th.sorted { color: #f7931a; }
     td {
       padding: 12px 16px;
@@ -377,19 +378,19 @@ function generateDashboardHTML(data: {
       padding: 4px 8px;
       border-radius: 4px;
     }
-    .tier-simple { color: #4ade80; }
-    .tier-ai { color: #60a5fa; }
-    .tier-heavy_ai { color: #f472b6; }
-    .cat-stacks { color: #5865f2; }
-    .cat-ai { color: #f472b6; }
-    .cat-text { color: #4ade80; }
-    .cat-data { color: #facc15; }
-    .cat-crypto { color: #f7931a; }
-    .cat-random { color: #60a5fa; }
-    .cat-math { color: #a78bfa; }
-    .cat-util { color: #2dd4bf; }
+    .tier-simple { color: #22d3ee; }
+    .tier-ai { color: #c4b5fd; }
+    .tier-heavy_ai { color: #fdba74; }
+    .cat-stacks { color: #f7931a; }
+    .cat-crypto { color: #fb923c; }
+    .cat-ai { color: #a855f7; }
+    .cat-text { color: #06b6d4; }
+    .cat-util { color: #22d3ee; }
+    .cat-random { color: #0ea5e9; }
+    .cat-data { color: #3b82f6; }
+    .cat-math { color: #6366f1; }
     .success-high { color: #4ade80; }
-    .success-med { color: #facc15; }
+    .success-med { color: #fbbf24; }
     .success-low { color: #f87171; }
     .table-container {
       background: #18181b;
