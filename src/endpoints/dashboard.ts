@@ -687,10 +687,3 @@ function generateDashboardHTML(data: {
 </body>
 </html>`;
 }
-
-function getCategoryFromPath(path: string): string {
-  const match = path.match(/^\/api\/([^/]+)/);
-  if (!match) return "Other";
-  const cat = match[1];
-  return cat.charAt(0).toUpperCase() + cat.slice(1);
-}
