@@ -116,6 +116,16 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/math/gcd-lcm": "simple",
   "/api/math/factorial": "simple",
 
+  // === REGISTRY ENDPOINTS (7 paid + 1 free) ===
+  "/api/registry/probe": "ai",
+  "/api/registry/register": "ai",
+  // "/api/registry/list": free - not in tier list
+  "/api/registry/details": "ai",
+  "/api/registry/update": "ai",
+  "/api/registry/delete": "ai",
+  "/api/admin/registry/verify": "ai",
+  "/api/admin/registry/pending": "ai",
+
   // === UTILITY ENDPOINTS (22) ===
   "/api/util/timestamp": "simple",
   "/api/util/dns-lookup": "simple",

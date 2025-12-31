@@ -2,6 +2,7 @@ import { OpenAPIRoute } from "chanfana";
 import type { AppContext } from "../types";
 import { ENDPOINT_TIERS } from "../utils/pricing";
 import { getAllMetrics, getDailyStats, type EndpointMetrics } from "../middleware/metrics";
+import { listAllEntries, type RegistryEntryMinimal } from "../utils/registry";
 
 // Extract category from path (e.g., /api/stacks/... → Stacks)
 function getCategoryFromPath(path: string): string {
@@ -34,13 +35,18 @@ export class Dashboard extends OpenAPIRoute {
 
     let metrics: EndpointMetrics[] = [];
     let dailyStats: { date: string; calls: number }[] = [];
+    let registryEntries: RegistryEntryMinimal[] = [];
 
     // Only fetch metrics if METRICS KV is configured
     if (c.env.METRICS) {
-      [metrics, dailyStats] = await Promise.all([
+      const [metricsResult, dailyResult, registryResult] = await Promise.all([
         getAllMetrics(c.env.METRICS, paths),
         getDailyStats(c.env.METRICS, 7),
+        listAllEntries(c.env.METRICS, { limit: 100 }),
       ]);
+      metrics = metricsResult;
+      dailyStats = dailyResult;
+      registryEntries = registryResult.entries.filter(e => e.status !== "rejected");
     } else {
       // Generate placeholder data when KV is not configured
       metrics = paths.map((path) => ({
@@ -116,6 +122,7 @@ export class Dashboard extends OpenAPIRoute {
       categoryStats,
       activeEndpoints,
       kvConfigured: !!c.env.METRICS,
+      registryEntries,
     });
 
     return c.html(html);
@@ -137,8 +144,9 @@ function generateDashboardHTML(data: {
   categoryStats: Record<string, { count: number; calls: number; stx: number }>;
   activeEndpoints: EndpointMetrics[];
   kvConfigured: boolean;
+  registryEntries: RegistryEntryMinimal[];
 }): string {
-  const { metrics, dailyStats, totals, tierCounts, categoryStats, activeEndpoints, kvConfigured } = data;
+  const { metrics, dailyStats, totals, tierCounts, categoryStats, activeEndpoints, kvConfigured, registryEntries } = data;
 
   // Sort by total calls descending
   const sortedMetrics = [...metrics].sort((a, b) => b.totalCalls - a.totalCalls);
@@ -593,6 +601,46 @@ function generateDashboardHTML(data: {
         </table>
       </div>
     </div>
+
+    ${registryEntries.length > 0 ? `
+    <h2 class="section-title" style="margin-top: 32px;">X402 Endpoint Registry</h2>
+    <div class="table-container">
+      <div class="table-scroll" style="max-height: 400px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>URL</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Owner</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${registryEntries.map((entry) => {
+              const statusClass = entry.status === "verified" ? "success-high" : entry.status === "unverified" ? "success-med" : "success-low";
+              const ownerShort = entry.owner.slice(0, 8) + "..." + entry.owner.slice(-4);
+              return `
+                <tr>
+                  <td><strong>${entry.name}</strong></td>
+                  <td><code style="font-size: 11px;">${entry.url.length > 50 ? entry.url.slice(0, 50) + "..." : entry.url}</code></td>
+                  <td>${entry.category || "-"}</td>
+                  <td class="${statusClass}">${entry.status}</td>
+                  <td><code style="font-size: 11px;">${ownerShort}</code></td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    ` : `
+    <div class="chart-container" style="margin-top: 32px; text-align: center; padding: 40px;">
+      <h2 class="section-title">X402 Endpoint Registry</h2>
+      <p style="color: #71717a; margin-bottom: 16px;">No endpoints registered yet.</p>
+      <p style="color: #a1a1aa; font-size: 13px;">Register your x402 endpoint via <code>/api/registry/register</code></p>
+    </div>
+    `}
 
     <div class="footer">
       <p>Powered by <a href="https://x402.org" target="_blank">X402</a> |

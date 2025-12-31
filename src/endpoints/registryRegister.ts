@@ -1,0 +1,255 @@
+import { BaseEndpoint } from "./BaseEndpoint";
+import type { AppContext } from "../types";
+import { probeX402Endpoint } from "../utils/probe";
+import {
+  generateUrlHash,
+  saveRegistryEntry,
+  getRegistryEntryByUrl,
+  type RegistryEntry,
+} from "../utils/registry";
+import { Address } from "@stacks/transactions";
+
+export class RegistryRegister extends BaseEndpoint {
+  schema = {
+    tags: ["Registry"],
+    summary: "(paid) Register an x402 endpoint in the registry",
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object" as const,
+            required: ["url", "name", "description"],
+            properties: {
+              url: {
+                type: "string" as const,
+                description: "The x402 endpoint URL to register",
+              },
+              name: {
+                type: "string" as const,
+                description: "Display name for the endpoint",
+              },
+              description: {
+                type: "string" as const,
+                description: "Description of what the endpoint does",
+              },
+              owner: {
+                type: "string" as const,
+                description: "Owner STX address (defaults to payer address if not specified)",
+              },
+              category: {
+                type: "string" as const,
+                description: "Category for filtering (e.g., 'ai', 'data', 'utility')",
+              },
+              tags: {
+                type: "array" as const,
+                items: { type: "string" as const },
+                description: "Tags for discovery",
+              },
+            },
+          },
+        },
+      },
+    },
+    parameters: [
+      {
+        name: "tokenType",
+        in: "query" as const,
+        required: false,
+        schema: {
+          type: "string" as const,
+          enum: ["STX", "sBTC", "USDCx"] as const,
+          default: "STX",
+        },
+      },
+    ],
+    responses: {
+      "200": {
+        description: "Registration successful",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object" as const,
+              properties: {
+                success: { type: "boolean" as const },
+                entry: {
+                  type: "object" as const,
+                  properties: {
+                    id: { type: "string" as const },
+                    url: { type: "string" as const },
+                    name: { type: "string" as const },
+                    description: { type: "string" as const },
+                    owner: { type: "string" as const },
+                    status: { type: "string" as const },
+                    category: { type: "string" as const },
+                    registeredAt: { type: "string" as const },
+                  },
+                },
+                probeResult: { type: "object" as const },
+                tokenType: { type: "string" as const },
+              },
+            },
+          },
+        },
+      },
+      "400": {
+        description: "Invalid request",
+      },
+      "402": {
+        description: "Payment required",
+      },
+      "409": {
+        description: "Endpoint already registered",
+      },
+    },
+  };
+
+  async handle(c: AppContext) {
+    const tokenType = this.getTokenType(c);
+
+    // Check if METRICS (KV) is configured - we use same KV for registry
+    if (!c.env.METRICS) {
+      return this.errorResponse(c, "Registry storage not configured", 500);
+    }
+
+    let body: {
+      url?: string;
+      name?: string;
+      description?: string;
+      owner?: string;
+      category?: string;
+      tags?: string[];
+    };
+
+    try {
+      body = await c.req.json();
+    } catch {
+      return this.errorResponse(c, "Invalid JSON body", 400);
+    }
+
+    // Validate required fields
+    if (!body.url) {
+      return this.errorResponse(c, "url is required", 400);
+    }
+    if (!body.name || body.name.trim().length === 0) {
+      return this.errorResponse(c, "name is required", 400);
+    }
+    if (!body.description || body.description.trim().length === 0) {
+      return this.errorResponse(c, "description is required", 400);
+    }
+
+    // Validate URL format
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(body.url);
+    } catch {
+      return this.errorResponse(c, "Invalid URL format", 400);
+    }
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return this.errorResponse(c, "URL must use http or https", 400);
+    }
+
+    // Validate owner address if provided
+    let ownerAddress: string;
+    if (body.owner) {
+      try {
+        const addressObj = Address.parse(body.owner);
+        ownerAddress = Address.stringify(addressObj);
+      } catch {
+        return this.errorResponse(c, "Invalid owner address format", 400);
+      }
+    } else {
+      // For MVP, require owner address to be specified
+      // TODO: Extract from payment transaction when possible
+      return this.errorResponse(c, "owner address is required", 400);
+    }
+
+    // Validate name length
+    if (body.name.length > 100) {
+      return this.errorResponse(c, "name must be 100 characters or less", 400);
+    }
+
+    // Validate description length
+    if (body.description.length > 500) {
+      return this.errorResponse(c, "description must be 500 characters or less", 400);
+    }
+
+    // Check if URL is already registered
+    const existing = await getRegistryEntryByUrl(c.env.METRICS, body.url);
+    if (existing) {
+      return c.json(
+        {
+          error: "Endpoint already registered",
+          existingEntry: {
+            id: existing.id,
+            owner: existing.owner,
+            status: existing.status,
+          },
+          tokenType,
+        },
+        409
+      );
+    }
+
+    // Probe the endpoint to validate it's a real x402 endpoint
+    const probeResult = await probeX402Endpoint(body.url, { timeout: 15000 });
+
+    if (!probeResult.success) {
+      return this.errorResponse(
+        c,
+        `Failed to probe endpoint: ${probeResult.error}`,
+        400
+      );
+    }
+
+    // Generate URL hash for ID
+    const urlHash = generateUrlHash(body.url);
+
+    // Get registrant address from payment (the address that paid)
+    // For now, use the owner address as registrant too
+    // TODO: Extract actual payer from X-PAYMENT header
+    const registeredBy = ownerAddress;
+
+    // Create the registry entry
+    const now = new Date().toISOString();
+    const entry: RegistryEntry = {
+      id: urlHash,
+      url: body.url,
+      name: body.name.trim(),
+      description: body.description.trim(),
+      owner: ownerAddress,
+      status: "unverified", // Auto-approve with unverified flag
+      category: body.category?.toLowerCase().trim(),
+      tags: body.tags?.map((t) => t.toLowerCase().trim()),
+      probeData: probeResult.data,
+      registeredAt: now,
+      updatedAt: now,
+      registeredBy,
+    };
+
+    // Save to KV
+    await saveRegistryEntry(c.env.METRICS, entry);
+
+    return c.json({
+      success: true,
+      entry: {
+        id: entry.id,
+        url: entry.url,
+        name: entry.name,
+        description: entry.description,
+        owner: entry.owner,
+        status: entry.status,
+        category: entry.category,
+        registeredAt: entry.registeredAt,
+      },
+      probeResult: {
+        isX402Endpoint: probeResult.isX402Endpoint,
+        paymentAddress: probeResult.data?.paymentAddress,
+        acceptedTokens: probeResult.data?.acceptedTokens,
+        responseTimeMs: probeResult.data?.responseTimeMs,
+      },
+      tokenType,
+    });
+  }
+}
