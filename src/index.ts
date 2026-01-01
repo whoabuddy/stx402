@@ -77,7 +77,6 @@ import { TextHtmlDecode } from "./endpoints/textHtmlDecode";
 import { TextHexEncode } from "./endpoints/textHexEncode";
 import { TextHexDecode } from "./endpoints/textHexDecode";
 import { TextCaseConvert } from "./endpoints/textCaseConvert";
-import { TextSlug } from "./endpoints/textSlug";
 import { TextWordCount } from "./endpoints/textWordCount";
 import { TextReverse } from "./endpoints/textReverse";
 import { TextTruncate } from "./endpoints/textTruncate";
@@ -266,7 +265,6 @@ openapi.post("/api/text/html-decode", paymentMiddleware, trackMetrics, TextHtmlD
 openapi.post("/api/text/hex-encode", paymentMiddleware, trackMetrics, TextHexEncode as any);
 openapi.post("/api/text/hex-decode", paymentMiddleware, trackMetrics, TextHexDecode as any);
 openapi.post("/api/text/case-convert", paymentMiddleware, trackMetrics, TextCaseConvert as any);
-openapi.post("/api/text/slug", paymentMiddleware, trackMetrics, TextSlug as any);
 openapi.post("/api/text/word-count", paymentMiddleware, trackMetrics, TextWordCount as any);
 openapi.post("/api/text/reverse", paymentMiddleware, trackMetrics, TextReverse as any);
 openapi.post("/api/text/truncate", paymentMiddleware, trackMetrics, TextTruncate as any);
