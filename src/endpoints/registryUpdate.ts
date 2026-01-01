@@ -14,7 +14,7 @@ import {
   createActionMessage,
   isTimestampValid,
 } from "../utils/signatures";
-import { extractSenderFromSignedTx, type ExtendedSettleResult } from "../utils/payment";
+import { payerMatchesAddress, type ExtendedSettleResult } from "../utils/payment";
 
 export class RegistryUpdate extends BaseEndpoint {
   schema = {
@@ -229,21 +229,9 @@ export class RegistryUpdate extends BaseEndpoint {
       const settleResult = c.get("settleResult") as ExtendedSettleResult | undefined;
       const signedTx = c.get("signedTx") as string | undefined;
 
-      let payerAddress: string | null = null;
-
-      // Try from settle result first (has facilitator data)
-      if (settleResult?.senderAddress) {
-        payerAddress = settleResult.senderAddress;
-      } else if (settleResult?.sender_address) {
-        payerAddress = settleResult.sender_address;
-      }
-
-      // Fallback to extracting from the signed tx
-      if (!payerAddress && signedTx) {
-        payerAddress = extractSenderFromSignedTx(signedTx);
-      }
-
-      if (payerAddress && payerAddress === ownerAddress) {
+      // Check if payer matches owner using hash160 comparison
+      // This handles mainnet/testnet address format differences
+      if (payerMatchesAddress(settleResult || null, signedTx || null, ownerAddress)) {
         authMethod = "payment";
       }
     }

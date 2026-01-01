@@ -2,11 +2,6 @@ import {
   deserializeTransaction,
   Address,
 } from "@stacks/transactions";
-import { TransactionVersion } from "@stacks/network";
-
-// Address version constants
-const MAINNET_SINGLE_SIG = 22;
-const TESTNET_SINGLE_SIG = 26;
 
 // Extended settle result that includes sender address
 export interface ExtendedSettleResult {
@@ -23,8 +18,9 @@ export interface ExtendedSettleResult {
   amount?: string | number;
 }
 
-// Extract sender address from a signed transaction hex
-export function extractSenderFromSignedTx(signedTxHex: string): string | null {
+// Extract sender hash160 from a signed transaction hex
+// Returns the hash160 directly, avoiding network version issues
+export function extractSenderHash160FromSignedTx(signedTxHex: string): string | null {
   try {
     // Remove 0x prefix if present
     const hex = signedTxHex.startsWith("0x") ? signedTxHex.slice(2) : signedTxHex;
@@ -32,38 +28,56 @@ export function extractSenderFromSignedTx(signedTxHex: string): string | null {
     // Deserialize the transaction
     const tx = deserializeTransaction(hex);
 
-    // Get the sender address from the auth field
-    // The sender is in the origin auth's address
+    // Get the signer hash160 from the spending condition
     if (tx.auth && tx.auth.spendingCondition) {
       const spendingCondition = tx.auth.spendingCondition as {
         signer?: string;
         hashMode?: number;
       };
 
-      // Get signer hash160 from the spending condition
       if (spendingCondition.signer) {
-        const hash160 = spendingCondition.signer;
-
-        // Get the address version from the transaction version
-        // TransactionVersion.Mainnet = 0, TransactionVersion.Testnet = 128
-        const isMainnet = tx.version === TransactionVersion.Mainnet;
-        const addressVersion = isMainnet ? MAINNET_SINGLE_SIG : TESTNET_SINGLE_SIG;
-
-        // Create address object and stringify
-        const addressData = {
-          version: addressVersion,
-          hash160,
-        };
-
-        return Address.stringify(addressData as Address);
+        return spendingCondition.signer;
       }
     }
 
     return null;
   } catch (error) {
-    console.error("Failed to extract sender from signed tx:", error);
+    console.error("Failed to extract sender hash160 from signed tx:", error);
     return null;
   }
+}
+
+// Extract hash160 from a Stacks address string
+export function extractHash160FromAddress(address: string): string | null {
+  try {
+    const parsed = Address.parse(address);
+    return parsed.hash160;
+  } catch {
+    return null;
+  }
+}
+
+// Compare two addresses by their hash160 (ignores network version)
+// This handles comparing SP... with ST... addresses from the same key
+export function addressesMatchByHash160(addr1: string | null, addr2: string | null): boolean {
+  if (!addr1 || !addr2) return false;
+
+  const hash1 = extractHash160FromAddress(addr1);
+  const hash2 = extractHash160FromAddress(addr2);
+
+  if (!hash1 || !hash2) return false;
+
+  return hash1.toLowerCase() === hash2.toLowerCase();
+}
+
+// Check if a signed transaction's sender matches an address (by hash160)
+export function txSenderMatchesAddress(signedTxHex: string, address: string): boolean {
+  const txHash160 = extractSenderHash160FromSignedTx(signedTxHex);
+  const addrHash160 = extractHash160FromAddress(address);
+
+  if (!txHash160 || !addrHash160) return false;
+
+  return txHash160.toLowerCase() === addrHash160.toLowerCase();
 }
 
 // Parse the X-PAYMENT-RESPONSE header to get payment details
@@ -87,39 +101,28 @@ export function parsePaymentResponse(headerValue: string | null): ExtendedSettle
   }
 }
 
-// Get payer address from either the settle result or the signed transaction
-export function getPayerAddress(
+// Check if the payer (from settle result or signed tx) matches an expected address
+export function payerMatchesAddress(
   settleResult: ExtendedSettleResult | null,
-  signedTxHex?: string
-): string | null {
-  // First, try to get from settle result (preferred - from facilitator)
+  signedTxHex: string | null,
+  expectedAddress: string
+): boolean {
+  // First, try to match from settle result (preferred - from facilitator)
   if (settleResult?.senderAddress) {
-    return settleResult.senderAddress;
+    if (addressesMatchByHash160(settleResult.senderAddress, expectedAddress)) {
+      return true;
+    }
+  }
+  if (settleResult?.sender_address) {
+    if (addressesMatchByHash160(settleResult.sender_address, expectedAddress)) {
+      return true;
+    }
   }
 
-  // Fallback: extract from signed transaction
+  // Fallback: check signed transaction directly
   if (signedTxHex) {
-    return extractSenderFromSignedTx(signedTxHex);
+    return txSenderMatchesAddress(signedTxHex, expectedAddress);
   }
 
-  return null;
-}
-
-// Utility to get payer address from request context
-export function getPayerFromContext(
-  paymentResponseHeader: string | null,
-  paymentHeader: string | null
-): string | null {
-  // Try from response header first (has facilitator data)
-  const settleResult = parsePaymentResponse(paymentResponseHeader);
-  if (settleResult?.senderAddress) {
-    return settleResult.senderAddress;
-  }
-
-  // Fallback to extracting from the signed tx
-  if (paymentHeader) {
-    return extractSenderFromSignedTx(paymentHeader);
-  }
-
-  return null;
+  return false;
 }

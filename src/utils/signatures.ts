@@ -7,7 +7,6 @@ import {
   publicKeyToAddress as stacksPublicKeyToAddress,
   Address,
 } from "@stacks/transactions";
-import { TransactionVersion } from "@stacks/network";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 
@@ -171,13 +170,18 @@ export function verifyStructuredSignature(
   }
 }
 
+// Address version constants for c32check encoding
+const ADDRESS_VERSION_MAINNET_SINGLE_SIG = 22; // SP prefix
+const ADDRESS_VERSION_TESTNET_SINGLE_SIG = 26; // ST prefix
+
 // Convert a compressed public key to a Stacks address
 function publicKeyToAddress(publicKey: string, network: "mainnet" | "testnet" = "mainnet"): string {
   try {
-    // Use the stacks.js utility to convert public key to address
+    // Use the correct address version for c32check encoding
+    // Note: TransactionVersion (0/128) is different from address version (22/26)
     const version = network === "mainnet"
-      ? TransactionVersion.Mainnet
-      : TransactionVersion.Testnet;
+      ? ADDRESS_VERSION_MAINNET_SINGLE_SIG
+      : ADDRESS_VERSION_TESTNET_SINGLE_SIG;
 
     return stacksPublicKeyToAddress(version, publicKey);
   } catch (error) {

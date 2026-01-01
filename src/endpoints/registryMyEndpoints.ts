@@ -9,7 +9,7 @@ import {
   createActionMessage,
   isTimestampValid,
 } from "../utils/signatures";
-import { getPayerFromContext } from "../utils/payment";
+import { payerMatchesAddress, type ExtendedSettleResult } from "../utils/payment";
 
 export class RegistryMyEndpoints extends BaseEndpoint {
   schema = {
@@ -185,24 +185,14 @@ export class RegistryMyEndpoints extends BaseEndpoint {
 
     // Try authentication method 2: Payment from same address
     if (!authenticatedBy) {
-      const paymentResponseHeader = c.res?.headers?.get("X-PAYMENT-RESPONSE") || null;
-      const paymentHeader = c.req.header("X-PAYMENT") || null;
+      // Get settle result and signed tx from context (set by middleware)
+      const settleResult = c.get("settleResult") as ExtendedSettleResult | undefined;
+      const signedTx = c.get("signedTx") as string | undefined;
 
-      const payerAddress = getPayerFromContext(paymentResponseHeader, paymentHeader);
-
-      if (payerAddress) {
-        // Normalize both addresses for comparison
-        try {
-          const payerParsed = Address.parse(payerAddress);
-          const ownerParsed = Address.parse(ownerAddress);
-
-          // Compare hash160 (the actual identity, ignoring network version)
-          if (payerParsed.hash160 === ownerParsed.hash160) {
-            authenticatedBy = "payment";
-          }
-        } catch {
-          // Address parsing failed, can't verify
-        }
+      // Check if payer matches owner using hash160 comparison
+      // This handles mainnet/testnet address format differences
+      if (payerMatchesAddress(settleResult || null, signedTx || null, ownerAddress)) {
+        authenticatedBy = "payment";
       }
     }
 
