@@ -25,11 +25,9 @@ import { deriveChildAccount } from "../src/utils/wallet";
 import {
   Cl,
   cvToHex,
-  encodeStructuredData,
+  hexToCV,
   signStructuredData,
 } from "@stacks/transactions";
-import { sha256 } from "@noble/hashes/sha256";
-import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import {
   COLORS,
   X402_CLIENT_PK,
@@ -83,13 +81,13 @@ async function signMessage(
   domain: ReturnType<typeof Cl.tuple>,
   privateKey: string
 ): Promise<string> {
-  // Use stacks.js signStructuredData
+  // Use stacks.js signStructuredData - returns string directly
   const signature = signStructuredData({
     message,
     domain,
     privateKey,
   });
-  return signature.data;
+  return signature;
 }
 
 // =============================================================================
@@ -444,42 +442,28 @@ async function signChallenge(
   privateKey: string
 ): Promise<string> {
   try {
-    const SIP018_PREFIX = hexToBytes("534950303138"); // "SIP018" in hex
-
     const domainHex = challengeData.domain;
     const messageHex = challengeData.message;
 
     log("Signing challenge with domain:", domainHex.substring(0, 40) + "...");
     log("Message:", messageHex.substring(0, 40) + "...");
 
-    const domainBytes = hexToBytes(domainHex.startsWith("0x") ? domainHex.slice(2) : domainHex);
-    const messageBytes = hexToBytes(messageHex.startsWith("0x") ? messageHex.slice(2) : messageHex);
+    // Convert hex to ClarityValue objects
+    const domain = hexToCV(domainHex);
+    const message = hexToCV(messageHex);
 
-    const domainHash = sha256(domainBytes);
-    const messageHash = sha256(messageBytes);
+    log("Domain type:", domain.type);
+    log("Message type:", message.type);
 
-    const combined = new Uint8Array(SIP018_PREFIX.length + domainHash.length + messageHash.length);
-    combined.set(SIP018_PREFIX, 0);
-    combined.set(domainHash, SIP018_PREFIX.length);
-    combined.set(messageHash, SIP018_PREFIX.length + domainHash.length);
-
-    const finalHash = sha256(combined);
-    const messageHashHex = bytesToHex(finalHash);
-
-    log("Final message hash:", messageHashHex.substring(0, 20) + "...");
-
-    const { signMessageHashRsv } = await import("@stacks/transactions");
-    const signature = signMessageHashRsv({
+    // Use signStructuredData - returns string directly
+    const signature = signStructuredData({
+      message,
+      domain,
       privateKey,
-      messageHash: messageHashHex,
     });
 
-    if (!signature || !signature.data) {
-      throw new Error("signMessageHashRsv returned invalid result");
-    }
-
-    log("Generated signature:", signature.data.substring(0, 20) + "...");
-    return signature.data;
+    log("Generated signature:", signature.substring(0, 20) + "...");
+    return signature;
   } catch (error) {
     console.error("signChallenge error:", error);
     throw error;

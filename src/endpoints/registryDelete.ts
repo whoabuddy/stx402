@@ -212,11 +212,13 @@ export class RegistryDelete extends BaseEndpoint {
     }
 
     // Reconstruct the message that should have been signed
+    // Must match the message from createSignatureRequest("delete-endpoint", ...)
     const domain = getDomain(network);
-    const message = createActionMessage("challenge-response", {
+    const timestamp = challenge.expiresAt - 5 * 60 * 1000; // Original timestamp
+    const message = createActionMessage("delete-endpoint", {
+      url: body.url,
       owner: ownerAddress,
-      nonce: challenge.nonce,
-      timestamp: challenge.expiresAt - 5 * 60 * 1000, // Original timestamp
+      timestamp,
     });
 
     // Verify the signature

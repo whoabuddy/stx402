@@ -206,12 +206,16 @@ export class RegistryTransfer extends BaseEndpoint {
       );
     }
 
-    // Reconstruct the message
+    // Reconstruct the message (must match what was in the challenge)
+    // The challenge was created with action "transfer-ownership" and includes url, owner, newOwner
+    // We stored the challenge with expiresAt, and timestamp was Date.now() when created
     const domain = getDomain(network);
-    const message = createActionMessage("challenge-response", {
+    const timestamp = challenge.expiresAt - 5 * 60 * 1000; // Original timestamp
+    const message = createActionMessage("transfer-ownership", {
+      url: body.url,
       owner: ownerAddress,
-      nonce: challenge.nonce,
-      timestamp: challenge.expiresAt - 5 * 60 * 1000,
+      newOwner: newOwnerAddress,
+      timestamp,
     });
 
     // Verify the signature
