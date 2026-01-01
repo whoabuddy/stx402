@@ -5,9 +5,9 @@ import {
   publicKeyFromSignatureRsv,
   cvToHex,
   publicKeyToAddress as stacksPublicKeyToAddress,
-  TransactionVersion,
   Address,
 } from "@stacks/transactions";
+import { TransactionVersion } from "@stacks/network";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 

@@ -1,8 +1,8 @@
 import {
   deserializeTransaction,
   Address,
-  TransactionVersion,
 } from "@stacks/transactions";
+import { TransactionVersion } from "@stacks/network";
 
 // Address version constants
 const MAINNET_SINGLE_SIG = 22;
