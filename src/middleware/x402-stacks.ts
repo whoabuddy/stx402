@@ -1,5 +1,6 @@
 import type { Context } from "hono";
-import { X402PaymentVerifier } from "x402-stacks";
+import { X402PaymentVerifier, getDefaultSBTCContract, getDefaultUSDCxContract } from "x402-stacks";
+import type { TokenContract } from "x402-stacks";
 import { replaceBigintWithString } from "../utils/bigint";
 import {
   getPaymentAmountForPath,
@@ -19,6 +20,7 @@ export interface X402PaymentRequired {
   expiresAt: string;
   tokenType: TokenType;
   pricingTier: PricingTier;
+  tokenContract?: TokenContract;
 }
 
 export interface SettlePaymentResult {
@@ -203,6 +205,14 @@ export const x402PaymentMiddleware = () => {
     const pricingTier = getEndpointTier(c.req.path);
 
     if (!signedTx) {
+      // Get token contract for sBTC/USDCx (required for SIP-010 transfers)
+      let tokenContract: TokenContract | undefined;
+      if (tokenType === "sBTC") {
+        tokenContract = getDefaultSBTCContract(config.network);
+      } else if (tokenType === "USDCx") {
+        tokenContract = getDefaultUSDCxContract(config.network);
+      }
+
       // Respond 402 with payment request
       const paymentRequest: X402PaymentRequired = {
         maxAmountRequired: config.minAmount.toString(),
@@ -213,6 +223,7 @@ export const x402PaymentMiddleware = () => {
         expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes
         tokenType,
         pricingTier,
+        ...(tokenContract && { tokenContract }),
       };
 
       return c.json(paymentRequest, 402);
