@@ -127,6 +127,10 @@ import { UtilRegexEscape } from "./endpoints/utilRegexEscape";
 import { UtilStringDistance } from "./endpoints/utilStringDistance";
 import { UtilVerifySignature } from "./endpoints/utilVerifySignature";
 
+// Network endpoints
+import { NetGeoIp } from "./endpoints/netGeoIp";
+import { NetAsnLookup } from "./endpoints/netAsnLookup";
+
 // Registry endpoints
 import { RegistryProbe } from "./endpoints/registryProbe";
 import { RegistryRegister } from "./endpoints/registryRegister";
@@ -307,6 +311,10 @@ openapi.get("/api/util/mime-type", paymentMiddleware, trackMetrics, UtilMimeType
 openapi.post("/api/util/regex-escape", paymentMiddleware, trackMetrics, UtilRegexEscape as any);
 openapi.post("/api/util/string-distance", paymentMiddleware, trackMetrics, UtilStringDistance as any);
 openapi.post("/api/util/verify-signature", paymentMiddleware, trackMetrics, UtilVerifySignature as any);
+
+// Network endpoints (paid)
+openapi.get("/api/net/geo-ip", paymentMiddleware, trackMetrics, NetGeoIp as any);
+openapi.get("/api/net/asn-lookup", paymentMiddleware, trackMetrics, NetAsnLookup as any);
 
 // Registry endpoints
 openapi.post("/api/registry/probe", paymentMiddleware, trackMetrics, RegistryProbe as any);
