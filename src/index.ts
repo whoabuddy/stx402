@@ -125,6 +125,7 @@ import { UtilSlugify } from "./endpoints/utilSlugify";
 import { UtilMimeType } from "./endpoints/utilMimeType";
 import { UtilRegexEscape } from "./endpoints/utilRegexEscape";
 import { UtilStringDistance } from "./endpoints/utilStringDistance";
+import { UtilVerifySignature } from "./endpoints/utilVerifySignature";
 
 // Registry endpoints
 import { RegistryProbe } from "./endpoints/registryProbe";
@@ -136,6 +137,7 @@ import { RegistryDelete } from "./endpoints/registryDelete";
 import { RegistryAdminVerify } from "./endpoints/registryAdminVerify";
 import { RegistryAdminPending } from "./endpoints/registryAdminPending";
 import { RegistryMyEndpoints } from "./endpoints/registryMyEndpoints";
+import { RegistryTransfer } from "./endpoints/registryTransfer";
 
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 import { metricsMiddleware } from "./middleware/metrics";
@@ -304,6 +306,7 @@ openapi.post("/api/util/slugify", paymentMiddleware, trackMetrics, UtilSlugify a
 openapi.get("/api/util/mime-type", paymentMiddleware, trackMetrics, UtilMimeType as any);
 openapi.post("/api/util/regex-escape", paymentMiddleware, trackMetrics, UtilRegexEscape as any);
 openapi.post("/api/util/string-distance", paymentMiddleware, trackMetrics, UtilStringDistance as any);
+openapi.post("/api/util/verify-signature", paymentMiddleware, trackMetrics, UtilVerifySignature as any);
 
 // Registry endpoints
 openapi.post("/api/registry/probe", paymentMiddleware, trackMetrics, RegistryProbe as any);
@@ -313,6 +316,7 @@ openapi.post("/api/registry/details", paymentMiddleware, trackMetrics, RegistryD
 openapi.post("/api/registry/update", paymentMiddleware, trackMetrics, RegistryUpdate as any);
 openapi.post("/api/registry/delete", paymentMiddleware, trackMetrics, RegistryDelete as any);
 openapi.post("/api/registry/my-endpoints", paymentMiddleware, trackMetrics, RegistryMyEndpoints as any);
+openapi.post("/api/registry/transfer", paymentMiddleware, trackMetrics, RegistryTransfer as any);
 openapi.post("/api/admin/registry/verify", paymentMiddleware, trackMetrics, RegistryAdminVerify as any);
 openapi.post("/api/admin/registry/pending", paymentMiddleware, trackMetrics, RegistryAdminPending as any);
 

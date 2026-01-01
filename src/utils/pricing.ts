@@ -116,7 +116,7 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/math/gcd-lcm": "simple",
   "/api/math/factorial": "simple",
 
-  // === REGISTRY ENDPOINTS (8 paid + 1 free) ===
+  // === REGISTRY ENDPOINTS (9 paid + 1 free) ===
   "/api/registry/probe": "ai",
   "/api/registry/register": "ai",
   // "/api/registry/list": free - not in tier list
@@ -124,10 +124,11 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/registry/update": "ai",
   "/api/registry/delete": "ai",
   "/api/registry/my-endpoints": "ai",
+  "/api/registry/transfer": "ai",
   "/api/admin/registry/verify": "ai",
   "/api/admin/registry/pending": "ai",
 
-  // === UTILITY ENDPOINTS (22) ===
+  // === UTILITY ENDPOINTS (23) ===
   "/api/util/timestamp": "simple",
   "/api/util/dns-lookup": "simple",
   "/api/util/ip-info": "simple",
@@ -150,6 +151,7 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/util/mime-type": "simple",
   "/api/util/regex-escape": "simple",
   "/api/util/string-distance": "simple",
+  "/api/util/verify-signature": "simple",
 };
 
 // Get pricing tier for an endpoint path (strips path params like :address)

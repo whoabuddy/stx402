@@ -8,11 +8,18 @@ import {
 } from "../utils/registry";
 import { probeX402Endpoint } from "../utils/probe";
 import { Address } from "@stacks/transactions";
+import {
+  verifyStructuredSignature,
+  getDomain,
+  createActionMessage,
+  isTimestampValid,
+} from "../utils/signatures";
+import { getPayerFromContext } from "../utils/payment";
 
 export class RegistryUpdate extends BaseEndpoint {
   schema = {
     tags: ["Registry"],
-    summary: "(paid) Update a registered x402 endpoint (owner only)",
+    summary: "(paid) Update a registered x402 endpoint (owner only, signature or payment auth)",
     requestBody: {
       required: true,
       content: {
@@ -50,6 +57,14 @@ export class RegistryUpdate extends BaseEndpoint {
                 type: "boolean" as const,
                 description: "Re-probe the endpoint to update probe data",
                 default: false,
+              },
+              signature: {
+                type: "string" as const,
+                description: "SIP-018 signature proving ownership (optional if payment is from owner)",
+              },
+              timestamp: {
+                type: "number" as const,
+                description: "Unix timestamp (ms) for signature (required with signature)",
               },
             },
           },
@@ -101,6 +116,7 @@ export class RegistryUpdate extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
+    const network = c.env.X402_NETWORK as "mainnet" | "testnet";
 
     if (!c.env.METRICS) {
       return this.errorResponse(c, "Registry storage not configured", 500);
@@ -114,6 +130,8 @@ export class RegistryUpdate extends BaseEndpoint {
       category?: string;
       tags?: string[];
       reprobeEndpoint?: boolean;
+      signature?: string;
+      timestamp?: number;
     };
 
     try {
@@ -146,12 +164,84 @@ export class RegistryUpdate extends BaseEndpoint {
       return this.errorResponse(c, "Endpoint not found in registry", 404);
     }
 
-    // Verify ownership
+    // Verify ownership (address must match registered owner)
     if (entry.owner !== ownerAddress) {
       return c.json(
         {
           error: "Not authorized - you are not the owner of this endpoint",
           registeredOwner: entry.owner,
+          tokenType,
+        },
+        403
+      );
+    }
+
+    // Dual authentication: signature OR payment from same address
+    let authMethod: "signature" | "payment" | null = null;
+
+    // Try signature auth first
+    if (body.signature) {
+      if (!body.timestamp) {
+        return this.errorResponse(c, "timestamp is required when providing signature", 400);
+      }
+
+      if (!isTimestampValid(body.timestamp)) {
+        return c.json(
+          { error: "Timestamp expired or invalid. Must be within 5 minutes.", tokenType },
+          403
+        );
+      }
+
+      // Build the message that should have been signed
+      const domain = getDomain(network);
+      const message = createActionMessage("list-my-endpoints", {
+        owner: ownerAddress,
+        timestamp: body.timestamp,
+      });
+
+      const verifyResult = verifyStructuredSignature(
+        message,
+        domain,
+        body.signature,
+        ownerAddress,
+        network
+      );
+
+      if (!verifyResult.valid) {
+        return c.json(
+          {
+            error: "Invalid signature",
+            details: verifyResult.error,
+            recoveredAddress: verifyResult.recoveredAddress,
+            expectedAddress: ownerAddress,
+            tokenType,
+          },
+          403
+        );
+      }
+
+      authMethod = "signature";
+    }
+
+    // Try payment auth if no signature
+    if (!authMethod) {
+      const paymentResponseHeader = c.req.header("X-PAYMENT-RESPONSE");
+      const paymentHeader = c.req.header("X-PAYMENT");
+
+      const payerAddress = getPayerFromContext(paymentResponseHeader || null, paymentHeader || null);
+
+      if (payerAddress && payerAddress === ownerAddress) {
+        authMethod = "payment";
+      }
+    }
+
+    // If no auth method succeeded, return error
+    if (!authMethod) {
+      return c.json(
+        {
+          error: "Authentication required - provide a signature OR pay from the owner address",
+          owner: ownerAddress,
+          hint: "Include a SIP-018 signature with timestamp, or ensure the X-PAYMENT is from the owner address",
           tokenType,
         },
         403
@@ -214,6 +304,7 @@ export class RegistryUpdate extends BaseEndpoint {
         tags: entry.tags,
         updatedAt: entry.updatedAt,
       },
+      verifiedBy: authMethod,
       tokenType,
     });
   }
