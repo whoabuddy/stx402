@@ -452,7 +452,6 @@ async function runTests() {
   const x402Client = new X402PaymentClient({
     network: X402_NETWORK as "mainnet" | "testnet",
     privateKey: privateKey as string,
-    senderAddress: address as string,
   });
 
   console.log(`${COLORS.gray}Client: ${address}${COLORS.reset}`);

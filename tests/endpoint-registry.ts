@@ -1320,10 +1320,11 @@ const linksEndpoints: TestConfig[] = [
     name: "links-expand",
     endpoint: "/api/links/expand/nonexistent",
     method: "GET",
-    // Note: This is a FREE endpoint - redirects without payment
-    // Will 404 if slug doesn't exist
+    // Note: This is a FREE endpoint - no payment required
+    // Returns 404 for missing slugs
+    skipPayment: true, // Mark as free endpoint
     validateResponse: (data) => {
-      // Accept either redirect or 404 error response
+      // Accept URL response or 404 error
       return hasField(data, "url") || hasField(data, "error");
     },
   },
@@ -1332,9 +1333,9 @@ const linksEndpoints: TestConfig[] = [
     endpoint: "/api/links/stats",
     method: "POST",
     body: { slug: "nonexistent" },
-    validateResponse: (data, tokenType) => {
-      // May 404 if not found
-      return hasTokenType(data, tokenType) || hasField(data, "error");
+    validateResponse: (data) => {
+      // Returns 404 error for nonexistent slugs - this is expected
+      return hasField(data, "error");
     },
   },
   {
