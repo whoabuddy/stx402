@@ -165,6 +165,15 @@ import {
 // SQL endpoints (Durable Objects)
 import { SqlQuery, SqlExecute, SqlSchema } from "./endpoints/sql";
 
+// Links endpoints (Durable Objects)
+import {
+  LinksCreate,
+  LinksExpand,
+  LinksStats,
+  LinksDelete,
+  LinksList,
+} from "./endpoints/links";
+
 // Durable Objects
 export { UserDurableObject } from "./durable-objects/UserDurableObject";
 
@@ -379,6 +388,13 @@ openapi.post("/api/counter/delete", paymentMiddleware, trackMetrics, CounterDele
 openapi.post("/api/sql/query", paymentMiddleware, trackMetrics, SqlQuery as any);
 openapi.post("/api/sql/execute", paymentMiddleware, trackMetrics, SqlExecute as any);
 openapi.get("/api/sql/schema", paymentMiddleware, trackMetrics, SqlSchema as any);
+
+// Links endpoints (paid - Durable Objects URL Shortener)
+openapi.post("/api/links/create", paymentMiddleware, trackMetrics, LinksCreate as any);
+openapi.get("/api/links/expand/:slug", LinksExpand as any); // Free expand (tracking included)
+openapi.post("/api/links/stats", paymentMiddleware, trackMetrics, LinksStats as any);
+openapi.post("/api/links/delete", paymentMiddleware, trackMetrics, LinksDelete as any);
+openapi.get("/api/links/list", paymentMiddleware, trackMetrics, LinksList as any);
 
 // Export the Hono app
 export default app;

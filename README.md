@@ -1,6 +1,6 @@
 # STX402
 
-Cloudflare Worker API providing **132 useful endpoints** via [X402 micropayments](https://x402.org). Built with [OpenAPI 3.1](https://github.com/cloudflare/chanfana) + [Hono](https://hono.dev).
+Cloudflare Worker API providing **137 useful endpoints** via [X402 micropayments](https://x402.org). Built with [OpenAPI 3.1](https://github.com/cloudflare/chanfana) + [Hono](https://hono.dev).
 
 ## Payment
 
@@ -265,8 +265,27 @@ Direct SQL access to your per-user SQLite database in Durable Objects.
 **Features:**
 - Full SQLite syntax support
 - Parameterized queries for safety
-- System tables protected (counters, user_data)
+- System tables protected (counters, user_data, links)
 - Create your own tables for custom data
+- Per-user isolation (by payer address)
+
+### Links (5 endpoints)
+
+URL shortener with click tracking, backed by Durable Objects.
+
+| Method | Path | Tier | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/links/create` | storage_write | Create short link |
+| `GET` | `/api/links/expand/:slug` | **free** | Expand short link (tracks clicks) |
+| `POST` | `/api/links/stats` | storage_read | Get click statistics |
+| `POST` | `/api/links/delete` | storage_write | Delete link |
+| `GET` | `/api/links/list` | storage_read | List all links |
+
+**Features:**
+- Auto-generated or custom slugs
+- Click tracking with referrer, country, timestamp
+- Optional TTL for expiring links
+- Title/metadata storage
 - Per-user isolation (by payer address)
 
 ## Project Structure
@@ -289,8 +308,10 @@ src/
 │   │   └── paste*.ts   # create, get, delete
 │   ├── counter/        # Counter endpoints (Durable Objects)
 │   │   └── counter*.ts # increment, decrement, get, reset, list, delete
-│   └── sql/            # SQL endpoints (Durable Objects)
-│       └── sql*.ts     # query, execute, schema
+│   ├── sql/            # SQL endpoints (Durable Objects)
+│   │   └── sql*.ts     # query, execute, schema
+│   └── links/          # URL shortener endpoints (Durable Objects)
+│       └── links*.ts   # create, expand, stats, delete, list
 ├── durable-objects/
 │   └── UserDurableObject.ts  # Per-user SQLite-backed DO
 ├── middleware/

@@ -1302,6 +1302,59 @@ const sqlEndpoints: TestConfig[] = [
 ];
 
 // =============================================================================
+// LINKS ENDPOINTS (5) - Durable Objects URL Shortener
+// Note: These endpoints provide URL shortening with click tracking.
+// Expand is free (to allow redirects), create/stats/delete/list are paid.
+// =============================================================================
+
+const linksEndpoints: TestConfig[] = [
+  {
+    name: "links-create",
+    endpoint: "/api/links/create",
+    method: "POST",
+    body: { url: "https://example.com", title: "Example Site" },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["slug", "shortUrl", "url"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "links-expand",
+    endpoint: "/api/links/expand/nonexistent",
+    method: "GET",
+    // Note: This is a FREE endpoint - redirects without payment
+    // Will 404 if slug doesn't exist
+    validateResponse: (data) => {
+      // Accept either redirect or 404 error response
+      return hasField(data, "url") || hasField(data, "error");
+    },
+  },
+  {
+    name: "links-stats",
+    endpoint: "/api/links/stats",
+    method: "POST",
+    body: { slug: "nonexistent" },
+    validateResponse: (data, tokenType) => {
+      // May 404 if not found
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "links-delete",
+    endpoint: "/api/links/delete",
+    method: "POST",
+    body: { slug: "nonexistent" },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["deleted", "slug"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "links-list",
+    endpoint: "/api/links/list",
+    method: "GET",
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["links", "count"]) && hasTokenType(data, tokenType),
+  },
+];
+
+// =============================================================================
 // EXPORT COMBINED REGISTRY
 // =============================================================================
 
@@ -1320,6 +1373,7 @@ export const ENDPOINT_REGISTRY: TestConfig[] = [
   ...pasteEndpoints,
   ...counterEndpoints,
   ...sqlEndpoints,
+  ...linksEndpoints,
 ];
 
 // Category mapping for filtered runs
@@ -1338,11 +1392,12 @@ export const ENDPOINT_CATEGORIES: Record<string, TestConfig[]> = {
   paste: pasteEndpoints,
   counter: counterEndpoints,
   sql: sqlEndpoints,
+  links: linksEndpoints,
 };
 
 // Export counts for verification
 export const ENDPOINT_COUNTS = {
-  total: ENDPOINT_REGISTRY.length, // 130 endpoints (129 paid + 1 free registry/list)
+  total: ENDPOINT_REGISTRY.length, // 135 endpoints (133 paid + 2 free)
   stacks: stacksEndpoints.length,  // 15
   ai: aiEndpoints.length,          // 13
   text: textEndpoints.length,      // 24
@@ -1357,4 +1412,5 @@ export const ENDPOINT_COUNTS = {
   paste: pasteEndpoints.length,    // 3
   counter: counterEndpoints.length, // 6
   sql: sqlEndpoints.length,        // 3
+  links: linksEndpoints.length,    // 5
 };

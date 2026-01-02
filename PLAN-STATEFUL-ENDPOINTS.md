@@ -101,7 +101,7 @@ function getStorageWriteTier(valueSize: number): PricingTier {
 
 ## Implementation Phases
 
-### Phase 1: KV Foundation (4 endpoints)
+### Phase 1: KV Foundation (4 endpoints) ✅ COMPLETED
 **New category**: `/api/kv/*`
 
 | Endpoint | Method | Tier | Description |
@@ -156,7 +156,7 @@ function getStorageWriteTier(valueSize: number): PricingTier {
 
 ---
 
-### Phase 2: Paste Service (3 endpoints)
+### Phase 2: Paste Service (3 endpoints) ✅ COMPLETED
 **Category**: `/api/paste/*`
 
 | Endpoint | Method | Tier | Description |
@@ -186,8 +186,10 @@ function getStorageWriteTier(valueSize: number): PricingTier {
 
 ---
 
-### Phase 3: Counters (Durable Objects) (4 endpoints)
-**Category**: `/api/counter/*`
+### Phase 3: Counters + SQL (Durable Objects) (9 endpoints) ✅ COMPLETED
+**Category**: `/api/counter/*` + `/api/sql/*`
+
+**Actual Implementation** - Counter (6 endpoints) + SQL (3 endpoints):
 
 | Endpoint | Method | Tier | Description |
 |----------|--------|------|-------------|
@@ -228,38 +230,43 @@ function getStorageWriteTier(valueSize: number): PricingTier {
 
 ---
 
-### Phase 4: URL Shortener (4 endpoints)
+### Phase 4: URL Shortener (5 endpoints) ✅ COMPLETED
 **Category**: `/api/links/*`
 
 | Endpoint | Method | Tier | Description |
 |----------|--------|------|-------------|
 | `/api/links/create` | POST | storage_write | Create short link |
-| `/api/links/expand` | GET | storage_read | Resolve and redirect |
+| `/api/links/expand/:slug` | GET | **free** | Resolve and redirect (tracks clicks) |
 | `/api/links/stats` | POST | storage_read | Get click statistics |
 | `/api/links/delete` | POST | storage_write | Delete link |
+| `/api/links/list` | GET | storage_read | List all links |
 
 **Features:**
 - Custom slugs (optional)
 - Click tracking with timestamps
-- Referrer tracking
-- QR code generation (integrate with existing `/api/util/qr-generate`)
-- Optional expiration
+- Referrer and country tracking
+- Optional title/metadata
+- Optional expiration (TTL)
+- Per-user isolation via Durable Objects
 
 ```typescript
 // POST /api/links/create
 {
   url: string,           // Target URL
   slug?: string,         // Custom slug (optional, 3-32 chars)
-  ttl?: number,          // Seconds until expiration (optional)
-  trackStats?: boolean   // Default true
+  title?: string,        // Link title/description
+  ttl?: number           // Seconds until expiration (optional)
 }
-// Response: { slug, shortUrl, qrCode?: string, expiresAt? }
+// Response: { slug, shortUrl, url, title?, expiresAt? }
 
 // POST /api/links/stats
 {
   slug: string
 }
-// Response: { slug, url, clicks, lastClickAt, referrers: Record<string, number> }
+// Response: { slug, url, clicks, createdAt, lastClickAt?, referrers, recentClicks }
+
+// GET /api/links/list
+// Response: { links: [...], count }
 ```
 
 ---
@@ -508,18 +515,18 @@ src/
 
 ## Summary
 
-| Phase | Category | Endpoints | Storage | New Count |
-|-------|----------|-----------|---------|-----------|
-| 1 | `/api/kv/*` | 4 | KV | 120 |
-| 2 | `/api/paste/*` | 3 | KV | 123 |
-| 3 | `/api/counter/*` | 4 | DO | 127 |
-| 4 | `/api/links/*` | 4 | DO | 131 |
-| 5 | `/api/sync/*` | 4 | DO | 135 |
-| 6 | `/api/queue/*` | 5 | DO | 140 |
-| 7 | `/api/memory/*` | 5 | KV+AI | 145 |
+| Phase | Category | Endpoints | Storage | Status |
+|-------|----------|-----------|---------|--------|
+| 1 | `/api/kv/*` | 4 | KV | ✅ Done |
+| 2 | `/api/paste/*` | 3 | KV | ✅ Done |
+| 3 | `/api/counter/*` + `/api/sql/*` | 6+3=9 | DO | ✅ Done |
+| 4 | `/api/links/*` | 5 | DO | ✅ Done |
+| 5 | `/api/sync/*` | 4 | DO | Planned |
+| 6 | `/api/queue/*` | 5 | DO | Planned |
+| 7 | `/api/memory/*` | 5 | KV+AI | Planned |
 
-**Total new endpoints**: 29
-**Final count**: 145 endpoints
+**Completed**: 21 endpoints (Phases 1-4)
+**Current total**: 137 endpoints (116 original + 21 stateful)
 
 ---
 
