@@ -1,7 +1,7 @@
 import { OpenAPIRoute } from "chanfana";
 import type { AppContext } from "../types";
 import { ENDPOINT_TIERS } from "../utils/pricing";
-import { getAllMetrics, getDailyStats, type EndpointMetrics } from "../middleware/metrics";
+import { getDashboardMetrics, type EndpointMetrics } from "../middleware/metrics";
 import { listAllEntries, type RegistryEntryMinimal } from "../utils/registry";
 
 // Extract category from path (e.g., /api/stacks/... → Stacks)
@@ -39,13 +39,13 @@ export class Dashboard extends OpenAPIRoute {
 
     // Only fetch metrics if METRICS KV is configured
     if (c.env.METRICS) {
-      const [metricsResult, dailyResult, registryResult] = await Promise.all([
-        getAllMetrics(c.env.METRICS, paths),
-        getDailyStats(c.env.METRICS, 7),
+      // Single KV read for metrics + daily stats, separate read for registry
+      const [dashboardData, registryResult] = await Promise.all([
+        getDashboardMetrics(c.env.METRICS, paths, 7),
         listAllEntries(c.env.METRICS, { limit: 100 }),
       ]);
-      metrics = metricsResult;
-      dailyStats = dailyResult;
+      metrics = dashboardData.endpoints;
+      dailyStats = dashboardData.daily;
       registryEntries = registryResult.entries.filter(e => e.status !== "rejected");
     } else {
       // Generate placeholder data when KV is not configured
