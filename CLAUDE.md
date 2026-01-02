@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-STX402 is a Cloudflare Workers API providing **147 useful endpoints** via X402 micropayments.
+STX402 is a Cloudflare Workers API providing **152 useful endpoints** via X402 micropayments.
 
 **Vision**: A marketplace of useful API endpoints where the best ones surface to the top based on usage and earnings. Each endpoint is simple, composable, and pays for itself through micropayments.
 
@@ -31,7 +31,7 @@ bun run tests/get-bns-address.test.ts
 
 ## Architecture
 
-### Endpoint Categories (147 total)
+### Endpoint Categories (152 total)
 
 | Category | Count | Path Pattern | Tier | Description |
 |----------|-------|--------------|------|-------------|
@@ -53,6 +53,7 @@ bun run tests/get-bns-address.test.ts
 | Links | 5 | `/api/links/*` | storage_* | URL shortener with click tracking |
 | Sync | 5 | `/api/sync/*` | storage_* | Distributed locks with auto-expiration |
 | Queue | 5 | `/api/queue/*` | storage_* | Job queue with priority and retries |
+| Memory | 5 | `/api/memory/*` | storage_ai | Agent memory with semantic search |
 
 ### Pricing Tiers
 
@@ -66,7 +67,7 @@ Defined in `src/utils/pricing.ts`:
 | `storage_read` | 0.0005 | 0.0000005 | 0.0005 | KV get, list operations |
 | `storage_write` | 0.001 | 0.000001 | 0.001 | KV set, delete operations |
 | `storage_write_large` | 0.005 | 0.000005 | 0.005 | Values > 100KB |
-| `storage_ai` | 0.003 | 0.000003 | 0.003 | Semantic search (future) |
+| `storage_ai` | 0.003 | 0.000003 | 0.003 | Memory store/search with embeddings |
 
 ### Endpoint Pattern
 
@@ -123,9 +124,13 @@ export class MyEndpoint extends BaseEndpoint {
 - `src/endpoints/paste/*.ts` - Paste endpoints (create, get, delete)
 - `src/endpoints/counter/*.ts` - Atomic counter endpoints (increment, decrement, get, reset, list, delete)
 - `src/endpoints/sql/*.ts` - SQL query endpoints (query, execute, schema)
+- `src/endpoints/links/*.ts` - URL shortener endpoints (create, expand, stats, delete, list)
+- `src/endpoints/sync/*.ts` - Distributed lock endpoints (lock, unlock, check, extend, list)
+- `src/endpoints/queue/*.ts` - Job queue endpoints (push, pop, complete, fail, status)
+- `src/endpoints/memory/*.ts` - Agent memory endpoints (store, recall, search, list, forget)
 
 **Durable Objects:**
-- `src/durable-objects/UserDurableObject.ts` - Per-user SQLite-backed DO (counters, custom SQL)
+- `src/durable-objects/UserDurableObject.ts` - Per-user SQLite-backed DO (counters, links, locks, queues, memories)
 
 **Middleware:**
 - `src/middleware/x402-stacks.ts` - X402 payment verification/settlement

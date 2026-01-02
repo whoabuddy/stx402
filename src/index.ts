@@ -192,6 +192,15 @@ import {
   QueueStatus,
 } from "./endpoints/queue";
 
+// Memory endpoints (Durable Objects - Agent Memory System)
+import {
+  MemoryStore,
+  MemoryRecall,
+  MemorySearch,
+  MemoryList,
+  MemoryForget,
+} from "./endpoints/memory";
+
 // Durable Objects
 export { UserDurableObject } from "./durable-objects/UserDurableObject";
 
@@ -427,6 +436,13 @@ openapi.post("/api/queue/pop", paymentMiddleware, trackMetrics, QueuePop as any)
 openapi.post("/api/queue/complete", paymentMiddleware, trackMetrics, QueueComplete as any);
 openapi.post("/api/queue/fail", paymentMiddleware, trackMetrics, QueueFail as any);
 openapi.post("/api/queue/status", paymentMiddleware, trackMetrics, QueueStatus as any);
+
+// Memory endpoints (paid - Durable Objects Agent Memory System)
+openapi.post("/api/memory/store", paymentMiddleware, trackMetrics, MemoryStore as any);
+openapi.post("/api/memory/recall", paymentMiddleware, trackMetrics, MemoryRecall as any);
+openapi.post("/api/memory/search", paymentMiddleware, trackMetrics, MemorySearch as any);
+openapi.post("/api/memory/list", paymentMiddleware, trackMetrics, MemoryList as any);
+openapi.post("/api/memory/forget", paymentMiddleware, trackMetrics, MemoryForget as any);
 
 // Export the Hono app
 export default app;

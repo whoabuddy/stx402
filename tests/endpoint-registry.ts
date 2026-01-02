@@ -1454,6 +1454,62 @@ const queueEndpoints: TestConfig[] = [
 ];
 
 // =============================================================================
+// MEMORY ENDPOINTS (5) - Durable Objects Agent Memory System
+// Note: These endpoints provide AI-powered memory storage with semantic search.
+// Memories are stored with embeddings for similarity search.
+// =============================================================================
+
+const memoryEndpoints: TestConfig[] = [
+  {
+    name: "memory-store",
+    endpoint: "/api/memory/store",
+    method: "POST",
+    body: {
+      key: `test-memory-${Date.now()}`,
+      content: "This is a test memory for the AI agent system.",
+      metadata: { tags: ["test"], type: "note", importance: 5 },
+      generateEmbedding: true,
+    },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["key", "stored", "hasEmbedding"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "memory-recall",
+    endpoint: "/api/memory/recall",
+    method: "POST",
+    body: { key: "nonexistent-memory" },
+    validateResponse: (data, tokenType) => {
+      // May return 404 for nonexistent memory
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "memory-search",
+    endpoint: "/api/memory/search",
+    method: "POST",
+    body: { query: "test memory", limit: 10 },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["query", "results", "count"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "memory-list",
+    endpoint: "/api/memory/list",
+    method: "POST",
+    body: { limit: 10 },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["memories", "total", "hasMore"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "memory-forget",
+    endpoint: "/api/memory/forget",
+    method: "POST",
+    body: { key: "nonexistent-memory" },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["deleted", "key"]) && hasTokenType(data, tokenType),
+  },
+];
+
+// =============================================================================
 // EXPORT COMBINED REGISTRY
 // =============================================================================
 
@@ -1475,6 +1531,7 @@ export const ENDPOINT_REGISTRY: TestConfig[] = [
   ...linksEndpoints,
   ...syncEndpoints,
   ...queueEndpoints,
+  ...memoryEndpoints,
 ];
 
 // Category mapping for filtered runs
@@ -1496,11 +1553,12 @@ export const ENDPOINT_CATEGORIES: Record<string, TestConfig[]> = {
   links: linksEndpoints,
   sync: syncEndpoints,
   queue: queueEndpoints,
+  memory: memoryEndpoints,
 };
 
 // Export counts for verification
 export const ENDPOINT_COUNTS = {
-  total: ENDPOINT_REGISTRY.length, // 145 endpoints (143 paid + 2 free)
+  total: ENDPOINT_REGISTRY.length, // 150 endpoints (148 paid + 2 free)
   stacks: stacksEndpoints.length,  // 15
   ai: aiEndpoints.length,          // 13
   text: textEndpoints.length,      // 24
@@ -1518,4 +1576,5 @@ export const ENDPOINT_COUNTS = {
   links: linksEndpoints.length,    // 5
   sync: syncEndpoints.length,      // 5
   queue: queueEndpoints.length,    // 5
+  memory: memoryEndpoints.length,  // 5
 };

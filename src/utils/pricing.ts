@@ -52,7 +52,7 @@ export const TIER_AMOUNTS: Record<PricingTier, Record<TokenType, string>> = {
   },
 };
 
-// Endpoint path to pricing tier mapping (143 paid endpoints + 4 free = 147 total)
+// Endpoint path to pricing tier mapping (148 paid endpoints + 4 free = 152 total)
 export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   // === STACKS ENDPOINTS (15) ===
   "/api/stacks/get-bns-name": "simple",
@@ -232,6 +232,13 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/queue/complete": "storage_write",
   "/api/queue/fail": "storage_write",
   "/api/queue/status": "storage_read",
+
+  // === MEMORY ENDPOINTS (5 paid) - Durable Objects Agent Memory ===
+  "/api/memory/store": "storage_ai",
+  "/api/memory/recall": "storage_read",
+  "/api/memory/search": "storage_ai",
+  "/api/memory/list": "storage_read",
+  "/api/memory/forget": "storage_write",
 };
 
 // Get pricing tier for an endpoint path (strips path params like :address)

@@ -124,6 +124,31 @@ export class UserDurableObject extends DurableObject<Env> {
       CREATE INDEX IF NOT EXISTS idx_jobs_available ON jobs(queue, status, available_at, priority DESC)
     `);
 
+    // Memories table for agent memory system
+    this.sql.exec(`
+      CREATE TABLE IF NOT EXISTS memories (
+        key TEXT PRIMARY KEY,
+        content TEXT NOT NULL,
+        summary TEXT,
+        tags TEXT,
+        type TEXT DEFAULT 'note',
+        importance INTEGER DEFAULT 5,
+        source TEXT,
+        embedding TEXT,
+        expires_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `);
+
+    // Index for efficient memory queries
+    this.sql.exec(`
+      CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)
+    `);
+    this.sql.exec(`
+      CREATE INDEX IF NOT EXISTS idx_memories_importance ON memories(importance DESC)
+    `);
+
     this.initialized = true;
   }
 
@@ -940,7 +965,7 @@ export class UserDurableObject extends DurableObject<Env> {
 
     // Security: Prevent modification of system tables
     const normalizedQuery = query.trim().toUpperCase();
-    const systemTables = ["COUNTERS", "USER_DATA", "LINKS", "LINK_CLICKS", "LOCKS", "JOBS"];
+    const systemTables = ["COUNTERS", "USER_DATA", "LINKS", "LINK_CLICKS", "LOCKS", "JOBS", "MEMORIES"];
 
     for (const table of systemTables) {
       // Check if trying to DROP or ALTER system tables
@@ -1373,5 +1398,426 @@ export class UserDurableObject extends DurableObject<Env> {
       createdAt: row.created_at as string,
       error: row.error as string | null,
     }));
+  }
+
+  // ===========================================================================
+  // Memory Operations (Agent Memory System)
+  // ===========================================================================
+
+  /**
+   * Store a memory with optional metadata and embedding
+   */
+  async memoryStore(
+    key: string,
+    content: string,
+    options?: {
+      summary?: string;
+      tags?: string[];
+      type?: "fact" | "conversation" | "task" | "note";
+      importance?: number;
+      source?: string;
+      embedding?: number[];
+      ttl?: number;
+    }
+  ): Promise<{
+    key: string;
+    stored: boolean;
+    hasEmbedding: boolean;
+  }> {
+    this.initializeSchema();
+    const now = new Date().toISOString();
+
+    // Validate importance (0-10)
+    const importance = Math.min(Math.max(options?.importance ?? 5, 0), 10);
+
+    // Calculate expiration
+    const expiresAt = options?.ttl
+      ? new Date(Date.now() + options.ttl * 1000).toISOString()
+      : null;
+
+    // Serialize tags and embedding
+    const tagsStr = options?.tags?.length ? JSON.stringify(options.tags) : null;
+    const embeddingStr = options?.embedding?.length ? JSON.stringify(options.embedding) : null;
+
+    // Check if memory exists
+    const existing = this.sql
+      .exec("SELECT 1 FROM memories WHERE key = ?", key)
+      .toArray();
+
+    if (existing.length > 0) {
+      // Update existing memory
+      this.sql.exec(
+        `UPDATE memories SET content = ?, summary = ?, tags = ?, type = ?, importance = ?,
+         source = ?, embedding = ?, expires_at = ?, updated_at = ?
+         WHERE key = ?`,
+        content,
+        options?.summary ?? null,
+        tagsStr,
+        options?.type ?? "note",
+        importance,
+        options?.source ?? null,
+        embeddingStr,
+        expiresAt,
+        now,
+        key
+      );
+    } else {
+      // Insert new memory
+      this.sql.exec(
+        `INSERT INTO memories (key, content, summary, tags, type, importance, source, embedding, expires_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        key,
+        content,
+        options?.summary ?? null,
+        tagsStr,
+        options?.type ?? "note",
+        importance,
+        options?.source ?? null,
+        embeddingStr,
+        expiresAt,
+        now,
+        now
+      );
+    }
+
+    return {
+      key,
+      stored: true,
+      hasEmbedding: !!embeddingStr,
+    };
+  }
+
+  /**
+   * Recall a memory by key
+   */
+  async memoryRecall(key: string): Promise<{
+    key: string;
+    content: string;
+    summary: string | null;
+    tags: string[];
+    type: string;
+    importance: number;
+    source: string | null;
+    hasEmbedding: boolean;
+    expiresAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null> {
+    this.initializeSchema();
+
+    // Clean up expired memories
+    this.sql.exec(
+      "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < ?",
+      new Date().toISOString()
+    );
+
+    const result = this.sql
+      .exec(
+        `SELECT key, content, summary, tags, type, importance, source, embedding,
+         expires_at, created_at, updated_at FROM memories WHERE key = ?`,
+        key
+      )
+      .toArray();
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const row = result[0];
+    let tags: string[] = [];
+    if (row.tags) {
+      try {
+        tags = JSON.parse(row.tags as string);
+      } catch {
+        tags = [];
+      }
+    }
+
+    return {
+      key: row.key as string,
+      content: row.content as string,
+      summary: row.summary as string | null,
+      tags,
+      type: row.type as string,
+      importance: row.importance as number,
+      source: row.source as string | null,
+      hasEmbedding: !!row.embedding,
+      expiresAt: row.expires_at as string | null,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    };
+  }
+
+  /**
+   * Search memories semantically using embedding similarity
+   * The embedding for the query should be generated by the caller
+   */
+  async memorySearch(
+    queryEmbedding: number[],
+    options?: {
+      limit?: number;
+      minSimilarity?: number;
+      tags?: string[];
+      type?: string;
+      minImportance?: number;
+    }
+  ): Promise<
+    Array<{
+      key: string;
+      content: string;
+      summary: string | null;
+      tags: string[];
+      type: string;
+      importance: number;
+      similarity: number;
+    }>
+  > {
+    this.initializeSchema();
+
+    // Clean up expired memories
+    this.sql.exec(
+      "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < ?",
+      new Date().toISOString()
+    );
+
+    const limit = Math.min(options?.limit ?? 10, 100);
+    const minSimilarity = options?.minSimilarity ?? 0.5;
+    const minImportance = options?.minImportance ?? 0;
+
+    // Get all memories with embeddings (filtering will be done in code)
+    let query = `SELECT key, content, summary, tags, type, importance, embedding
+                 FROM memories WHERE embedding IS NOT NULL AND importance >= ?`;
+    const params: unknown[] = [minImportance];
+
+    if (options?.type) {
+      query += " AND type = ?";
+      params.push(options.type);
+    }
+
+    const results = this.sql.exec(query, ...params).toArray();
+
+    // Calculate cosine similarity for each memory
+    const scoredResults: Array<{
+      key: string;
+      content: string;
+      summary: string | null;
+      tags: string[];
+      type: string;
+      importance: number;
+      similarity: number;
+    }> = [];
+
+    for (const row of results) {
+      let storedEmbedding: number[];
+      try {
+        storedEmbedding = JSON.parse(row.embedding as string);
+      } catch {
+        continue;
+      }
+
+      // Cosine similarity
+      const similarity = this.cosineSimilarity(queryEmbedding, storedEmbedding);
+
+      if (similarity < minSimilarity) {
+        continue;
+      }
+
+      // Parse tags
+      let tags: string[] = [];
+      if (row.tags) {
+        try {
+          tags = JSON.parse(row.tags as string);
+        } catch {
+          tags = [];
+        }
+      }
+
+      // Filter by tags if specified
+      if (options?.tags?.length) {
+        const hasMatchingTag = options.tags.some((t) => tags.includes(t));
+        if (!hasMatchingTag) {
+          continue;
+        }
+      }
+
+      scoredResults.push({
+        key: row.key as string,
+        content: row.content as string,
+        summary: row.summary as string | null,
+        tags,
+        type: row.type as string,
+        importance: row.importance as number,
+        similarity,
+      });
+    }
+
+    // Sort by similarity descending and limit
+    scoredResults.sort((a, b) => b.similarity - a.similarity);
+    return scoredResults.slice(0, limit);
+  }
+
+  /**
+   * Calculate cosine similarity between two vectors
+   */
+  private cosineSimilarity(a: number[], b: number[]): number {
+    if (a.length !== b.length) {
+      return 0;
+    }
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < a.length; i++) {
+      dotProduct += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
+
+    const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
+    if (magnitude === 0) {
+      return 0;
+    }
+
+    return dotProduct / magnitude;
+  }
+
+  /**
+   * List memories with optional filters
+   */
+  async memoryList(options?: {
+    prefix?: string;
+    tags?: string[];
+    type?: string;
+    minImportance?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    memories: Array<{
+      key: string;
+      summary: string | null;
+      tags: string[];
+      type: string;
+      importance: number;
+      hasEmbedding: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+    total: number;
+    hasMore: boolean;
+  }> {
+    this.initializeSchema();
+
+    // Clean up expired memories
+    this.sql.exec(
+      "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < ?",
+      new Date().toISOString()
+    );
+
+    const limit = Math.min(options?.limit ?? 50, 500);
+    const offset = options?.offset ?? 0;
+    const minImportance = options?.minImportance ?? 0;
+
+    // Build query with filters
+    let whereClause = "WHERE importance >= ?";
+    const params: unknown[] = [minImportance];
+
+    if (options?.prefix) {
+      whereClause += " AND key LIKE ?";
+      params.push(`${options.prefix}%`);
+    }
+
+    if (options?.type) {
+      whereClause += " AND type = ?";
+      params.push(options.type);
+    }
+
+    // Get total count
+    const countResult = this.sql
+      .exec(`SELECT COUNT(*) as count FROM memories ${whereClause}`, ...params)
+      .toArray();
+    const total = countResult[0]?.count as number;
+
+    // Get paginated results
+    const results = this.sql
+      .exec(
+        `SELECT key, summary, tags, type, importance, embedding, created_at, updated_at
+         FROM memories ${whereClause}
+         ORDER BY importance DESC, updated_at DESC
+         LIMIT ? OFFSET ?`,
+        ...params,
+        limit,
+        offset
+      )
+      .toArray();
+
+    // Process results and filter by tags if needed
+    const memories: Array<{
+      key: string;
+      summary: string | null;
+      tags: string[];
+      type: string;
+      importance: number;
+      hasEmbedding: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }> = [];
+
+    for (const row of results) {
+      let tags: string[] = [];
+      if (row.tags) {
+        try {
+          tags = JSON.parse(row.tags as string);
+        } catch {
+          tags = [];
+        }
+      }
+
+      // Filter by tags if specified
+      if (options?.tags?.length) {
+        const hasMatchingTag = options.tags.some((t) => tags.includes(t));
+        if (!hasMatchingTag) {
+          continue;
+        }
+      }
+
+      memories.push({
+        key: row.key as string,
+        summary: row.summary as string | null,
+        tags,
+        type: row.type as string,
+        importance: row.importance as number,
+        hasEmbedding: !!row.embedding,
+        createdAt: row.created_at as string,
+        updatedAt: row.updated_at as string,
+      });
+    }
+
+    return {
+      memories,
+      total,
+      hasMore: offset + limit < total,
+    };
+  }
+
+  /**
+   * Forget (delete) a memory
+   */
+  async memoryForget(key: string): Promise<{
+    deleted: boolean;
+    key: string;
+  }> {
+    this.initializeSchema();
+
+    const existing = this.sql
+      .exec("SELECT 1 FROM memories WHERE key = ?", key)
+      .toArray();
+
+    if (existing.length === 0) {
+      return { deleted: false, key };
+    }
+
+    this.sql.exec("DELETE FROM memories WHERE key = ?", key);
+    return { deleted: true, key };
   }
 }

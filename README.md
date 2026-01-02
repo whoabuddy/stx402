@@ -1,6 +1,6 @@
 # STX402
 
-Cloudflare Worker API providing **147 useful endpoints** via [X402 micropayments](https://x402.org). Built with [OpenAPI 3.1](https://github.com/cloudflare/chanfana) + [Hono](https://hono.dev).
+Cloudflare Worker API providing **152 useful endpoints** via [X402 micropayments](https://x402.org). Built with [OpenAPI 3.1](https://github.com/cloudflare/chanfana) + [Hono](https://hono.dev).
 
 ## Payment
 
@@ -14,6 +14,7 @@ All paid endpoints require X402 micropayments. Supports `?tokenType=STX|sBTC|USD
 | Storage Read | 0.0005 | 0.0000005 | 0.0005 | KV get, list operations |
 | Storage Write | 0.001 | 0.000001 | 0.001 | KV set, delete operations |
 | Storage Large | 0.005 | 0.000005 | 0.005 | Values > 100KB |
+| Storage AI | 0.003 | 0.000003 | 0.003 | Memory with embeddings |
 
 ## Endpoints
 
@@ -327,6 +328,26 @@ Distributed job queue with priority, retries, and dead letter queue support, bac
 - Visibility timeout to prevent duplicate processing
 - Per-user isolation (by payer address)
 
+### Memory (5 endpoints)
+
+AI-powered agent memory system with semantic search, backed by Durable Objects.
+
+| Method | Path | Tier | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/memory/store` | storage_ai | Store memory with optional embedding |
+| `POST` | `/api/memory/recall` | storage_read | Retrieve memory by key |
+| `POST` | `/api/memory/search` | storage_ai | Semantic search using embeddings |
+| `POST` | `/api/memory/list` | storage_read | List memories with filters |
+| `POST` | `/api/memory/forget` | storage_write | Delete a memory |
+
+**Features:**
+- Automatic embedding generation for semantic search
+- Auto-summarization for long content
+- Rich metadata (tags, type, importance, source)
+- Cosine similarity search across memories
+- Optional TTL for expiring memories
+- Per-user isolation (by payer address)
+
 ## Project Structure
 
 ```
@@ -353,8 +374,10 @@ src/
 │   │   └── links*.ts   # create, expand, stats, delete, list
 │   ├── sync/           # Distributed locks (Durable Objects)
 │   │   └── sync*.ts    # lock, unlock, check, extend, list
-│   └── queue/          # Job queue endpoints (Durable Objects)
-│       └── queue*.ts   # push, pop, complete, fail, status
+│   ├── queue/          # Job queue endpoints (Durable Objects)
+│   │   └── queue*.ts   # push, pop, complete, fail, status
+│   └── memory/         # Agent memory endpoints (Durable Objects + AI)
+│       └── memory*.ts  # store, recall, search, list, forget
 ├── durable-objects/
 │   └── UserDurableObject.ts  # Per-user SQLite-backed DO
 ├── middleware/

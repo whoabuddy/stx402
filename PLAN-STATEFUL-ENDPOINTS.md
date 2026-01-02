@@ -523,10 +523,10 @@ src/
 | 4 | `/api/links/*` | 5 | DO | ✅ Done |
 | 5 | `/api/sync/*` | 5 | DO | ✅ Done |
 | 6 | `/api/queue/*` | 5 | DO | ✅ Done |
-| 7 | `/api/memory/*` | 5 | KV+AI | Planned |
+| 7 | `/api/memory/*` | 5 | DO+AI | ✅ Done |
 
-**Completed**: 31 endpoints (Phases 1-6)
-**Current total**: 147 endpoints (116 original + 31 stateful)
+**Completed**: 36 endpoints (Phases 1-7)
+**Current total**: 152 endpoints (116 original + 36 stateful)
 
 ---
 
