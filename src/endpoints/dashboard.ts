@@ -643,9 +643,12 @@ function generateDashboardHTML(data: {
     `}
 
     <div class="footer">
-      <p>Powered by <a href="https://x402.org" target="_blank">X402</a> |
-      <a href="/" target="_blank">API Docs</a> |
-      Built on <a href="https://stacks.co" target="_blank">Stacks</a></p>
+      <p>
+        <a href="/archive/2025">2025 Year in Review</a> |
+        Powered by <a href="https://x402.org" target="_blank">X402</a> |
+        <a href="/" target="_blank">API Docs</a> |
+        Built on <a href="https://stacks.co" target="_blank">Stacks</a>
+      </p>
     </div>
   </div>
   <script>
