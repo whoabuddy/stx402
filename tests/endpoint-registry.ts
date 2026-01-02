@@ -1403,6 +1403,57 @@ const syncEndpoints: TestConfig[] = [
 ];
 
 // =============================================================================
+// QUEUE ENDPOINTS (5) - Durable Objects Job Queue
+// Note: These endpoints provide distributed job queue functionality with
+// priority, retries, and dead letter queue support.
+// =============================================================================
+
+const queueEndpoints: TestConfig[] = [
+  {
+    name: "queue-push",
+    endpoint: "/api/queue/push",
+    method: "POST",
+    body: { queue: "test-queue", payload: { task: "test" }, priority: 0 },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["jobId", "queue", "position"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "queue-pop",
+    endpoint: "/api/queue/pop",
+    method: "POST",
+    body: { queue: "test-queue", visibility: 60 },
+    validateResponse: (data, tokenType) => {
+      // May return a job or empty queue
+      return (hasFields(data, ["jobId", "payload", "attempt"]) || hasField(data, "empty")) && hasTokenType(data, tokenType);
+    },
+  },
+  {
+    name: "queue-complete",
+    endpoint: "/api/queue/complete",
+    method: "POST",
+    body: { jobId: "nonexistent-job" },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["completed", "jobId"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "queue-fail",
+    endpoint: "/api/queue/fail",
+    method: "POST",
+    body: { jobId: "nonexistent-job", error: "Test error" },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["failed", "willRetry", "jobId"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "queue-status",
+    endpoint: "/api/queue/status",
+    method: "POST",
+    body: { queue: "test-queue" },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["queue", "pending", "processing", "completed"]) && hasTokenType(data, tokenType),
+  },
+];
+
+// =============================================================================
 // EXPORT COMBINED REGISTRY
 // =============================================================================
 
@@ -1423,6 +1474,7 @@ export const ENDPOINT_REGISTRY: TestConfig[] = [
   ...sqlEndpoints,
   ...linksEndpoints,
   ...syncEndpoints,
+  ...queueEndpoints,
 ];
 
 // Category mapping for filtered runs
@@ -1443,11 +1495,12 @@ export const ENDPOINT_CATEGORIES: Record<string, TestConfig[]> = {
   sql: sqlEndpoints,
   links: linksEndpoints,
   sync: syncEndpoints,
+  queue: queueEndpoints,
 };
 
 // Export counts for verification
 export const ENDPOINT_COUNTS = {
-  total: ENDPOINT_REGISTRY.length, // 140 endpoints (138 paid + 2 free)
+  total: ENDPOINT_REGISTRY.length, // 145 endpoints (143 paid + 2 free)
   stacks: stacksEndpoints.length,  // 15
   ai: aiEndpoints.length,          // 13
   text: textEndpoints.length,      // 24
@@ -1464,4 +1517,5 @@ export const ENDPOINT_COUNTS = {
   sql: sqlEndpoints.length,        // 3
   links: linksEndpoints.length,    // 5
   sync: syncEndpoints.length,      // 5
+  queue: queueEndpoints.length,    // 5
 };

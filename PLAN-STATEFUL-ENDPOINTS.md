@@ -307,7 +307,7 @@ function getStorageWriteTier(valueSize: number): PricingTier {
 
 ---
 
-### Phase 6: Job Queue (5 endpoints)
+### Phase 6: Job Queue (5 endpoints) ✅ COMPLETED
 **Category**: `/api/queue/*`
 
 | Endpoint | Method | Tier | Description |
@@ -522,11 +522,11 @@ src/
 | 3 | `/api/counter/*` + `/api/sql/*` | 6+3=9 | DO | ✅ Done |
 | 4 | `/api/links/*` | 5 | DO | ✅ Done |
 | 5 | `/api/sync/*` | 5 | DO | ✅ Done |
-| 6 | `/api/queue/*` | 5 | DO | Planned |
+| 6 | `/api/queue/*` | 5 | DO | ✅ Done |
 | 7 | `/api/memory/*` | 5 | KV+AI | Planned |
 
-**Completed**: 26 endpoints (Phases 1-5)
-**Current total**: 142 endpoints (116 original + 26 stateful)
+**Completed**: 31 endpoints (Phases 1-6)
+**Current total**: 147 endpoints (116 original + 31 stateful)
 
 ---
 

@@ -1,6 +1,6 @@
 # STX402
 
-Cloudflare Worker API providing **142 useful endpoints** via [X402 micropayments](https://x402.org). Built with [OpenAPI 3.1](https://github.com/cloudflare/chanfana) + [Hono](https://hono.dev).
+Cloudflare Worker API providing **147 useful endpoints** via [X402 micropayments](https://x402.org). Built with [OpenAPI 3.1](https://github.com/cloudflare/chanfana) + [Hono](https://hono.dev).
 
 ## Payment
 
@@ -306,6 +306,27 @@ Distributed locking with automatic expiration, backed by Durable Objects.
 - Per-user isolation (by payer address)
 - Prevents deadlocks with mandatory expiration
 
+### Queue (5 endpoints)
+
+Distributed job queue with priority, retries, and dead letter queue support, backed by Durable Objects.
+
+| Method | Path | Tier | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/queue/push` | storage_write | Add job to queue |
+| `POST` | `/api/queue/pop` | storage_write | Claim next available job |
+| `POST` | `/api/queue/complete` | storage_write | Mark job as completed |
+| `POST` | `/api/queue/fail` | storage_write | Mark job as failed (retry or dead letter) |
+| `POST` | `/api/queue/status` | storage_read | Get queue statistics |
+
+**Features:**
+- Named queues per payer
+- Priority support (higher = processed sooner)
+- Delayed jobs with `delay` parameter
+- Automatic retry with exponential backoff
+- Dead letter queue for failed jobs (max attempts)
+- Visibility timeout to prevent duplicate processing
+- Per-user isolation (by payer address)
+
 ## Project Structure
 
 ```
@@ -330,8 +351,10 @@ src/
 │   │   └── sql*.ts     # query, execute, schema
 │   ├── links/          # URL shortener endpoints (Durable Objects)
 │   │   └── links*.ts   # create, expand, stats, delete, list
-│   └── sync/           # Distributed locks (Durable Objects)
-│       └── sync*.ts    # lock, unlock, check, extend, list
+│   ├── sync/           # Distributed locks (Durable Objects)
+│   │   └── sync*.ts    # lock, unlock, check, extend, list
+│   └── queue/          # Job queue endpoints (Durable Objects)
+│       └── queue*.ts   # push, pop, complete, fail, status
 ├── durable-objects/
 │   └── UserDurableObject.ts  # Per-user SQLite-backed DO
 ├── middleware/

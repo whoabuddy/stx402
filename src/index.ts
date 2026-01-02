@@ -183,6 +183,15 @@ import {
   SyncList,
 } from "./endpoints/sync";
 
+// Queue endpoints (Durable Objects - Job Queue)
+import {
+  QueuePush,
+  QueuePop,
+  QueueComplete,
+  QueueFail,
+  QueueStatus,
+} from "./endpoints/queue";
+
 // Durable Objects
 export { UserDurableObject } from "./durable-objects/UserDurableObject";
 
@@ -411,6 +420,13 @@ openapi.post("/api/sync/unlock", paymentMiddleware, trackMetrics, SyncUnlock as 
 openapi.post("/api/sync/check", paymentMiddleware, trackMetrics, SyncCheck as any);
 openapi.post("/api/sync/extend", paymentMiddleware, trackMetrics, SyncExtend as any);
 openapi.get("/api/sync/list", paymentMiddleware, trackMetrics, SyncList as any);
+
+// Queue endpoints (paid - Durable Objects Job Queue)
+openapi.post("/api/queue/push", paymentMiddleware, trackMetrics, QueuePush as any);
+openapi.post("/api/queue/pop", paymentMiddleware, trackMetrics, QueuePop as any);
+openapi.post("/api/queue/complete", paymentMiddleware, trackMetrics, QueueComplete as any);
+openapi.post("/api/queue/fail", paymentMiddleware, trackMetrics, QueueFail as any);
+openapi.post("/api/queue/status", paymentMiddleware, trackMetrics, QueueStatus as any);
 
 // Export the Hono app
 export default app;

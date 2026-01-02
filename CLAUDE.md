@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-STX402 is a Cloudflare Workers API providing **142 useful endpoints** via X402 micropayments.
+STX402 is a Cloudflare Workers API providing **147 useful endpoints** via X402 micropayments.
 
 **Vision**: A marketplace of useful API endpoints where the best ones surface to the top based on usage and earnings. Each endpoint is simple, composable, and pays for itself through micropayments.
 
@@ -31,7 +31,7 @@ bun run tests/get-bns-address.test.ts
 
 ## Architecture
 
-### Endpoint Categories (142 total)
+### Endpoint Categories (147 total)
 
 | Category | Count | Path Pattern | Tier | Description |
 |----------|-------|--------------|------|-------------|
@@ -52,6 +52,7 @@ bun run tests/get-bns-address.test.ts
 | SQL | 3 | `/api/sql/*` | storage_* | Direct SQLite access (Durable Objects) |
 | Links | 5 | `/api/links/*` | storage_* | URL shortener with click tracking |
 | Sync | 5 | `/api/sync/*` | storage_* | Distributed locks with auto-expiration |
+| Queue | 5 | `/api/queue/*` | storage_* | Job queue with priority and retries |
 
 ### Pricing Tiers
 

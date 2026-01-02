@@ -96,6 +96,34 @@ export class UserDurableObject extends DurableObject<Env> {
       CREATE INDEX IF NOT EXISTS idx_locks_expires ON locks(expires_at)
     `);
 
+    // Jobs table for queue functionality
+    this.sql.exec(`
+      CREATE TABLE IF NOT EXISTS jobs (
+        id TEXT PRIMARY KEY,
+        queue TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        priority INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'pending',
+        attempt INTEGER NOT NULL DEFAULT 0,
+        max_attempts INTEGER NOT NULL DEFAULT 3,
+        available_at TEXT NOT NULL,
+        visibility_timeout TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        completed_at TEXT,
+        failed_at TEXT,
+        error TEXT
+      )
+    `);
+
+    // Indexes for efficient queue operations
+    this.sql.exec(`
+      CREATE INDEX IF NOT EXISTS idx_jobs_queue_status ON jobs(queue, status)
+    `);
+    this.sql.exec(`
+      CREATE INDEX IF NOT EXISTS idx_jobs_available ON jobs(queue, status, available_at, priority DESC)
+    `);
+
     this.initialized = true;
   }
 
@@ -912,7 +940,7 @@ export class UserDurableObject extends DurableObject<Env> {
 
     // Security: Prevent modification of system tables
     const normalizedQuery = query.trim().toUpperCase();
-    const systemTables = ["COUNTERS", "USER_DATA", "LINKS", "LINK_CLICKS", "LOCKS"];
+    const systemTables = ["COUNTERS", "USER_DATA", "LINKS", "LINK_CLICKS", "LOCKS", "JOBS"];
 
     for (const table of systemTables) {
       // Check if trying to DROP or ALTER system tables
@@ -958,5 +986,392 @@ export class UserDurableObject extends DurableObject<Env> {
         sql: row.sql as string,
       })),
     };
+  }
+
+  // ===========================================================================
+  // Queue Operations (Job Queue)
+  // ===========================================================================
+
+  /**
+   * Generate a unique job ID
+   */
+  private generateJobId(): string {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let id = "";
+    for (let i = 0; i < 16; i++) {
+      id += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return `job_${id}`;
+  }
+
+  /**
+   * Clean up visibility timeouts (make jobs available again if popped but not completed)
+   */
+  private cleanupVisibilityTimeouts(queue: string): void {
+    const now = new Date().toISOString();
+    // Jobs that have visibility_timeout expired and are still "processing" become "pending" again
+    this.sql.exec(
+      `UPDATE jobs SET status = 'pending', visibility_timeout = NULL, updated_at = ?, attempt = attempt + 1
+       WHERE queue = ? AND status = 'processing' AND visibility_timeout < ?`,
+      now,
+      queue,
+      now
+    );
+  }
+
+  /**
+   * Push a new job to a queue
+   */
+  async queuePush(
+    queue: string,
+    payload: unknown,
+    options?: {
+      priority?: number;
+      delay?: number;
+      maxAttempts?: number;
+    }
+  ): Promise<{
+    jobId: string;
+    queue: string;
+    position: number;
+  }> {
+    this.initializeSchema();
+    const now = new Date();
+    const nowStr = now.toISOString();
+
+    const jobId = this.generateJobId();
+    const priority = options?.priority ?? 0;
+    const delay = options?.delay ?? 0;
+    const maxAttempts = options?.maxAttempts ?? 3;
+    const availableAt = new Date(now.getTime() + delay * 1000).toISOString();
+
+    // Serialize payload
+    const payloadStr = JSON.stringify(payload);
+
+    this.sql.exec(
+      `INSERT INTO jobs (id, queue, payload, priority, status, max_attempts, available_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
+      jobId,
+      queue,
+      payloadStr,
+      priority,
+      maxAttempts,
+      availableAt,
+      nowStr,
+      nowStr
+    );
+
+    // Get position in queue (count of pending jobs with higher or equal priority ahead of this one)
+    const positionResult = this.sql
+      .exec(
+        `SELECT COUNT(*) as count FROM jobs
+         WHERE queue = ? AND status = 'pending' AND available_at <= ?
+         AND (priority > ? OR (priority = ? AND created_at < ?))`,
+        queue,
+        nowStr,
+        priority,
+        priority,
+        nowStr
+      )
+      .toArray();
+
+    const position = (positionResult[0]?.count as number) + 1;
+
+    return { jobId, queue, position };
+  }
+
+  /**
+   * Pop the next available job from a queue
+   */
+  async queuePop(
+    queue: string,
+    options?: {
+      visibility?: number; // seconds before job becomes available again if not completed
+    }
+  ): Promise<{
+    jobId: string;
+    payload: unknown;
+    attempt: number;
+  } | { empty: true }> {
+    this.initializeSchema();
+    this.cleanupVisibilityTimeouts(queue);
+
+    const now = new Date();
+    const nowStr = now.toISOString();
+    const visibility = options?.visibility ?? 60; // default 60 seconds
+    const visibilityTimeout = new Date(now.getTime() + visibility * 1000).toISOString();
+
+    // Find the next available job (highest priority, oldest, available)
+    const jobs = this.sql
+      .exec(
+        `SELECT id, payload, attempt FROM jobs
+         WHERE queue = ? AND status = 'pending' AND available_at <= ?
+         ORDER BY priority DESC, created_at ASC
+         LIMIT 1`,
+        queue,
+        nowStr
+      )
+      .toArray();
+
+    if (jobs.length === 0) {
+      return { empty: true };
+    }
+
+    const job = jobs[0];
+    const jobId = job.id as string;
+    const attempt = (job.attempt as number) + 1;
+
+    // Mark job as processing with visibility timeout
+    this.sql.exec(
+      `UPDATE jobs SET status = 'processing', visibility_timeout = ?, attempt = ?, updated_at = ?
+       WHERE id = ?`,
+      visibilityTimeout,
+      attempt,
+      nowStr,
+      jobId
+    );
+
+    // Parse payload
+    let payload: unknown;
+    try {
+      payload = JSON.parse(job.payload as string);
+    } catch {
+      payload = job.payload;
+    }
+
+    return { jobId, payload, attempt };
+  }
+
+  /**
+   * Mark a job as completed
+   */
+  async queueComplete(jobId: string): Promise<{
+    completed: boolean;
+    error?: string;
+  }> {
+    this.initializeSchema();
+    const now = new Date().toISOString();
+
+    // Check if job exists and is processing
+    const existing = this.sql
+      .exec("SELECT status FROM jobs WHERE id = ?", jobId)
+      .toArray();
+
+    if (existing.length === 0) {
+      return { completed: false, error: "Job not found" };
+    }
+
+    const status = existing[0].status as string;
+    if (status !== "processing") {
+      return { completed: false, error: `Job is not processing (status: ${status})` };
+    }
+
+    // Mark as completed
+    this.sql.exec(
+      `UPDATE jobs SET status = 'completed', completed_at = ?, updated_at = ?, visibility_timeout = NULL
+       WHERE id = ?`,
+      now,
+      now,
+      jobId
+    );
+
+    return { completed: true };
+  }
+
+  /**
+   * Mark a job as failed (will retry or go to dead letter)
+   */
+  async queueFail(
+    jobId: string,
+    options?: {
+      error?: string;
+      retry?: boolean;
+    }
+  ): Promise<{
+    failed: boolean;
+    willRetry: boolean;
+    error?: string;
+  }> {
+    this.initializeSchema();
+    const now = new Date().toISOString();
+
+    // Check if job exists
+    const existing = this.sql
+      .exec("SELECT status, attempt, max_attempts, queue FROM jobs WHERE id = ?", jobId)
+      .toArray();
+
+    if (existing.length === 0) {
+      return { failed: false, willRetry: false, error: "Job not found" };
+    }
+
+    const job = existing[0];
+    const status = job.status as string;
+    const attempt = job.attempt as number;
+    const maxAttempts = job.max_attempts as number;
+
+    if (status !== "processing") {
+      return { failed: false, willRetry: false, error: `Job is not processing (status: ${status})` };
+    }
+
+    const shouldRetry = options?.retry !== false && attempt < maxAttempts;
+    const errorMsg = options?.error ?? null;
+
+    if (shouldRetry) {
+      // Calculate exponential backoff: 2^attempt seconds (2, 4, 8, 16...)
+      const backoff = Math.min(Math.pow(2, attempt), 300); // cap at 5 minutes
+      const availableAt = new Date(Date.now() + backoff * 1000).toISOString();
+
+      // Mark as pending for retry
+      this.sql.exec(
+        `UPDATE jobs SET status = 'pending', available_at = ?, error = ?, updated_at = ?, visibility_timeout = NULL
+         WHERE id = ?`,
+        availableAt,
+        errorMsg,
+        now,
+        jobId
+      );
+
+      return { failed: true, willRetry: true };
+    } else {
+      // Mark as dead (exceeded max attempts)
+      this.sql.exec(
+        `UPDATE jobs SET status = 'dead', failed_at = ?, error = ?, updated_at = ?, visibility_timeout = NULL
+         WHERE id = ?`,
+        now,
+        errorMsg,
+        now,
+        jobId
+      );
+
+      return { failed: true, willRetry: false };
+    }
+  }
+
+  /**
+   * Get queue status and statistics
+   */
+  async queueStatus(queue: string): Promise<{
+    queue: string;
+    pending: number;
+    processing: number;
+    completed: number;
+    failed: number;
+    dead: number;
+    total: number;
+    oldestPending: string | null;
+    newestPending: string | null;
+  }> {
+    this.initializeSchema();
+    this.cleanupVisibilityTimeouts(queue);
+
+    // Get counts by status
+    const counts = this.sql
+      .exec(
+        `SELECT status, COUNT(*) as count FROM jobs WHERE queue = ? GROUP BY status`,
+        queue
+      )
+      .toArray();
+
+    const statusCounts: Record<string, number> = {
+      pending: 0,
+      processing: 0,
+      completed: 0,
+      failed: 0,
+      dead: 0,
+    };
+
+    for (const row of counts) {
+      const status = row.status as string;
+      statusCounts[status] = row.count as number;
+    }
+
+    // Get oldest and newest pending jobs
+    const oldest = this.sql
+      .exec(
+        `SELECT created_at FROM jobs WHERE queue = ? AND status = 'pending' ORDER BY created_at ASC LIMIT 1`,
+        queue
+      )
+      .toArray();
+
+    const newest = this.sql
+      .exec(
+        `SELECT created_at FROM jobs WHERE queue = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1`,
+        queue
+      )
+      .toArray();
+
+    const total = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+
+    return {
+      queue,
+      pending: statusCounts.pending,
+      processing: statusCounts.processing,
+      completed: statusCounts.completed,
+      failed: statusCounts.failed,
+      dead: statusCounts.dead,
+      total,
+      oldestPending: oldest.length > 0 ? (oldest[0].created_at as string) : null,
+      newestPending: newest.length > 0 ? (newest[0].created_at as string) : null,
+    };
+  }
+
+  /**
+   * List jobs in a queue with optional filters
+   */
+  async queueList(
+    queue: string,
+    options?: {
+      status?: string;
+      limit?: number;
+    }
+  ): Promise<
+    Array<{
+      jobId: string;
+      status: string;
+      priority: number;
+      attempt: number;
+      createdAt: string;
+      error: string | null;
+    }>
+  > {
+    this.initializeSchema();
+
+    const limit = Math.min(options?.limit ?? 100, 1000);
+    const status = options?.status;
+
+    let results;
+    if (status) {
+      results = this.sql
+        .exec(
+          `SELECT id, status, priority, attempt, created_at, error FROM jobs
+           WHERE queue = ? AND status = ?
+           ORDER BY priority DESC, created_at ASC
+           LIMIT ?`,
+          queue,
+          status,
+          limit
+        )
+        .toArray();
+    } else {
+      results = this.sql
+        .exec(
+          `SELECT id, status, priority, attempt, created_at, error FROM jobs
+           WHERE queue = ?
+           ORDER BY priority DESC, created_at ASC
+           LIMIT ?`,
+          queue,
+          limit
+        )
+        .toArray();
+    }
+
+    return results.map((row) => ({
+      jobId: row.id as string,
+      status: row.status as string,
+      priority: row.priority as number,
+      attempt: row.attempt as number,
+      createdAt: row.created_at as string,
+      error: row.error as string | null,
+    }));
   }
 }
