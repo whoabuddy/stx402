@@ -136,7 +136,22 @@ export class LinksCreate extends BaseEndpoint {
     const stub = c.env.USER_DO.get(id) as DurableObjectStub<UserDurableObject>;
 
     try {
+      // If custom slug, check if it's globally unique first
+      if (slug) {
+        const existingOwner = await c.env.STORAGE.get(`link:slug:${slug}`);
+        if (existingOwner && existingOwner !== payerAddress) {
+          return this.errorResponse(c, "Slug is already taken", 400);
+        }
+      }
+
       const result = await stub.linkCreate(url, { slug, title, ttl });
+
+      // Store global slug→owner mapping for the expand endpoint
+      const kvKey = `link:slug:${result.slug}`;
+      await c.env.STORAGE.put(kvKey, payerAddress, {
+        // Set expiration if TTL is provided, otherwise keep forever
+        ...(ttl ? { expirationTtl: ttl + 3600 } : {}), // Add 1 hour buffer
+      });
 
       // Build short URL
       const baseUrl = new URL(c.req.url).origin;

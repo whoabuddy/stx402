@@ -84,6 +84,11 @@ export class LinksDelete extends BaseEndpoint {
 
     try {
       const result = await stub.linkDelete(slug);
+
+      // Clean up global slug mapping
+      const kvKey = `link:slug:${slug}`;
+      await c.env.STORAGE.delete(kvKey);
+
       return c.json({ ...result, tokenType });
     } catch (error) {
       console.error("Link delete error:", error);

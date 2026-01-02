@@ -5,7 +5,7 @@ import type { UserDurableObject } from "../../durable-objects/UserDurableObject"
 export class LinksExpand extends BaseEndpoint {
   schema = {
     tags: ["Links"],
-    summary: "(paid) Expand/resolve a short link",
+    summary: "(free) Expand/resolve a short link - tracks clicks",
     parameters: [
       {
         name: "slug",
@@ -26,16 +26,6 @@ export class LinksExpand extends BaseEndpoint {
           default: false,
         },
       },
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
     ],
     responses: {
       "200": {
@@ -49,7 +39,6 @@ export class LinksExpand extends BaseEndpoint {
                 url: { type: "string" as const },
                 title: { type: "string" as const, nullable: true },
                 clicks: { type: "number" as const },
-                tokenType: { type: "string" as const },
               },
             },
           },
@@ -57,19 +46,11 @@ export class LinksExpand extends BaseEndpoint {
       },
       "302": { description: "Redirect to target URL (if redirect=true)" },
       "400": { description: "Invalid request" },
-      "402": { description: "Payment required" },
       "404": { description: "Link not found" },
     },
   };
 
   async handle(c: AppContext) {
-    const tokenType = this.getTokenType(c);
-    const payerAddress = this.getPayerAddress(c);
-
-    if (!payerAddress) {
-      return this.errorResponse(c, "Could not determine payer address", 400);
-    }
-
     const slug = c.req.param("slug");
     const shouldRedirect = c.req.query("redirect") === "true";
 
@@ -77,14 +58,24 @@ export class LinksExpand extends BaseEndpoint {
       return this.errorResponse(c, "Slug is required", 400);
     }
 
-    // Get user's Durable Object
-    const id = c.env.USER_DO.idFromName(payerAddress);
+    // Look up the owner from global slug mapping in KV
+    const kvKey = `link:slug:${slug}`;
+    const ownerAddress = await c.env.STORAGE.get(kvKey);
+
+    if (!ownerAddress) {
+      return this.errorResponse(c, `Link '${slug}' not found`, 404);
+    }
+
+    // Get the owner's Durable Object
+    const id = c.env.USER_DO.idFromName(ownerAddress);
     const stub = c.env.USER_DO.get(id) as DurableObjectStub<UserDurableObject>;
 
     try {
       const link = await stub.linkGet(slug);
 
       if (!link) {
+        // Link was deleted from DO but KV entry still exists - clean up
+        await c.env.STORAGE.delete(kvKey);
         return this.errorResponse(c, `Link '${slug}' not found or expired`, 404);
       }
 
@@ -106,7 +97,6 @@ export class LinksExpand extends BaseEndpoint {
         url: link.url,
         title: link.title,
         clicks: link.clicks + 1, // Include this click
-        tokenType,
       });
     } catch (error) {
       console.error("Link expand error:", error);
