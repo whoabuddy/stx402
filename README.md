@@ -175,6 +175,29 @@ OpenAPI docs: `GET /` | Dashboard: `GET /dashboard`
 | `POST` | `/api/net/cors-proxy` | CORS proxy |
 | `POST` | `/api/net/ssl-check` | SSL certificate check |
 
+### Registry (10 endpoints)
+
+API endpoint discovery and registration system.
+
+| Method | Path | Tier | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/registry/probe` | ai | Probe endpoint reachability |
+| `POST` | `/api/registry/register` | ai | Register a new endpoint |
+| `GET` | `/api/registry/list` | free | List all registered endpoints |
+| `POST` | `/api/registry/details` | ai | Get endpoint details |
+| `POST` | `/api/registry/update` | ai | Update endpoint metadata |
+| `POST` | `/api/registry/delete` | ai | Delete an endpoint |
+| `POST` | `/api/registry/my-endpoints` | ai | List your registered endpoints |
+| `POST` | `/api/registry/transfer` | ai | Transfer ownership |
+| `POST` | `/api/admin/registry/verify` | ai | Admin: verify endpoint |
+| `POST` | `/api/admin/registry/pending` | ai | Admin: list pending endpoints |
+
+**Features:**
+- Endpoint discovery across the API marketplace
+- Owner-verified endpoints
+- Category-based organization
+- Transfer ownership capability
+
 ### KV Storage (4 endpoints)
 
 Stateful key-value storage with TTL support. Keys are namespaced by payer address for automatic isolation.

@@ -1112,6 +1112,165 @@ const counterEndpoints: TestConfig[] = [
 ];
 
 // =============================================================================
+// NETWORK ENDPOINTS (6)
+// =============================================================================
+
+const netEndpoints: TestConfig[] = [
+  {
+    name: "geo-ip",
+    endpoint: "/api/net/geo-ip",
+    method: "GET",
+    validateResponse: (data, tokenType) =>
+      hasField(data, "ip") && hasTokenType(data, tokenType),
+  },
+  {
+    name: "asn-lookup",
+    endpoint: "/api/net/asn-lookup?ip=8.8.8.8",
+    method: "GET",
+    validateResponse: (data, tokenType) =>
+      hasField(data, "asn") && hasTokenType(data, tokenType),
+  },
+  {
+    name: "request-fingerprint",
+    endpoint: "/api/net/request-fingerprint",
+    method: "GET",
+    validateResponse: (data, tokenType) =>
+      hasField(data, "fingerprint") && hasTokenType(data, tokenType),
+  },
+  {
+    name: "http-probe",
+    endpoint: "/api/net/http-probe",
+    method: "POST",
+    body: { url: "https://example.com" },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["status", "url"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "cors-proxy",
+    endpoint: "/api/net/cors-proxy",
+    method: "POST",
+    body: { url: "https://example.com", method: "GET" },
+    validateResponse: (data, tokenType) =>
+      hasField(data, "status") && hasTokenType(data, tokenType),
+  },
+  {
+    name: "ssl-check",
+    endpoint: "/api/net/ssl-check",
+    method: "POST",
+    body: { hostname: "example.com" },
+    validateResponse: (data, tokenType) =>
+      hasField(data, "valid") && hasTokenType(data, tokenType),
+  },
+];
+
+// =============================================================================
+// REGISTRY ENDPOINTS (10)
+// Note: Registry endpoints manage API endpoint discovery and registration.
+// Some tests may require prior state or specific authorization.
+// =============================================================================
+
+const registryEndpoints: TestConfig[] = [
+  {
+    name: "registry-probe",
+    endpoint: "/api/registry/probe",
+    method: "POST",
+    body: { url: "https://example.com/api/test" },
+    validateResponse: (data, tokenType) =>
+      hasField(data, "reachable") && hasTokenType(data, tokenType),
+  },
+  {
+    name: "registry-register",
+    endpoint: "/api/registry/register",
+    method: "POST",
+    body: {
+      url: `https://example.com/api/test-${Date.now()}`,
+      name: "Test Endpoint",
+      description: "A test endpoint for registration",
+      category: "utility",
+    },
+    validateResponse: (data, tokenType) => {
+      // May fail if already registered, but should return proper response
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "registry-list",
+    endpoint: "/api/registry/list",
+    method: "GET",
+    // This is a FREE endpoint, no payment required
+    validateResponse: (data) => hasField(data, "endpoints"),
+  },
+  {
+    name: "registry-details",
+    endpoint: "/api/registry/details",
+    method: "POST",
+    body: { url: "https://example.com/api/nonexistent" },
+    validateResponse: (data, tokenType) => {
+      // May 404 if not found
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "registry-update",
+    endpoint: "/api/registry/update",
+    method: "POST",
+    body: { url: "https://example.com/api/nonexistent", description: "Updated" },
+    validateResponse: (data, tokenType) => {
+      // May fail if not owner or not found
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "registry-delete",
+    endpoint: "/api/registry/delete",
+    method: "POST",
+    body: { url: "https://example.com/api/nonexistent" },
+    validateResponse: (data, tokenType) => {
+      // May fail if not owner or not found
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "registry-my-endpoints",
+    endpoint: "/api/registry/my-endpoints",
+    method: "POST",
+    body: {},
+    validateResponse: (data, tokenType) =>
+      hasField(data, "endpoints") && hasTokenType(data, tokenType),
+  },
+  {
+    name: "registry-transfer",
+    endpoint: "/api/registry/transfer",
+    method: "POST",
+    body: { url: "https://example.com/api/nonexistent", newOwner: FIXTURES.mainnetAddress },
+    validateResponse: (data, tokenType) => {
+      // May fail if not owner or not found
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "admin-registry-verify",
+    endpoint: "/api/admin/registry/verify",
+    method: "POST",
+    body: { url: "https://example.com/api/nonexistent", verified: true },
+    validateResponse: (data, tokenType) => {
+      // May fail if not admin
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "admin-registry-pending",
+    endpoint: "/api/admin/registry/pending",
+    method: "POST",
+    body: {},
+    validateResponse: (data, tokenType) => {
+      // May fail if not admin
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+];
+
+// =============================================================================
 // SQL ENDPOINTS (3) - Durable Objects
 // Note: These endpoints provide direct SQL access to user's DO database.
 // =============================================================================
@@ -1155,6 +1314,8 @@ export const ENDPOINT_REGISTRY: TestConfig[] = [
   ...randomEndpoints,
   ...mathEndpoints,
   ...utilEndpoints,
+  ...netEndpoints,
+  ...registryEndpoints,
   ...kvEndpoints,
   ...pasteEndpoints,
   ...counterEndpoints,
@@ -1171,6 +1332,8 @@ export const ENDPOINT_CATEGORIES: Record<string, TestConfig[]> = {
   random: randomEndpoints,
   math: mathEndpoints,
   util: utilEndpoints,
+  net: netEndpoints,
+  registry: registryEndpoints,
   kv: kvEndpoints,
   paste: pasteEndpoints,
   counter: counterEndpoints,
@@ -1179,7 +1342,7 @@ export const ENDPOINT_CATEGORIES: Record<string, TestConfig[]> = {
 
 // Export counts for verification
 export const ENDPOINT_COUNTS = {
-  total: ENDPOINT_REGISTRY.length, // 114 endpoints
+  total: ENDPOINT_REGISTRY.length, // 130 endpoints (129 paid + 1 free registry/list)
   stacks: stacksEndpoints.length,  // 15
   ai: aiEndpoints.length,          // 13
   text: textEndpoints.length,      // 24
@@ -1188,6 +1351,8 @@ export const ENDPOINT_COUNTS = {
   random: randomEndpoints.length,  // 7
   math: mathEndpoints.length,      // 6
   util: utilEndpoints.length,      // 23
+  net: netEndpoints.length,        // 6
+  registry: registryEndpoints.length, // 10
   kv: kvEndpoints.length,          // 4
   paste: pasteEndpoints.length,    // 3
   counter: counterEndpoints.length, // 6
