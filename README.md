@@ -1,6 +1,6 @@
 # STX402
 
-Cloudflare Worker API providing **120 useful endpoints** via [X402 micropayments](https://x402.org). Built with [OpenAPI 3.1](https://github.com/cloudflare/chanfana) + [Hono](https://hono.dev).
+Cloudflare Worker API providing **123 useful endpoints** via [X402 micropayments](https://x402.org). Built with [OpenAPI 3.1](https://github.com/cloudflare/chanfana) + [Hono](https://hono.dev).
 
 ## Payment
 
@@ -193,6 +193,23 @@ Stateful key-value storage with TTL support. Keys are namespaced by payer addres
 - Value size up to 25MB (large tier pricing for > 100KB)
 - Prefix-based listing with pagination
 
+### Paste (3 endpoints)
+
+Simple paste service with short codes for sharing text snippets.
+
+| Method | Path | Tier | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/paste/create` | storage_write | Create paste, get short code |
+| `GET` | `/api/paste/:code` | storage_read | Retrieve paste by code |
+| `POST` | `/api/paste/delete` | storage_write | Delete paste (owner only) |
+
+**Features:**
+- 6-character alphanumeric short codes
+- Language hint for syntax highlighting
+- TTL: 60s min, 7 days default, 30 days max
+- Max content size: 500KB
+- Owner-only deletion
+
 ## Project Structure
 
 ```
@@ -207,11 +224,10 @@ src/
 │   ├── random*.ts      # Random generation
 │   ├── text*.ts        # Text/encoding utilities
 │   ├── util*.ts        # General utilities
-│   └── kv/             # KV storage endpoints
-│       ├── kvSet.ts    # Store values
-│       ├── kvGet.ts    # Retrieve values
-│       ├── kvDelete.ts # Delete values
-│       └── kvList.ts   # List keys
+│   ├── kv/             # KV storage endpoints
+│   │   └── kv*.ts      # set, get, delete, list
+│   └── paste/          # Paste endpoints
+│       └── paste*.ts   # create, get, delete
 ├── middleware/
 │   ├── x402-stacks.ts  # X402 payment verification
 │   └── metrics.ts      # Usage tracking (KV)

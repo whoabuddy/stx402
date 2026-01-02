@@ -1017,6 +1017,45 @@ const kvEndpoints: TestConfig[] = [
 ];
 
 // =============================================================================
+// PASTE ENDPOINTS (3)
+// Note: These endpoints are stateful. Create stores content with a short code,
+// get retrieves it, delete removes it. Only the creator can delete.
+// =============================================================================
+
+const pasteEndpoints: TestConfig[] = [
+  {
+    name: "paste-create",
+    endpoint: "/api/paste/create",
+    method: "POST",
+    body: { content: "Hello, World! This is a test paste.", language: "text", ttl: 60 },
+    validateResponse: (data, tokenType) =>
+      hasFields(data, ["code", "url", "expiresAt", "bytes"]) && hasTokenType(data, tokenType),
+  },
+  {
+    name: "paste-get",
+    endpoint: "/api/paste/nonexistent",
+    method: "GET",
+    // Note: This will 404 since the code doesn't exist
+    // For full lifecycle testing, use a dedicated test file
+    validateResponse: (data, tokenType) => {
+      // Accept either success (code found) or 404 error response
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+  {
+    name: "paste-delete",
+    endpoint: "/api/paste/delete",
+    method: "POST",
+    body: { code: "nonexistent" },
+    // Note: This will 404 since the code doesn't exist
+    validateResponse: (data, tokenType) => {
+      // Accept either success or 404 error response
+      return hasTokenType(data, tokenType) || hasField(data, "error");
+    },
+  },
+];
+
+// =============================================================================
 // EXPORT COMBINED REGISTRY
 // =============================================================================
 
@@ -1030,6 +1069,7 @@ export const ENDPOINT_REGISTRY: TestConfig[] = [
   ...mathEndpoints,
   ...utilEndpoints,
   ...kvEndpoints,
+  ...pasteEndpoints,
 ];
 
 // Category mapping for filtered runs
@@ -1043,11 +1083,12 @@ export const ENDPOINT_CATEGORIES: Record<string, TestConfig[]> = {
   math: mathEndpoints,
   util: utilEndpoints,
   kv: kvEndpoints,
+  paste: pasteEndpoints,
 };
 
 // Export counts for verification
 export const ENDPOINT_COUNTS = {
-  total: ENDPOINT_REGISTRY.length, // 102 endpoints
+  total: ENDPOINT_REGISTRY.length, // 105 endpoints
   stacks: stacksEndpoints.length,  // 15
   ai: aiEndpoints.length,          // 13
   text: textEndpoints.length,      // 24
@@ -1057,4 +1098,5 @@ export const ENDPOINT_COUNTS = {
   math: mathEndpoints.length,      // 6
   util: utilEndpoints.length,      // 23
   kv: kvEndpoints.length,          // 4
+  paste: pasteEndpoints.length,    // 3
 };

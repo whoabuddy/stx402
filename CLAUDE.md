@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-STX402 is a Cloudflare Workers API providing **120 useful endpoints** via X402 micropayments.
+STX402 is a Cloudflare Workers API providing **123 useful endpoints** via X402 micropayments.
 
 **Vision**: A marketplace of useful API endpoints where the best ones surface to the top based on usage and earnings. Each endpoint is simple, composable, and pays for itself through micropayments.
 
@@ -31,7 +31,7 @@ bun run tests/get-bns-address.test.ts
 
 ## Architecture
 
-### Endpoint Categories (120 total)
+### Endpoint Categories (123 total)
 
 | Category | Count | Path Pattern | Tier | Description |
 |----------|-------|--------------|------|-------------|
@@ -47,6 +47,7 @@ bun run tests/get-bns-address.test.ts
 | Network | 6 | `/api/net/*` | simple | Network utilities |
 | Registry | 10 | `/api/registry/*` | ai | Endpoint registry management |
 | KV Storage | 4 | `/api/kv/*` | storage_* | Stateful key-value storage |
+| Paste | 3 | `/api/paste/*` | storage_* | Text paste with short codes |
 
 ### Pricing Tiers
 
@@ -114,6 +115,7 @@ export class MyEndpoint extends BaseEndpoint {
 - `src/endpoints/net*.ts` - Network utilities (geo-IP, ASN, SSL checks)
 - `src/endpoints/registry*.ts` - Endpoint registry management
 - `src/endpoints/kv/*.ts` - KV storage endpoints (set, get, delete, list)
+- `src/endpoints/paste/*.ts` - Paste endpoints (create, get, delete)
 
 **Middleware:**
 - `src/middleware/x402-stacks.ts` - X402 payment verification/settlement

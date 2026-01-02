@@ -149,6 +149,9 @@ import { RegistryTransfer } from "./endpoints/registryTransfer";
 // KV Storage endpoints
 import { KvSet, KvGet, KvDelete, KvList } from "./endpoints/kv";
 
+// Paste endpoints
+import { PasteCreate, PasteGet, PasteDelete } from "./endpoints/paste";
+
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 import { metricsMiddleware } from "./middleware/metrics";
 
@@ -342,6 +345,11 @@ openapi.post("/api/kv/set", paymentMiddleware, trackMetrics, KvSet as any);
 openapi.post("/api/kv/get", paymentMiddleware, trackMetrics, KvGet as any);
 openapi.post("/api/kv/delete", paymentMiddleware, trackMetrics, KvDelete as any);
 openapi.post("/api/kv/list", paymentMiddleware, trackMetrics, KvList as any);
+
+// Paste endpoints (paid)
+openapi.post("/api/paste/create", paymentMiddleware, trackMetrics, PasteCreate as any);
+openapi.get("/api/paste/:code", paymentMiddleware, trackMetrics, PasteGet as any);
+openapi.post("/api/paste/delete", paymentMiddleware, trackMetrics, PasteDelete as any);
 
 // Export the Hono app
 export default app;
