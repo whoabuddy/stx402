@@ -59,6 +59,10 @@ export interface TestConfig {
   headers?: Record<string, string>;
   /** Expected content type (defaults to application/json) */
   expectedContentType?: string;
+  /** Additional HTTP status codes to accept as valid (besides 200) */
+  allowedStatuses?: number[];
+  /** Skip payment flow for free endpoints */
+  skipPayment?: boolean;
 }
 
 export interface TestResult {
@@ -186,7 +190,9 @@ async function testSingleToken(
 
   logger.info(`Retry status: ${retryRes.status}`);
 
-  if (retryRes.status !== 200) {
+  // Check if status is acceptable (200 or in allowedStatuses)
+  const acceptableStatuses = [200, ...(config.allowedStatuses || [])];
+  if (!acceptableStatuses.includes(retryRes.status)) {
     const errText = await retryRes.text();
     logger.error(`Retry failed (${retryRes.status}): ${errText}`);
     return false;

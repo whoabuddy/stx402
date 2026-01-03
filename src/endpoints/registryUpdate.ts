@@ -26,7 +26,7 @@ export class RegistryUpdate extends BaseEndpoint {
         "application/json": {
           schema: {
             type: "object" as const,
-            required: ["url", "owner"],
+            required: ["url"],
             properties: {
               url: {
                 type: "string" as const,
@@ -34,7 +34,7 @@ export class RegistryUpdate extends BaseEndpoint {
               },
               owner: {
                 type: "string" as const,
-                description: "Owner STX address (must match registered owner)",
+                description: "Owner STX address (defaults to payer address, must match registered owner)",
               },
               name: {
                 type: "string" as const,
@@ -144,17 +144,22 @@ export class RegistryUpdate extends BaseEndpoint {
       return this.errorResponse(c, "url is required", 400);
     }
 
-    if (!body.owner) {
-      return this.errorResponse(c, "owner is required", 400);
-    }
-
-    // Validate owner address format
+    // Use provided owner or default to payer address
     let ownerAddress: string;
-    try {
-      const addressObj = Address.parse(body.owner);
-      ownerAddress = Address.stringify(addressObj);
-    } catch {
-      return this.errorResponse(c, "Invalid owner address format", 400);
+    if (body.owner) {
+      try {
+        const addressObj = Address.parse(body.owner);
+        ownerAddress = Address.stringify(addressObj);
+      } catch {
+        return this.errorResponse(c, "Invalid owner address format", 400);
+      }
+    } else {
+      // Default to payer address when owner not specified
+      const payerAddress = this.getPayerAddress(c);
+      if (!payerAddress) {
+        return this.errorResponse(c, "Could not determine owner from payment. Please specify owner address.", 400);
+      }
+      ownerAddress = payerAddress;
     }
 
     // Look up the entry

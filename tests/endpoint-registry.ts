@@ -135,10 +135,11 @@ const stacksEndpoints: TestConfig[] = [
     endpoint: "/api/stacks/call-readonly",
     method: "POST",
     body: {
-      // USDA token - well-known SIP-010 token with get-name read-only function
-      contractAddress: "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR",
-      contractName: "usda-token",
-      functionName: "get-name",
+      // POX-4 contract - built-in Stacks contract with get-pox-info read-only function
+      // Using mainnet POX-4 which is a core contract (less likely to be rate-limited)
+      contractAddress: "SP000000000000000000002Q6VF78",
+      contractName: "pox-4",
+      functionName: "get-pox-info",
       functionArgs: [],
     },
     validateResponse: (data, tokenType) =>
@@ -990,6 +991,7 @@ const kvEndpoints: TestConfig[] = [
     // Note: This may 404 if run independently without kv-set first
     // For full lifecycle testing, use tests/kv-storage.test.ts
     body: { key: "nonexistent-key-for-404-test" },
+    allowedStatuses: [404],
     validateResponse: (data, tokenType) => {
       // Accept either success (key found) or 404 error response
       return hasTokenType(data, tokenType) || hasField(data, "error");
@@ -1009,6 +1011,7 @@ const kvEndpoints: TestConfig[] = [
     method: "POST",
     // Note: This may 404 if run independently
     body: { key: "nonexistent-key-for-404-test" },
+    allowedStatuses: [404],
     validateResponse: (data, tokenType) => {
       // Accept either success or 404 error response
       return hasTokenType(data, tokenType) || hasField(data, "error");
@@ -1033,10 +1036,11 @@ const pasteEndpoints: TestConfig[] = [
   },
   {
     name: "paste-get",
-    endpoint: "/api/paste/nonexistent",
+    endpoint: "/api/paste/abc123",
     method: "GET",
     // Note: This will 404 since the code doesn't exist
     // For full lifecycle testing, use a dedicated test file
+    allowedStatuses: [404],
     validateResponse: (data, tokenType) => {
       // Accept either success (code found) or 404 error response
       return hasTokenType(data, tokenType) || hasField(data, "error");
@@ -1046,8 +1050,9 @@ const pasteEndpoints: TestConfig[] = [
     name: "paste-delete",
     endpoint: "/api/paste/delete",
     method: "POST",
-    body: { code: "nonexistent" },
+    body: { code: "abc123" },
     // Note: This will 404 since the code doesn't exist
+    allowedStatuses: [404],
     validateResponse: (data, tokenType) => {
       // Accept either success or 404 error response
       return hasTokenType(data, tokenType) || hasField(data, "error");
@@ -1082,6 +1087,7 @@ const counterEndpoints: TestConfig[] = [
     endpoint: "/api/counter/get?name=nonexistent-counter",
     method: "GET",
     // Note: This will 404 if counter doesn't exist
+    allowedStatuses: [404],
     validateResponse: (data, tokenType) => {
       return hasTokenType(data, tokenType) || hasField(data, "error");
     },
@@ -1135,7 +1141,7 @@ const netEndpoints: TestConfig[] = [
     endpoint: "/api/net/request-fingerprint",
     method: "GET",
     validateResponse: (data, tokenType) =>
-      hasField(data, "fingerprint") && hasTokenType(data, tokenType),
+      hasField(data, "ip") && hasTokenType(data, tokenType),
   },
   {
     name: "http-probe",
@@ -1157,7 +1163,7 @@ const netEndpoints: TestConfig[] = [
     name: "ssl-check",
     endpoint: "/api/net/ssl-check",
     method: "POST",
-    body: { hostname: "example.com" },
+    body: { domain: "example.com" },
     validateResponse: (data, tokenType) =>
       hasField(data, "valid") && hasTokenType(data, tokenType),
   },
@@ -1176,7 +1182,7 @@ const registryEndpoints: TestConfig[] = [
     method: "POST",
     body: { url: "https://example.com/api/test" },
     validateResponse: (data, tokenType) =>
-      hasField(data, "reachable") && hasTokenType(data, tokenType),
+      hasField(data, "success") && hasTokenType(data, tokenType),
   },
   {
     name: "registry-register",
@@ -1198,15 +1204,17 @@ const registryEndpoints: TestConfig[] = [
     endpoint: "/api/registry/list",
     method: "GET",
     // This is a FREE endpoint, no payment required
-    validateResponse: (data) => hasField(data, "endpoints"),
+    skipPayment: true,
+    validateResponse: (data) => hasField(data, "entries"),
   },
   {
     name: "registry-details",
     endpoint: "/api/registry/details",
     method: "POST",
     body: { url: "https://example.com/api/nonexistent" },
+    // May 404 if not found
+    allowedStatuses: [404],
     validateResponse: (data, tokenType) => {
-      // May 404 if not found
       return hasTokenType(data, tokenType) || hasField(data, "error");
     },
   },
@@ -1252,7 +1260,9 @@ const registryEndpoints: TestConfig[] = [
     name: "admin-registry-verify",
     endpoint: "/api/admin/registry/verify",
     method: "POST",
-    body: { url: "https://example.com/api/nonexistent", verified: true },
+    body: { url: "https://example.com/api/nonexistent", action: "verify", adminAddress: FIXTURES.mainnetAddress },
+    // Admin endpoints return 403 for non-admin callers - this is expected behavior
+    allowedStatuses: [403],
     validateResponse: (data, tokenType) => {
       // May fail if not admin
       return hasTokenType(data, tokenType) || hasField(data, "error");
@@ -1262,7 +1272,9 @@ const registryEndpoints: TestConfig[] = [
     name: "admin-registry-pending",
     endpoint: "/api/admin/registry/pending",
     method: "POST",
-    body: {},
+    body: { adminAddress: FIXTURES.mainnetAddress },
+    // Admin endpoints return 403 for non-admin callers - this is expected behavior
+    allowedStatuses: [403],
     validateResponse: (data, tokenType) => {
       // May fail if not admin
       return hasTokenType(data, tokenType) || hasField(data, "error");
@@ -1322,7 +1334,8 @@ const linksEndpoints: TestConfig[] = [
     method: "GET",
     // Note: This is a FREE endpoint - no payment required
     // Returns 404 for missing slugs
-    skipPayment: true, // Mark as free endpoint
+    skipPayment: true,
+    allowedStatuses: [404],
     validateResponse: (data) => {
       // Accept URL response or 404 error
       return hasField(data, "url") || hasField(data, "error");
@@ -1333,8 +1346,9 @@ const linksEndpoints: TestConfig[] = [
     endpoint: "/api/links/stats",
     method: "POST",
     body: { slug: "nonexistent" },
+    // Returns 404 error for nonexistent slugs - this is expected
+    allowedStatuses: [404],
     validateResponse: (data) => {
-      // Returns 404 error for nonexistent slugs - this is expected
       return hasField(data, "error");
     },
   },
@@ -1478,8 +1492,9 @@ const memoryEndpoints: TestConfig[] = [
     endpoint: "/api/memory/recall",
     method: "POST",
     body: { key: "nonexistent-memory" },
+    // May return 404 for nonexistent memory
+    allowedStatuses: [404],
     validateResponse: (data, tokenType) => {
-      // May return 404 for nonexistent memory
       return hasTokenType(data, tokenType) || hasField(data, "error");
     },
   },

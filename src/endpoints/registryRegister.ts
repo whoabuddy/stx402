@@ -150,7 +150,7 @@ export class RegistryRegister extends BaseEndpoint {
       return this.errorResponse(c, "URL must use http or https", 400);
     }
 
-    // Validate owner address if provided
+    // Validate owner address if provided, otherwise use payer address
     let ownerAddress: string;
     if (body.owner) {
       try {
@@ -160,9 +160,12 @@ export class RegistryRegister extends BaseEndpoint {
         return this.errorResponse(c, "Invalid owner address format", 400);
       }
     } else {
-      // For MVP, require owner address to be specified
-      // TODO: Extract from payment transaction when possible
-      return this.errorResponse(c, "owner address is required", 400);
+      // Use payer address as owner when not explicitly specified
+      const payerAddress = this.getPayerAddress(c);
+      if (!payerAddress) {
+        return this.errorResponse(c, "Could not determine owner from payment. Please specify owner address.", 400);
+      }
+      ownerAddress = payerAddress;
     }
 
     // Validate name length

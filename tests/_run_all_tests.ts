@@ -240,6 +240,38 @@ async function testEndpointWithToken(
   const fullUrl = `${X402_WORKER_URL}${endpoint}`;
 
   try {
+    // For free endpoints, skip the payment flow entirely
+    if (config.skipPayment) {
+      logger.debug("1. Direct request (free endpoint)...");
+
+      const res = await fetch(fullUrl, {
+        method: config.method,
+        headers: {
+          ...(config.body ? { "Content-Type": "application/json" } : {}),
+          ...config.headers,
+        },
+        body: config.body ? JSON.stringify(config.body) : undefined,
+      });
+
+      const allowedStatuses = [200, ...(config.allowedStatuses || [])];
+      if (!allowedStatuses.includes(res.status)) {
+        const text = await res.text();
+        return { passed: false, error: `(${res.status}) ${text.slice(0, 100)}` };
+      }
+
+      // Validate response
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+        logger.debug("Response", data);
+        if (config.validateResponse(data, tokenType)) {
+          return { passed: true };
+        }
+        return { passed: false, error: "Response validation failed" };
+      }
+      return { passed: true };
+    }
+
     // Step 1: Initial request (expect 402)
     logger.debug("1. Initial request...");
 
@@ -290,7 +322,9 @@ async function testEndpointWithToken(
       });
 
       // Success - break out of retry loop
-      if (retryRes.status === 200) {
+      // Accept 200, or any status in allowedStatuses
+      const allowedStatuses = [200, ...(config.allowedStatuses || [])];
+      if (allowedStatuses.includes(retryRes.status)) {
         break;
       }
 
@@ -301,15 +335,17 @@ async function testEndpointWithToken(
       // Parse error to check if retryable
       let errorCode: string | undefined;
       let errorMessage: string | undefined;
+      let bodyRetryAfter: number | undefined;
       try {
         const parsed = JSON.parse(errText);
         errorCode = parsed.code;
         errorMessage = parsed.error || parsed.details?.exceptionMessage || parsed.details?.settleError;
+        bodyRetryAfter = parsed.retryAfter;
       } catch { /* not JSON */ }
 
       if (isRetryableError(retryRes.status, errorCode, errorMessage || errText) && attempt < maxRetries) {
-        // Calculate delay: use Retry-After header or exponential backoff
-        const retryAfterSecs = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 0;
+        // Calculate delay: use Retry-After header, body retryAfter, or exponential backoff
+        const retryAfterSecs = retryAfterHeader ? parseInt(retryAfterHeader, 10) : (bodyRetryAfter || 0);
         const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000); // Max 10s
         const delayMs = retryAfterSecs > 0 ? retryAfterSecs * 1000 : backoffMs;
 
@@ -332,7 +368,9 @@ async function testEndpointWithToken(
       break;
     }
 
-    if (!retryRes || retryRes.status !== 200) {
+    // Check if response status is acceptable
+    const allowedStatuses = [200, ...(config.allowedStatuses || [])];
+    if (!retryRes || !allowedStatuses.includes(retryRes.status)) {
       return { passed: false, error: lastError || "Request failed" };
     }
 

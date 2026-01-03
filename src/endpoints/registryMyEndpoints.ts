@@ -21,11 +21,10 @@ export class RegistryMyEndpoints extends BaseEndpoint {
         "application/json": {
           schema: {
             type: "object" as const,
-            required: ["owner"],
             properties: {
               owner: {
                 type: "string" as const,
-                description: "Owner STX address to list endpoints for",
+                description: "Owner STX address to list endpoints for (defaults to payer address)",
               },
               signature: {
                 type: "string" as const,
@@ -119,17 +118,22 @@ export class RegistryMyEndpoints extends BaseEndpoint {
       return this.errorResponse(c, "Invalid JSON body", 400);
     }
 
-    if (!body.owner) {
-      return this.errorResponse(c, "owner is required", 400);
-    }
-
-    // Validate owner address format
+    // Use provided owner or default to payer address
     let ownerAddress: string;
-    try {
-      const addressObj = Address.parse(body.owner);
-      ownerAddress = Address.stringify(addressObj);
-    } catch {
-      return this.errorResponse(c, "Invalid owner address format", 400);
+    if (body.owner) {
+      try {
+        const addressObj = Address.parse(body.owner);
+        ownerAddress = Address.stringify(addressObj);
+      } catch {
+        return this.errorResponse(c, "Invalid owner address format", 400);
+      }
+    } else {
+      // Default to payer address when owner not specified
+      const payerAddress = this.getPayerAddress(c);
+      if (!payerAddress) {
+        return this.errorResponse(c, "Could not determine owner from payment. Please specify owner address.", 400);
+      }
+      ownerAddress = payerAddress;
     }
 
     let authenticatedBy: "signature" | "payment" | null = null;

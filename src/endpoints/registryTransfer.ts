@@ -27,7 +27,7 @@ export class RegistryTransfer extends BaseEndpoint {
         "application/json": {
           schema: {
             type: "object" as const,
-            required: ["url", "owner", "newOwner"],
+            required: ["url", "newOwner"],
             properties: {
               url: {
                 type: "string" as const,
@@ -35,7 +35,7 @@ export class RegistryTransfer extends BaseEndpoint {
               },
               owner: {
                 type: "string" as const,
-                description: "Current owner STX address",
+                description: "Current owner STX address (defaults to payer address)",
               },
               newOwner: {
                 type: "string" as const,
@@ -115,20 +115,26 @@ export class RegistryTransfer extends BaseEndpoint {
     if (!body.url) {
       return this.errorResponse(c, "url is required", 400);
     }
-    if (!body.owner) {
-      return this.errorResponse(c, "owner is required", 400);
-    }
     if (!body.newOwner) {
       return this.errorResponse(c, "newOwner is required", 400);
     }
 
-    // Validate owner address
+    // Use provided owner or default to payer address
     let ownerAddress: string;
-    try {
-      const addressObj = Address.parse(body.owner);
-      ownerAddress = Address.stringify(addressObj);
-    } catch {
-      return this.errorResponse(c, "Invalid owner address format", 400);
+    if (body.owner) {
+      try {
+        const addressObj = Address.parse(body.owner);
+        ownerAddress = Address.stringify(addressObj);
+      } catch {
+        return this.errorResponse(c, "Invalid owner address format", 400);
+      }
+    } else {
+      // Default to payer address when owner not specified
+      const payerAddress = this.getPayerAddress(c);
+      if (!payerAddress) {
+        return this.errorResponse(c, "Could not determine owner from payment. Please specify owner address.", 400);
+      }
+      ownerAddress = payerAddress;
     }
 
     // Validate new owner address
