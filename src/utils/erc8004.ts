@@ -72,13 +72,43 @@ export function parseContractId(contractId: string): {
 }
 
 /**
- * Call a read-only function on an ERC-8004 registry
+ * Sleep for a given number of milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Parse retry delay from error message (e.g., "try again in 11 seconds")
+ */
+function parseRetryDelay(errorMessage: string): number | null {
+  const match = errorMessage.match(/try again in (\d+) seconds?/i);
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+  return null;
+}
+
+/**
+ * Check if an error is a rate limit error (429)
+ */
+function isRateLimitError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    return msg.includes("429") || msg.includes("rate limit") || msg.includes("too many requests");
+  }
+  return false;
+}
+
+/**
+ * Call a read-only function on an ERC-8004 registry with automatic retry on rate limits
  */
 export async function callRegistryFunction(
   network: ERC8004Network,
   registry: "identity" | "reputation" | "validation",
   functionName: string,
-  functionArgs: ClarityValue[] = []
+  functionArgs: ClarityValue[] = [],
+  options?: { maxRetries?: number; baseDelay?: number; maxDelay?: number }
 ): Promise<ClarityValue> {
   const contracts = getContractAddresses(network);
   const contractId = contracts[registry];
@@ -86,16 +116,54 @@ export async function callRegistryFunction(
 
   const stacksNetwork = network === "mainnet" ? "mainnet" : "testnet";
 
-  const result = await fetchCallReadOnlyFunction({
-    contractAddress: address,
-    contractName: name,
-    functionName,
-    functionArgs,
-    senderAddress: address,
-    network: stacksNetwork,
-  });
+  const maxRetries = options?.maxRetries ?? 3;
+  const baseDelay = options?.baseDelay ?? 1000;
+  const maxDelay = options?.maxDelay ?? 30000;
 
-  return result;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await fetchCallReadOnlyFunction({
+        contractAddress: address,
+        contractName: name,
+        functionName,
+        functionArgs,
+        senderAddress: address,
+        network: stacksNetwork,
+      });
+
+      return result;
+    } catch (error) {
+      // Check if this is a rate limit error
+      if (!isRateLimitError(error)) {
+        throw error; // Not a rate limit, rethrow immediately
+      }
+
+      // If this was the last attempt, rethrow
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      // Parse retry delay from error message or use exponential backoff
+      let delay: number;
+      if (error instanceof Error) {
+        const retryAfter = parseRetryDelay(error.message);
+        if (retryAfter !== null && retryAfter > 0) {
+          // Use the suggested delay with small jitter
+          delay = Math.min(retryAfter * 1000 + Math.random() * 500, maxDelay);
+        } else {
+          // Exponential backoff with jitter
+          delay = Math.min(baseDelay * Math.pow(2, attempt) + Math.random() * baseDelay, maxDelay);
+        }
+      } else {
+        delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+      }
+
+      await sleep(delay);
+    }
+  }
+
+  // Should not reach here
+  throw new Error("Unexpected error in callRegistryFunction retry logic");
 }
 
 /**
