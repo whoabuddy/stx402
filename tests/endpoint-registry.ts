@@ -1679,7 +1679,7 @@ const agentEndpoints: TestConfig[] = [
     // May return 404 if agent doesn't exist
     allowedStatuses: [404],
     validateResponse: (data, tokenType) => {
-      return (hasFields(data, ["count", "averageScore"]) && hasTokenType(data, tokenType)) || hasField(data, "error");
+      return (hasFields(data, ["count", "averageResponse"]) && hasTokenType(data, tokenType)) || hasField(data, "error");
     },
   },
   {
