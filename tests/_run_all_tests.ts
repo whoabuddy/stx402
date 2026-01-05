@@ -7,6 +7,7 @@
  *   bun run tests/_run_all_tests.ts                    # All endpoints, STX only
  *   bun run tests/_run_all_tests.ts --all-tokens       # All endpoints, all tokens
  *   bun run tests/_run_all_tests.ts --token=sBTC       # All endpoints, specific token
+ *   bun run tests/_run_all_tests.ts --token=STX --token=sBTC  # Multiple specific tokens
  *   bun run tests/_run_all_tests.ts --category=stacks  # Single category
  *   bun run tests/_run_all_tests.ts --filter=sha256    # Filter by name
  *   bun run tests/_run_all_tests.ts --delay=1000       # 1s delay between tests
@@ -133,13 +134,27 @@ function parseArgs(): RunConfig {
     order: "default",
   };
 
+  // Track if --token= was explicitly specified (to clear default)
+  let tokenSpecified = false;
+
   for (const arg of args) {
     if (arg === "--all-tokens") {
       config.tokens = ["STX", "sBTC", "USDCx"];
+      tokenSpecified = true;
     } else if (arg.startsWith("--token=")) {
-      const token = arg.split("=")[1].toUpperCase();
-      if (["STX", "SBTC", "USDCX"].includes(token)) {
-        config.tokens = [token === "SBTC" ? "sBTC" : token === "USDCX" ? "USDCx" : token] as TokenType[];
+      const rawToken = arg.split("=")[1].toUpperCase();
+      // Normalize token names (sBTC and USDCx have specific casing)
+      const token = (rawToken === "SBTC" ? "sBTC" : rawToken === "USDCX" ? "USDCx" : rawToken) as TokenType;
+      if (["STX", "sBTC", "USDCx"].includes(token)) {
+        // On first --token=, clear the default; then accumulate
+        if (!tokenSpecified) {
+          config.tokens = [];
+          tokenSpecified = true;
+        }
+        // Avoid duplicates
+        if (!config.tokens.includes(token)) {
+          config.tokens.push(token);
+        }
       }
     } else if (arg.startsWith("--category=")) {
       config.category = arg.split("=")[1].toLowerCase();
