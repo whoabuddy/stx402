@@ -12,6 +12,7 @@ import { cors } from "hono/cors";
 import { Health } from "./endpoints/health";
 import { Dashboard } from "./endpoints/dashboard";
 import { Archive2025Page } from "./endpoints/archive-2025";
+import { docsHandler } from "./endpoints/docsPage";
 
 // Stacks endpoints
 import { GetBnsName } from "./endpoints/getBnsName";
@@ -242,8 +243,12 @@ app.use(
 
 // Setup OpenAPI registry
 const openapi = fromHono(app, {
-  docs_url: "/",
+  docs_url: null,  // Disable default docs, we use custom themed page
+  openapi_url: "/openapi.json",
 });
+
+// Custom themed docs page at root
+app.get("/", docsHandler);
 
 const paymentMiddleware = x402PaymentMiddleware();
 const trackMetrics = metricsMiddleware();
