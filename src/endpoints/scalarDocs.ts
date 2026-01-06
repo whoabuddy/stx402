@@ -177,6 +177,29 @@ export function getScalarHTML(specUrl: string): string {
     .scalar-app {
       margin-top: 48px !important;
     }
+
+    /* Mobile responsive styles */
+    @media (max-width: 640px) {
+      .stx402-nav {
+        padding: 0 12px;
+      }
+      .stx402-nav-brand span {
+        display: none;
+      }
+      .stx402-nav-links {
+        gap: 4px;
+      }
+      .stx402-nav-link {
+        font-size: 12px;
+        padding: 6px 8px;
+      }
+    }
+    @media (max-width: 400px) {
+      .stx402-nav-link {
+        font-size: 11px;
+        padding: 5px 6px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -186,7 +209,7 @@ export function getScalarHTML(specUrl: string): string {
         <rect fill="#f7931a" rx="12" width="100" height="100"/>
         <text x="50" y="68" font-size="40" font-weight="800" text-anchor="middle" fill="#000">402</text>
       </svg>
-      STX402
+      <span>STX402</span>
     </a>
     <div class="stx402-nav-links">
       <a href="/" class="stx402-nav-link active">API Docs</a>
