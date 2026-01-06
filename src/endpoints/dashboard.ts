@@ -571,6 +571,156 @@ function generateDashboardHTML(data: {
       font-size: 11px;
       color: #a1a1aa;
     }
+
+    /* Mobile optimizations */
+    @media (max-width: 600px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      .logo {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+      }
+      .subtitle {
+        font-size: 12px;
+        margin-bottom: 20px;
+      }
+      .section-nav {
+        gap: 6px;
+        margin-bottom: 20px;
+      }
+      .section-nav a {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+      .summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .card {
+        padding: 16px;
+        border-radius: 12px;
+      }
+      .card h3 {
+        font-size: 10px;
+        margin-bottom: 6px;
+      }
+      .card .value {
+        font-size: 20px;
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+      .tier-badges {
+        gap: 4px;
+        margin-top: 8px;
+      }
+      .tier-badge {
+        font-size: 9px;
+        padding: 3px 6px;
+      }
+      .section-title {
+        font-size: 16px;
+      }
+      .chart-container {
+        padding: 16px;
+        border-radius: 12px;
+      }
+      .bar-chart {
+        gap: 4px;
+        height: 100px;
+      }
+      .bar-value {
+        font-size: 9px;
+      }
+      .bar-label {
+        font-size: 9px;
+      }
+      .horiz-bar-label {
+        width: 50px;
+        font-size: 10px;
+      }
+      .horiz-bar-track {
+        height: 20px;
+      }
+      .horiz-bar-value {
+        font-size: 9px;
+      }
+      .horiz-bar-count {
+        display: none;
+      }
+      .charts-row {
+        gap: 16px;
+      }
+      .table-container {
+        border-radius: 12px;
+      }
+      table {
+        font-size: 11px;
+      }
+      th, td {
+        padding: 8px 10px;
+      }
+      code {
+        font-size: 10px;
+        padding: 2px 4px;
+      }
+      .footer {
+        margin-top: 32px;
+        padding-top: 16px;
+        font-size: 11px;
+      }
+      .footer p {
+        line-height: 1.8;
+      }
+      .copy-btn {
+        padding: 3px 6px;
+        font-size: 10px;
+      }
+      .host-badge {
+        font-size: 9px;
+        padding: 2px 4px;
+      }
+      .path-code {
+        font-size: 9px;
+      }
+      .owner-link {
+        font-size: 9px;
+        padding: 3px 6px;
+      }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 380px) {
+      .summary {
+        grid-template-columns: 1fr;
+      }
+      .card .value {
+        font-size: 24px;
+      }
+      .header-row {
+        gap: 8px;
+      }
+      h1 {
+        font-size: 18px;
+      }
+      .section-nav a {
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+    }
+
+    /* Hide less important columns on mobile */
+    @media (max-width: 768px) {
+      th:nth-child(6), td:nth-child(6),
+      th:nth-child(8), td:nth-child(8),
+      th:nth-child(9), td:nth-child(9) {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
