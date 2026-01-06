@@ -53,20 +53,21 @@ function generateToolboxHTML(): string {
       padding: 48px 24px;
     }
 
-    .page-header {
-      text-align: center;
-      margin-bottom: 48px;
-    }
-
-    .page-header h1 {
+    h1 {
       font-size: 32px;
       font-weight: 700;
+      color: #fafafa;
       margin-bottom: 8px;
     }
 
-    .page-header .subtitle {
-      color: #a1a1aa;
-      font-size: 16px;
+    h1 .accent {
+      color: #f7931a;
+    }
+
+    .subtitle {
+      color: #71717a;
+      margin-bottom: 32px;
+      font-size: 18px;
     }
 
     .tool-card {
@@ -558,10 +559,8 @@ function generateToolboxHTML(): string {
   ${getNavHTML("toolbox")}
 
   <div class="container">
-    <div class="page-header">
-      <h1>Toolbox</h1>
-      <p class="subtitle">Interactive tools for the curious</p>
-    </div>
+    <h1><span class="accent">STX402</span> Toolbox</h1>
+    <p class="subtitle">Interactive tools for the curious</p>
 
     <div class="tool-card">
       <h2>402 Checker</h2>
@@ -965,9 +964,6 @@ function generateToolboxHTML(): string {
       }
     });
 
-    // Store pending payment info
-    let pendingPayment = null;
-
     // Handle call endpoint
     callBtn.addEventListener('click', async function() {
       let url = callUrl.value.trim();
@@ -1011,14 +1007,11 @@ function generateToolboxHTML(): string {
           const payTo = paymentReq.payTo;
           const tokenType = paymentReq.tokenType || 'STX';
 
-          // Store for payment
-          pendingPayment = { url, method, body: hasBody ? bodyText : null, paymentReq };
-
           callStatusBadge.className = 'status-badge payment-required';
           callStatusBadge.textContent = '402 Payment Required';
           callResponseUrl.textContent = url;
 
-          // Show payment info with Pay button
+          // Show payment info
           callResponseBody.innerHTML = \`
 <div style="margin-bottom:16px;">
   <strong>Cost:</strong> <span style="color:#f7931a;font-weight:600;">\${amountNum} \${tokenType}</span>
@@ -1026,22 +1019,19 @@ function generateToolboxHTML(): string {
 <div style="margin-bottom:16px;">
   <strong>Recipient:</strong> <code style="background:#27272a;padding:2px 6px;border-radius:4px;font-size:12px;">\${payTo}</code>
 </div>
-<button id="pay-btn" style="
-  padding:12px 24px;
-  background:linear-gradient(135deg,#f7931a 0%,#c2410c 100%);
-  border:none;
-  border-radius:8px;
-  color:#000;
-  font-size:14px;
-  font-weight:600;
-  cursor:pointer;
-  margin-right:12px;
-">Pay with Wallet</button>
-<span style="color:#71717a;font-size:13px;">Opens your Stacks wallet to sign the payment</span>
+<div style="margin-bottom:16px;">
+  <strong>Network:</strong> \${paymentReq.network}
+</div>
+<div style="padding:16px;background:#18181b;border-radius:8px;margin-top:16px;">
+  <p style="color:#a1a1aa;font-size:13px;margin-bottom:8px;">
+    To call this endpoint, use the <a href="https://www.npmjs.com/package/x402-stacks" target="_blank" style="color:#f7931a;">x402-stacks</a> client library
+    which handles payment signing and verification.
+  </p>
+  <p style="color:#71717a;font-size:12px;">
+    Browser wallet signing (without broadcast) is not yet supported by @stacks/connect.
+  </p>
+</div>
 \`;
-
-          // Add pay button listener
-          document.getElementById('pay-btn').addEventListener('click', handlePayment);
 
         } else {
           // Got response (free endpoint or already paid)
@@ -1071,81 +1061,21 @@ function generateToolboxHTML(): string {
       }
     });
 
-    // Handle payment via wallet
-    async function handlePayment() {
-      if (!pendingPayment || !connectedAddress) return;
-
-      const { url, method, body, paymentReq } = pendingPayment;
-      const payBtn = document.getElementById('pay-btn');
-
-      payBtn.disabled = true;
-      payBtn.textContent = 'Opening Wallet...';
-
-      try {
-        const { request } = StacksConnect;
-
-        // Use stx_transferStx to pay directly
-        const amount = paymentReq.maxAmountRequired;
-        const recipient = paymentReq.payTo;
-
-        const result = await request('stx_transferStx', {
-          recipient,
-          amount,
-          memo: 'X402 payment: ' + paymentReq.resource,
-        });
-
-        // Payment sent! Show txid
-        callStatusBadge.className = 'status-badge free';
-        callStatusBadge.textContent = 'Payment Sent';
-
-        callResponseBody.innerHTML = \`
-<div style="margin-bottom:16px;">
-  <strong style="color:#22c55e;">Payment submitted!</strong>
-</div>
-<div style="margin-bottom:16px;">
-  <strong>Transaction:</strong> <a href="https://explorer.hiro.so/txid/\${result.txid}?chain=\${paymentReq.network}" target="_blank" style="color:#f7931a;">\${result.txid.slice(0,20)}...</a>
-</div>
-<div style="padding:16px;background:#18181b;border-radius:8px;margin-top:16px;">
-  <p style="color:#a1a1aa;font-size:13px;margin-bottom:8px;">
-    <strong>Note:</strong> This is a direct wallet payment. The full X402 protocol (sign-without-broadcast)
-    requires wallet support that isn't available yet in @stacks/connect.
-  </p>
-  <p style="color:#71717a;font-size:12px;">
-    For production integrations, use the <a href="https://www.npmjs.com/package/x402-stacks" target="_blank" style="color:#f7931a;">x402-stacks</a> client library.
-  </p>
-</div>
-\`;
-
-        pendingPayment = null;
-
-      } catch (err) {
-        console.error('Payment error:', err);
-        payBtn.disabled = false;
-        payBtn.textContent = 'Pay with Wallet';
-
-        // Show error
-        callResponseBody.innerHTML = \`
-<div style="color:#ef4444;margin-bottom:16px;">
-  <strong>Payment failed:</strong> \${err.message || 'User cancelled or wallet error'}
-</div>
-<button id="pay-btn" style="
-  padding:12px 24px;
-  background:linear-gradient(135deg,#f7931a 0%,#c2410c 100%);
-  border:none;
-  border-radius:8px;
-  color:#000;
-  font-size:14px;
-  font-weight:600;
-  cursor:pointer;
-">Try Again</button>
-\`;
-        document.getElementById('pay-btn').addEventListener('click', handlePayment);
+    // Initialize wallet UI after page loads
+    function initWallet() {
+      if (typeof StacksConnect !== 'undefined') {
+        updateWalletUI();
+      } else {
+        // Retry after a short delay if StacksConnect isn't ready
+        setTimeout(initWallet, 100);
       }
     }
 
-    // Initialize wallet UI
-    if (typeof StacksConnect !== 'undefined') {
-      updateWalletUI();
+    // Start initialization when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initWallet);
+    } else {
+      initWallet();
     }
   </script>
 </body>
