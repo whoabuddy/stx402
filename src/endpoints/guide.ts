@@ -321,10 +321,9 @@ function generateGuideHTML(): string {
       background: #0a0a0f;
       color: #e4e4e7;
       min-height: 100vh;
-      padding: 24px;
       line-height: 1.6;
     }
-    .container { max-width: 1000px; margin: 0 auto; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
     h1 {
       font-size: 32px;
       font-weight: 700;
