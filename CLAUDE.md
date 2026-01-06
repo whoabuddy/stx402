@@ -29,6 +29,40 @@ bun run tests/_run_all_tests.ts
 bun run tests/get-bns-address.test.ts
 ```
 
+### Registry Management Scripts
+
+**User endpoint management** (`X402_CLIENT_PK` - your wallet):
+
+```bash
+# List your registered endpoints (mainnet by default)
+X402_CLIENT_PK="..." bun run tests/registry-manage.ts list
+
+# Delete an endpoint you own (requires SIP-018 signature)
+X402_CLIENT_PK="..." bun run tests/registry-manage.ts delete https://example.com/api/endpoint
+
+# Against testnet/local
+X402_NETWORK=testnet X402_WORKER_URL=http://localhost:8787 X402_CLIENT_PK="..." bun run tests/registry-manage.ts list
+```
+
+**Admin verification** (`X402_PK` - server wallet, must match `X402_SERVER_ADDRESS`):
+
+```bash
+# List pending endpoints awaiting verification
+X402_PK="..." bun run tests/admin-verify.ts list
+
+# Verify or reject an endpoint
+X402_PK="..." bun run tests/admin-verify.ts verify https://example.com/api/endpoint
+X402_PK="..." bun run tests/admin-verify.ts reject https://example.com/api/endpoint
+
+# Against testnet/staging
+X402_NETWORK=testnet X402_WORKER_URL=https://stx402-staging.whoabuddy.workers.dev X402_PK="..." bun run tests/admin-verify.ts list
+```
+
+| Script | Env Var | Default Network | Default URL | Purpose |
+|--------|---------|-----------------|-------------|---------|
+| `registry-manage.ts` | `X402_CLIENT_PK` | mainnet | https://stx402.com | List/delete your endpoints |
+| `admin-verify.ts` | `X402_PK` | mainnet | https://stx402.com | Verify/reject pending endpoints |
+
 ## Architecture
 
 ### Endpoint Categories (168 total)
