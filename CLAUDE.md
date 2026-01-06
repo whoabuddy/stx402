@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-STX402 is a Cloudflare Workers API providing **168 useful endpoints** via X402 micropayments.
+STX402 is a Cloudflare Workers API providing **170 useful endpoints** via X402 micropayments.
 
 **Vision**: A marketplace of useful API endpoints where the best ones surface to the top based on usage and earnings. Each endpoint is simple, composable, and pays for itself through micropayments.
 
@@ -65,14 +65,14 @@ X402_NETWORK=testnet X402_WORKER_URL=https://stx402-staging.whoabuddy.workers.de
 
 ## Architecture
 
-### Endpoint Categories (168 total)
+### Endpoint Categories (170 total)
 
 | Category | Count | Path Pattern | Tier | Description |
 |----------|-------|--------------|------|-------------|
 | Health | 2 | `/api/health`, `/dashboard` | free | Monitoring endpoints |
 | Stacks | 15 | `/api/stacks/*` | simple | Blockchain queries, Clarity utilities |
 | AI | 13 | `/api/ai/*` | ai/heavy_ai | AI-powered analysis and generation |
-| Text | 24 | `/api/text/*` | simple | Encoding, hashing, transformation |
+| Text | 26 | `/api/text/*` | simple | Encoding, hashing, compression |
 | Data | 8 | `/api/data/*` | simple | JSON/CSV processing |
 | Crypto | 2 | `/api/crypto/*` | simple | Cryptographic operations |
 | Random | 7 | `/api/random/*` | simple | Secure random generation |
