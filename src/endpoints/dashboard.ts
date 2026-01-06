@@ -178,23 +178,59 @@ function generateDashboardHTML(data: {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STX402 API Dashboard</title>
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
+    :root {
+      --bg-primary: #09090b;
+      --bg-card: #0f0f12;
+      --bg-hover: #18181b;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.1);
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent: #f7931a;
+      --accent-dim: rgba(247, 147, 26, 0.12);
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0a0a0f;
-      color: #e4e4e7;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       min-height: 100vh;
-      padding: 24px;
+      padding: 32px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
     .container { max-width: 1600px; margin: 0 auto; }
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: #f7931a;
-      margin-bottom: 8px;
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
     }
-    .subtitle { color: #71717a; margin-bottom: 32px; }
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #f7931a 0%, #c2410c 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      color: #000;
+      box-shadow: 0 4px 12px rgba(247, 147, 26, 0.3);
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    h1 .accent { color: var(--accent); }
+    .subtitle { color: var(--text-muted); margin-bottom: 32px; font-size: 14px; }
     .warning {
       background: #422006;
       border: 1px solid #f59e0b;
@@ -211,25 +247,32 @@ function generateDashboardHTML(data: {
       margin-bottom: 32px;
     }
     .card {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 12px;
-      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.2s ease;
+    }
+    .card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
     }
     .card h3 {
-      color: #71717a;
-      font-size: 12px;
+      color: var(--text-muted);
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      font-weight: 500;
     }
     .card .value {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 700;
-      color: #fff;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
     }
     .card .value.stx { color: #06b6d4; }
-    .card .value.sbtc { color: #f7931a; }
+    .card .value.sbtc { color: var(--accent); }
     .card .value.usdcx { color: #3b82f6; }
     .card .value.success { color: #22c55e; }
     .tier-badges {
@@ -263,10 +306,10 @@ function generateDashboardHTML(data: {
       .charts-row { grid-template-columns: 1fr; }
     }
     .chart-container {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 12px;
-      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
     }
     .bar-chart {
       display: flex;
@@ -401,9 +444,9 @@ function generateDashboardHTML(data: {
     .success-med { color: #fbbf24; }
     .success-low { color: #f87171; }
     .table-container {
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
       overflow: hidden;
     }
     .table-scroll {
@@ -411,32 +454,37 @@ function generateDashboardHTML(data: {
       overflow-y: auto;
     }
     .footer {
-      margin-top: 32px;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
       text-align: center;
-      color: #52525b;
-      font-size: 12px;
+      color: var(--text-muted);
+      font-size: 13px;
     }
-    .footer a { color: #f7931a; text-decoration: none; }
-    .footer a:hover { text-decoration: underline; }
+    .footer a { color: var(--accent); text-decoration: none; transition: opacity 0.2s; }
+    .footer a:hover { opacity: 0.8; }
     .section-nav {
       display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
+      gap: 8px;
+      margin-bottom: 32px;
       flex-wrap: wrap;
     }
     .section-nav a {
-      background: #27272a;
-      color: #a1a1aa;
-      padding: 8px 16px;
-      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 10px 18px;
+      border-radius: 10px;
       text-decoration: none;
       font-size: 13px;
       font-weight: 500;
-      transition: background 0.15s, color 0.15s;
+      transition: all 0.2s ease;
     }
     .section-nav a:hover {
-      background: #3f3f46;
-      color: #fff;
+      background: var(--bg-hover);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+      transform: translateY(-1px);
     }
     .section-title {
       scroll-margin-top: 24px;
@@ -523,12 +571,65 @@ function generateDashboardHTML(data: {
       font-size: 11px;
       color: #a1a1aa;
     }
+
+    /* Mobile optimizations */
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      h1 { font-size: 20px; }
+      .logo { width: 32px; height: 32px; font-size: 12px; }
+      .subtitle { font-size: 12px; margin-bottom: 20px; }
+      .section-nav { gap: 6px; margin-bottom: 20px; }
+      .section-nav a { padding: 8px 12px; font-size: 12px; }
+      .summary { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .card { padding: 16px; border-radius: 12px; }
+      .card h3 { font-size: 10px; margin-bottom: 6px; }
+      .card .value { font-size: 20px; word-break: break-word; }
+      .tier-badges { gap: 4px; margin-top: 8px; }
+      .tier-badge { font-size: 9px; padding: 3px 6px; }
+      .section-title { font-size: 16px; }
+      .chart-container { padding: 16px; border-radius: 12px; }
+      .bar-chart { gap: 4px; height: 100px; }
+      .bar-value, .bar-label { font-size: 9px; }
+      .horiz-bar-label { width: 50px; font-size: 10px; }
+      .horiz-bar-track { height: 20px; }
+      .horiz-bar-value { font-size: 9px; }
+      .horiz-bar-count { display: none; }
+      .charts-row { gap: 16px; }
+      .table-container { border-radius: 12px; }
+      table { font-size: 11px; }
+      th, td { padding: 8px 10px; }
+      code { font-size: 10px; padding: 2px 4px; }
+      .footer { margin-top: 32px; padding-top: 16px; font-size: 11px; }
+      .copy-btn { padding: 3px 6px; font-size: 10px; }
+      .host-badge { font-size: 9px; padding: 2px 4px; }
+      .path-code { font-size: 9px; }
+      .owner-link { font-size: 9px; padding: 3px 6px; }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 380px) {
+      .summary { grid-template-columns: 1fr; }
+      .card .value { font-size: 24px; }
+      .header-row { gap: 8px; }
+      h1 { font-size: 18px; }
+      .section-nav a { padding: 6px 10px; font-size: 11px; }
+    }
+
+    /* Hide less important columns on mobile */
+    @media (max-width: 768px) {
+      th:nth-child(6), td:nth-child(6),
+      th:nth-child(8), td:nth-child(8),
+      th:nth-child(9), td:nth-child(9) { display: none; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>STX402 API Dashboard</h1>
-    <p class="subtitle">Real-time metrics for X402 payment-gated endpoints</p>
+    <div class="header-row">
+      <div class="logo">402</div>
+      <h1><span class="accent">STX402</span> Dashboard</h1>
+    </div>
+    <p class="subtitle">Real-time metrics for X402 payment-gated endpoints on Stacks</p>
 
     <nav class="section-nav">
       <a href="#summary">Summary</a>
