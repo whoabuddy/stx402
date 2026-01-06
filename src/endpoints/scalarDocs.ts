@@ -122,9 +122,79 @@ export function getScalarHTML(specUrl: string): string {
     .scalar-app .sidebar-item-active {
       border-left-color: #f7931a !important;
     }
+
+    /* Custom navigation bar */
+    .stx402-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: #09090b;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 1000;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .stx402-nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fafafa;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .stx402-nav-brand svg {
+      width: 28px;
+      height: 28px;
+    }
+    .stx402-nav-links {
+      display: flex;
+      gap: 8px;
+    }
+    .stx402-nav-link {
+      color: #a1a1aa;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    .stx402-nav-link:hover {
+      color: #fafafa;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .stx402-nav-link.active {
+      color: #f7931a;
+      background: rgba(247, 147, 26, 0.12);
+    }
+    /* Push Scalar content below nav */
+    .scalar-app {
+      margin-top: 48px !important;
+    }
   </style>
 </head>
 <body>
+  <nav class="stx402-nav">
+    <a href="/" class="stx402-nav-brand">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <rect fill="#f7931a" rx="12" width="100" height="100"/>
+        <text x="50" y="68" font-size="40" font-weight="800" text-anchor="middle" fill="#000">402</text>
+      </svg>
+      STX402
+    </a>
+    <div class="stx402-nav-links">
+      <a href="/" class="stx402-nav-link active">API Docs</a>
+      <a href="/dashboard" class="stx402-nav-link">Dashboard</a>
+      <a href="/guide" class="stx402-nav-link">Guide</a>
+      <a href="/about" class="stx402-nav-link">About</a>
+    </div>
+  </nav>
   <script id="api-reference" data-url="${specUrl}"></script>
   <script>
     var configuration = {
