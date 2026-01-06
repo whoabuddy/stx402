@@ -501,9 +501,9 @@ function generateGuideHTML(): string {
       </p>
     </div>
 
-    <div class="intro" style="border-color: #8b5cf6;">
+    <div class="intro" style="border-color: #3b82f6;">
       <p>
-        <strong style="color: #8b5cf6;">&#128274; Per-Payer Namespacing:</strong> Storage endpoints
+        <strong style="color: #3b82f6;">&#128274; Per-Payer Namespacing:</strong> Storage endpoints
         (KV, SQL, Counter, Links, Sync, Queue, Memory, Paste) are automatically isolated by your
         payment address. Your data is private — no configuration needed. Two users calling the
         same endpoint get their own separate storage.
