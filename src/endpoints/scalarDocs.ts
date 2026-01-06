@@ -12,40 +12,62 @@ export function getScalarHTML(specUrl: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STX402 API</title>
   <meta name="description" content="X402 micropayment-gated API endpoints on Stacks">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23f7931a' rx='12' width='100' height='100'/><text x='50' y='68' font-size='40' font-weight='800' text-anchor='middle' fill='%23000'>402</text></svg>">
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
-    /* aibtc.com branding: black + orange theme */
+    /* aibtc.com branding: black + Bitcoin orange theme */
     .dark-mode,
     .light-mode {
-      --scalar-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --scalar-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
-      /* Orange accent - Bitcoin/aibtc orange */
+      /* Bitcoin orange accent (#f7931a) */
       --scalar-color-accent: #f7931a;
 
-      /* Dark backgrounds */
-      --scalar-background-1: #0a0a0f;
-      --scalar-background-2: #18181b;
-      --scalar-background-3: #27272a;
-      --scalar-background-accent: rgba(247, 147, 26, 0.1);
+      /* Dark backgrounds - matching dashboard */
+      --scalar-background-1: #09090b;
+      --scalar-background-2: #0f0f12;
+      --scalar-background-3: #18181b;
+      --scalar-background-4: #27272a;
+      --scalar-background-accent: rgba(247, 147, 26, 0.12);
 
-      /* Text colors */
-      --scalar-color-1: #e4e4e7;
+      /* Text colors - matching dashboard */
+      --scalar-color-1: #fafafa;
       --scalar-color-2: #a1a1aa;
       --scalar-color-3: #71717a;
 
-      /* Border */
-      --scalar-border-color: #27272a;
+      /* Borders - subtle like dashboard */
+      --scalar-border-color: rgba(255, 255, 255, 0.06);
 
-      /* Buttons */
+      /* Buttons - Bitcoin orange */
       --scalar-button-1: #f7931a;
-      --scalar-button-1-hover: #fbbf24;
+      --scalar-button-1-hover: #c2410c;
       --scalar-button-1-color: #000000;
 
-      /* Code blocks */
+      /* Links and interactive elements */
+      --scalar-color-blue: #f7931a;
+      --scalar-color-green: #22c55e;
+      --scalar-color-red: #ef4444;
+      --scalar-color-yellow: #f7931a;
+      --scalar-color-orange: #f7931a;
+
+      /* Code blocks - orange keywords */
       --scalar-color-code-keyword: #f7931a;
       --scalar-color-code-string: #22d3ee;
       --scalar-color-code-number: #a855f7;
       --scalar-color-code-comment: #52525b;
+      --scalar-color-code-operator: #f7931a;
+      --scalar-color-code-function: #fbbf24;
+
+      /* Sidebar */
+      --scalar-sidebar-background-1: #09090b;
+      --scalar-sidebar-color-1: #fafafa;
+      --scalar-sidebar-color-2: #a1a1aa;
+      --scalar-sidebar-color-active: #f7931a;
+      --scalar-sidebar-border-color: rgba(255, 255, 255, 0.06);
+
+      /* Cards and panels */
+      --scalar-card-background: #0f0f12;
     }
 
     /* Force dark mode only */
@@ -71,23 +93,29 @@ export function getScalarHTML(specUrl: string): string {
 
     /* Header branding */
     .scalar-app .sidebar-header {
-      border-bottom: 1px solid #27272a;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    /* Tag colors - match category colors from guide.ts */
-    .scalar-app [data-tag="Stacks"] { --scalar-color-accent: #f7931a; }
-    .scalar-app [data-tag="AI"] { --scalar-color-accent: #a855f7; }
-    .scalar-app [data-tag="Text"] { --scalar-color-accent: #06b6d4; }
-    .scalar-app [data-tag="Data"] { --scalar-color-accent: #3b82f6; }
-    .scalar-app [data-tag="Crypto"] { --scalar-color-accent: #fb923c; }
-    .scalar-app [data-tag="Random"] { --scalar-color-accent: #0ea5e9; }
-    .scalar-app [data-tag="Math"] { --scalar-color-accent: #6366f1; }
-    .scalar-app [data-tag="Utility"] { --scalar-color-accent: #22d3ee; }
-    .scalar-app [data-tag="Network"] { --scalar-color-accent: #10b981; }
-    .scalar-app [data-tag="Registry"] { --scalar-color-accent: #f59e0b; }
-    .scalar-app [data-tag="Storage"] { --scalar-color-accent: #8b5cf6; }
-    .scalar-app [data-tag="Agent"] { --scalar-color-accent: #34d399; }
-    .scalar-app [data-tag="System"] { --scalar-color-accent: #71717a; }
+    /* HTTP method badges - orange theme */
+    .scalar-app [data-method="GET"] {
+      background: rgba(247, 147, 26, 0.15) !important;
+      color: #f7931a !important;
+    }
+    .scalar-app [data-method="POST"] {
+      background: rgba(34, 197, 94, 0.15) !important;
+      color: #22c55e !important;
+    }
+
+    /* Search highlight */
+    .scalar-app mark {
+      background: rgba(247, 147, 26, 0.3);
+      color: #fafafa;
+    }
+
+    /* Active sidebar item */
+    .scalar-app .sidebar-item-active {
+      border-left-color: #f7931a !important;
+    }
   </style>
 </head>
 <body>
@@ -101,6 +129,7 @@ export function getScalarHTML(specUrl: string): string {
       showSidebar: true,
       hideModels: false,
       defaultOpenAllTags: false,
+      withDefaultFonts: false,
       metaData: {
         title: 'STX402 API',
         description: 'X402 micropayment-gated API endpoints on Stacks',
@@ -109,6 +138,16 @@ export function getScalarHTML(specUrl: string): string {
         { url: 'https://stx402.com', description: 'Production' },
         { url: 'http://localhost:8787', description: 'Local Development' },
       ],
+      defaultHttpClient: {
+        targetKey: 'shell',
+        clientKey: 'curl',
+      },
+      hiddenClients: {
+        shell: ['httpie', 'wget'],
+        node: ['ofetch'],
+        php: ['curl'],
+        python: ['httpx_async', 'httpx_sync'],
+      },
     }
     document.getElementById('api-reference').dataset.configuration = JSON.stringify(configuration)
   </script>
