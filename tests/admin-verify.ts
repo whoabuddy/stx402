@@ -5,8 +5,8 @@
  *
  * Usage:
  *   bun run tests/admin-verify.ts list
- *   bun run tests/admin-verify.ts verify <url>
- *   bun run tests/admin-verify.ts reject <url>
+ *   bun run tests/admin-verify.ts verify <url> [url...]
+ *   bun run tests/admin-verify.ts reject <url> [url...]
  *
  * Environment:
  *   X402_PK       - Server mnemonic (admin wallet)
@@ -53,9 +53,9 @@ function printUsage() {
 ${COLORS.bright}Registry Admin Verification${COLORS.reset}
 
 ${COLORS.cyan}Usage:${COLORS.reset}
-  bun run tests/admin-verify.ts list              List all pending endpoints
-  bun run tests/admin-verify.ts verify <url>      Verify an endpoint
-  bun run tests/admin-verify.ts reject <url>      Reject an endpoint
+  bun run tests/admin-verify.ts list                    List all pending endpoints
+  bun run tests/admin-verify.ts verify <url> [url...]   Verify one or more endpoints
+  bun run tests/admin-verify.ts reject <url> [url...]   Reject one or more endpoints
 
 ${COLORS.cyan}Environment:${COLORS.reset}
   X402_PK         Server mnemonic (required)
@@ -66,6 +66,8 @@ ${COLORS.cyan}Environment:${COLORS.reset}
 ${COLORS.cyan}Examples:${COLORS.reset}
   X402_PK="..." bun run tests/admin-verify.ts list
   X402_PK="..." bun run tests/admin-verify.ts verify https://example.com/api/endpoint
+  X402_PK="..." bun run tests/admin-verify.ts verify https://a.com/api https://b.com/api
+  X402_PK="..." bun run tests/admin-verify.ts reject https://spam.com/api
 `);
 }
 
@@ -314,13 +316,22 @@ async function main() {
 
     case "verify":
     case "reject": {
-      const url = args[1];
-      if (!url) {
-        logError(`URL is required for ${command} command`);
+      const urls = args.slice(1);
+      if (urls.length === 0) {
+        logError(`At least one URL is required for ${command} command`);
         printUsage();
         process.exit(1);
       }
-      success = await verifyOrReject(x402Client, adminAddress, url, command);
+
+      let successCount = 0;
+      for (const url of urls) {
+        const result = await verifyOrReject(x402Client, adminAddress, url, command);
+        if (result) successCount++;
+      }
+
+      const actionLabel = command === "verify" ? "verified" : "rejected";
+      console.log(`\n${COLORS.bright}Summary:${COLORS.reset} ${successCount}/${urls.length} ${actionLabel} successfully`);
+      success = successCount === urls.length;
       break;
     }
 
