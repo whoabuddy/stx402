@@ -172,7 +172,7 @@ async function listPending(
   console.log(`\n${COLORS.bright}Listing Pending Endpoints${COLORS.reset}\n`);
 
   const { status, data } = await makeX402Request(
-    "/api/registry/admin/pending",
+    "/api/admin/registry/pending",
     "POST",
     x402Client,
     { adminAddress }
@@ -229,7 +229,7 @@ async function verifyOrReject(
   console.log(`  Action: ${action}\n`);
 
   const { status, data } = await makeX402Request(
-    "/api/registry/admin/verify",
+    "/api/admin/registry/verify",
     "POST",
     x402Client,
     { url, action, adminAddress }
