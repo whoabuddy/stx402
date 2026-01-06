@@ -3,6 +3,7 @@ import type { AppContext } from "../types";
 import { ENDPOINT_TIERS } from "../utils/pricing";
 import { getDashboardMetrics, type EndpointMetrics } from "../middleware/metrics";
 import { listAllEntries, type RegistryEntryMinimal } from "../utils/registry";
+import { getNavCSS, getNavHTML } from "../components/nav";
 
 // Extract category from path (e.g., /api/stacks/... → Stacks)
 function getCategoryFromPath(path: string): string {
@@ -163,6 +164,7 @@ function generateDashboardHTML(data: {
   <link rel="preconnect" href="https://rsms.me/">
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
+    ${getNavCSS()}
     :root {
       --bg-primary: #09090b;
       --bg-card: #0f0f12;
@@ -181,11 +183,10 @@ function generateDashboardHTML(data: {
       background: var(--bg-primary);
       color: var(--text-primary);
       min-height: 100vh;
-      padding: 32px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
-    .container { max-width: 1600px; margin: 0 auto; }
+    .container { max-width: 1600px; margin: 0 auto; padding: 32px; }
     .header-row {
       display: flex;
       align-items: center;
@@ -503,7 +504,7 @@ function generateDashboardHTML(data: {
 
     /* Mobile optimizations */
     @media (max-width: 600px) {
-      body { padding: 16px; }
+      .container { padding: 16px; }
       h1 { font-size: 20px; }
       .logo { width: 32px; height: 32px; font-size: 12px; }
       .subtitle { font-size: 12px; margin-bottom: 20px; }
@@ -548,6 +549,7 @@ function generateDashboardHTML(data: {
   </style>
 </head>
 <body>
+  ${getNavHTML("dashboard")}
   <div class="container">
     <div class="header-row">
       <div class="logo">402</div>
