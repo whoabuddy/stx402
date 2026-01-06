@@ -43,6 +43,8 @@ export interface RegistryEntryMinimal {
   category?: string;
   status: RegistryStatus;
   owner: string;
+  registeredAt: string;
+  updatedAt: string;
 }
 
 // Index entry for lookups
@@ -244,6 +246,8 @@ export async function listAllEntries(
         category: entry.category,
         status: entry.status,
         owner: entry.owner,
+        registeredAt: entry.registeredAt,
+        updatedAt: entry.updatedAt,
       });
     }
   }

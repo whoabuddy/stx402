@@ -418,6 +418,29 @@ function generateDashboardHTML(data: {
     }
     .footer a { color: #f7931a; text-decoration: none; }
     .footer a:hover { text-decoration: underline; }
+    .section-nav {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .section-nav a {
+      background: #27272a;
+      color: #a1a1aa;
+      padding: 8px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+    }
+    .section-nav a:hover {
+      background: #3f3f46;
+      color: #fff;
+    }
+    .section-title {
+      scroll-margin-top: 24px;
+    }
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -448,6 +471,14 @@ function generateDashboardHTML(data: {
     <h1>STX402 API Dashboard</h1>
     <p class="subtitle">Real-time metrics for X402 payment-gated endpoints</p>
 
+    <nav class="section-nav">
+      <a href="#summary">Summary</a>
+      <a href="#daily">Daily Activity</a>
+      <a href="#endpoint-metrics">Endpoint Metrics</a>
+      <a href="#x402-registry">X402 Registry</a>
+      <a href="#agent-registry">Agent Registry</a>
+    </nav>
+
     ${!kvConfigured ? `
     <div class="warning">
       KV namespace not configured. Metrics will not persist.
@@ -455,6 +486,7 @@ function generateDashboardHTML(data: {
     </div>
     ` : ""}
 
+    <h2 id="summary" class="section-title">Summary</h2>
     <div class="summary">
       <div class="card">
         <h3>Total Endpoints</h3>
@@ -487,8 +519,8 @@ function generateDashboardHTML(data: {
       </div>
     </div>
 
-    <div class="chart-container" style="margin-bottom: 32px;">
-      <h2 class="section-title">Last 7 Days</h2>
+    <div id="daily" class="chart-container" style="margin-bottom: 32px;">
+      <h2 class="section-title">Daily Activity (Last 7 Days)</h2>
       <div class="bar-chart">
         ${dailyStats.map((day) => {
           const heightPx = Math.max((day.calls / maxDailyCalls) * 100, 4);
@@ -549,7 +581,7 @@ function generateDashboardHTML(data: {
       </div>
     </div>
 
-    <h2 class="section-title">Endpoint Metrics</h2>
+    <h2 id="endpoint-metrics" class="section-title">Endpoint Metrics</h2>
     <div class="table-container">
       <div class="table-scroll">
         <table>
@@ -603,30 +635,38 @@ function generateDashboardHTML(data: {
     </div>
 
     ${registryEntries.length > 0 ? `
-    <h2 class="section-title" style="margin-top: 32px;">X402 Endpoint Registry</h2>
+    <h2 id="x402-registry" class="section-title" style="margin-top: 32px;">X402 Endpoint Registry</h2>
     <div class="table-container">
       <div class="table-scroll" style="max-height: 400px;">
-        <table>
+        <table id="registry-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>URL</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Owner</th>
+              <th data-sort="owner">Owner <span class="sort-icon">↕</span></th>
+              <th data-sort="name">Name <span class="sort-icon">↕</span></th>
+              <th data-sort="url">URL <span class="sort-icon">↕</span></th>
+              <th data-sort="category">Category <span class="sort-icon">↕</span></th>
+              <th data-sort="status">Status <span class="sort-icon">↕</span></th>
+              <th data-sort="registered" class="sorted">Published <span class="sort-icon">↓</span></th>
+              <th data-sort="updated">Updated <span class="sort-icon">↕</span></th>
             </tr>
           </thead>
           <tbody>
             ${registryEntries.map((entry) => {
               const statusClass = entry.status === "verified" ? "success-high" : entry.status === "unverified" ? "success-med" : "success-low";
               const ownerShort = entry.owner.slice(0, 8) + "..." + entry.owner.slice(-4);
+              const registeredTs = entry.registeredAt ? new Date(entry.registeredAt).getTime() : 0;
+              const updatedTs = entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
+              const registeredDisplay = entry.registeredAt ? new Date(entry.registeredAt).toLocaleDateString() : "-";
+              const updatedDisplay = entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString() : "-";
               return `
-                <tr>
+                <tr data-owner="${entry.owner}" data-name="${entry.name}" data-url="${entry.url}" data-category="${entry.category || ""}" data-status="${entry.status}" data-registered="${registeredTs}" data-updated="${updatedTs}">
+                  <td><code style="font-size: 11px;">${ownerShort}</code></td>
                   <td><strong>${entry.name}</strong></td>
-                  <td><code style="font-size: 11px;">${entry.url.length > 50 ? entry.url.slice(0, 50) + "..." : entry.url}</code></td>
+                  <td><code style="font-size: 11px;">${entry.url.length > 40 ? entry.url.slice(0, 40) + "..." : entry.url}</code></td>
                   <td>${entry.category || "-"}</td>
                   <td class="${statusClass}">${entry.status}</td>
-                  <td><code style="font-size: 11px;">${ownerShort}</code></td>
+                  <td>${registeredDisplay}</td>
+                  <td>${updatedDisplay}</td>
                 </tr>
               `;
             }).join("")}
@@ -635,12 +675,18 @@ function generateDashboardHTML(data: {
       </div>
     </div>
     ` : `
-    <div class="chart-container" style="margin-top: 32px; text-align: center; padding: 40px;">
+    <div id="x402-registry" class="chart-container" style="margin-top: 32px; text-align: center; padding: 40px;">
       <h2 class="section-title">X402 Endpoint Registry</h2>
       <p style="color: #71717a; margin-bottom: 16px;">No endpoints registered yet.</p>
       <p style="color: #a1a1aa; font-size: 13px;">Register your x402 endpoint via <code>/api/registry/register</code></p>
     </div>
     `}
+
+    <div id="agent-registry" class="chart-container" style="margin-top: 32px; text-align: center; padding: 40px;">
+      <h2 class="section-title">Agent Registry (ERC-8004)</h2>
+      <p style="color: #71717a; margin-bottom: 16px;">AI agent identity and reputation registry.</p>
+      <p style="color: #a1a1aa; font-size: 13px;">Register agents via <code>/api/agent/register</code> | View agents via <code>/api/agent/list</code></p>
+    </div>
 
     <div class="footer">
       <p>
@@ -653,57 +699,76 @@ function generateDashboardHTML(data: {
   </div>
   <script>
     (function() {
-      const activeEndpointsCount = ${activeEndpoints.length};
-      let currentSort = { key: 'calls', dir: 'desc' };
-      const tbody = document.querySelector('table tbody');
-      const headers = document.querySelectorAll('th[data-sort]');
+      // Generic table sorting function
+      function setupTableSorting(tableSelector, numericKeys, defaultSort) {
+        const table = document.querySelector(tableSelector);
+        if (!table) return;
 
-      function sortTable(key) {
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        const isNumeric = ['calls', 'success', 'latency', 'stx', 'sbtc', 'lastcall'].includes(key);
+        const tbody = table.querySelector('tbody');
+        const headers = table.querySelectorAll('th[data-sort]');
+        let currentSort = { ...defaultSort };
 
-        // Toggle direction if same column
-        if (currentSort.key === key) {
-          currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
-        } else {
-          currentSort.key = key;
-          currentSort.dir = isNumeric ? 'desc' : 'asc';
+        function sortTable(key) {
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+          const isNumeric = numericKeys.includes(key);
+
+          // Toggle direction if same column
+          if (currentSort.key === key) {
+            currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSort.key = key;
+            currentSort.dir = isNumeric ? 'desc' : 'asc';
+          }
+
+          rows.sort((a, b) => {
+            let aVal = a.dataset[key];
+            let bVal = b.dataset[key];
+
+            if (isNumeric) {
+              aVal = parseFloat(aVal) || 0;
+              bVal = parseFloat(bVal) || 0;
+              return currentSort.dir === 'asc' ? aVal - bVal : bVal - aVal;
+            } else {
+              return currentSort.dir === 'asc'
+                ? (aVal || '').localeCompare(bVal || '')
+                : (bVal || '').localeCompare(aVal || '');
+            }
+          });
+
+          // Re-append sorted rows
+          rows.forEach(row => tbody.appendChild(row));
+
+          // Update header styles
+          headers.forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (th.dataset.sort === key) {
+              th.classList.add('sorted');
+              icon.textContent = currentSort.dir === 'asc' ? '↑' : '↓';
+            } else {
+              th.classList.remove('sorted');
+              icon.textContent = '↕';
+            }
+          });
         }
 
-        rows.sort((a, b) => {
-          let aVal = a.dataset[key];
-          let bVal = b.dataset[key];
-
-          if (isNumeric) {
-            aVal = parseFloat(aVal) || 0;
-            bVal = parseFloat(bVal) || 0;
-            return currentSort.dir === 'asc' ? aVal - bVal : bVal - aVal;
-          } else {
-            return currentSort.dir === 'asc'
-              ? aVal.localeCompare(bVal)
-              : bVal.localeCompare(aVal);
-          }
-        });
-
-        // Re-append sorted rows
-        rows.forEach(row => tbody.appendChild(row));
-
-        // Update header styles
         headers.forEach(th => {
-          const icon = th.querySelector('.sort-icon');
-          if (th.dataset.sort === key) {
-            th.classList.add('sorted');
-            icon.textContent = currentSort.dir === 'asc' ? '↑' : '↓';
-          } else {
-            th.classList.remove('sorted');
-            icon.textContent = '↕';
-          }
+          th.addEventListener('click', () => sortTable(th.dataset.sort));
         });
       }
 
-      headers.forEach(th => {
-        th.addEventListener('click', () => sortTable(th.dataset.sort));
-      });
+      // Setup endpoint metrics table sorting
+      setupTableSorting(
+        'table:not(#registry-table)',
+        ['calls', 'success', 'latency', 'stx', 'sbtc', 'lastcall'],
+        { key: 'calls', dir: 'desc' }
+      );
+
+      // Setup registry table sorting
+      setupTableSorting(
+        '#registry-table',
+        ['registered', 'updated'],
+        { key: 'registered', dir: 'desc' }
+      );
     })();
   </script>
 </body>
