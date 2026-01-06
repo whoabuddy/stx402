@@ -54,19 +54,17 @@ function generateToolboxHTML(): string {
     }
 
     .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+      text-align: center;
       margin-bottom: 48px;
     }
 
-    .page-header .title-section h1 {
+    .page-header h1 {
       font-size: 32px;
       font-weight: 700;
       margin-bottom: 8px;
     }
 
-    .page-header .title-section .subtitle {
+    .page-header .subtitle {
       color: #a1a1aa;
       font-size: 16px;
     }
@@ -76,6 +74,11 @@ function generateToolboxHTML(): string {
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 16px;
       padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .tool-card:last-child {
+      margin-bottom: 0;
     }
 
     .tool-card h2 {
@@ -393,130 +396,161 @@ function generateToolboxHTML(): string {
       text-decoration: underline;
     }
 
-    /* Wallet connection */
-    .wallet-section {
-      flex-shrink: 0;
+    /* Call Endpoint Tool */
+    .wallet-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #18181b;
+      border-radius: 8px;
     }
 
-    .connect-btn {
-      padding: 10px 20px;
-      background: linear-gradient(135deg, #f7931a 0%, #c2410c 100%);
-      border: none;
-      border-radius: 8px;
-      color: #000;
+    .wallet-status .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+    }
+
+    .wallet-status.connected .status-dot {
+      background: #22c55e;
+    }
+
+    .wallet-status .status-text {
+      flex: 1;
       font-size: 14px;
-      font-weight: 600;
+      color: #a1a1aa;
+    }
+
+    .wallet-status.connected .status-text {
+      color: #fafafa;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 13px;
+    }
+
+    .wallet-status button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
       font-family: inherit;
       cursor: pointer;
-      transition: opacity 0.15s ease, transform 0.15s ease;
-      white-space: nowrap;
+      transition: all 0.15s ease;
     }
 
-    .connect-btn:hover {
+    .wallet-status .connect-btn {
+      background: linear-gradient(135deg, #f7931a 0%, #c2410c 100%);
+      color: #000;
+    }
+
+    .wallet-status .connect-btn:hover {
       opacity: 0.9;
     }
 
-    .connect-btn:active {
-      transform: scale(0.98);
-    }
-
-    .connect-btn:disabled {
+    .wallet-status .connect-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
-    .wallet-connected {
-      position: relative;
+    .wallet-status .disconnect-btn {
+      background: rgba(255, 255, 255, 0.06);
+      color: #a1a1aa;
     }
 
-    .wallet-address-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
+    .wallet-status .disconnect-btn:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    .call-form {
+      display: none;
+    }
+
+    .call-form.visible {
+      display: block;
+    }
+
+    .call-form .form-row {
+      margin-bottom: 16px;
+    }
+
+    .call-form label {
+      display: block;
+      font-size: 13px;
+      color: #a1a1aa;
+      margin-bottom: 8px;
+    }
+
+    .call-form textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px;
       background: #18181b;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 8px;
       color: #fafafa;
       font-size: 13px;
       font-family: 'SF Mono', Monaco, monospace;
-      cursor: pointer;
-      transition: all 0.15s ease;
+      resize: vertical;
     }
 
-    .wallet-address-btn:hover {
+    .call-form textarea:focus {
+      outline: none;
       border-color: #f7931a;
     }
 
-    .wallet-address-btn::after {
-      content: "▼";
-      font-size: 10px;
-      color: #71717a;
-      transition: transform 0.15s ease;
-    }
-
-    .wallet-address-btn.open::after {
-      transform: rotate(180deg);
-    }
-
-    .wallet-dropdown {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      min-width: 160px;
-      background: #18181b;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      overflow: hidden;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(-8px);
-      transition: all 0.15s ease;
-      z-index: 100;
-    }
-
-    .wallet-dropdown.open {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-
-    .wallet-dropdown button {
-      display: block;
+    .call-btn {
       width: 100%;
-      padding: 12px 16px;
-      background: none;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #f7931a 0%, #c2410c 100%);
       border: none;
-      color: #a1a1aa;
-      font-size: 13px;
+      border-radius: 8px;
+      color: #000;
+      font-size: 15px;
+      font-weight: 600;
       font-family: inherit;
-      text-align: left;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .wallet-dropdown button:hover {
-      background: rgba(255, 255, 255, 0.06);
-      color: #fafafa;
+    .call-btn:hover {
+      opacity: 0.9;
     }
 
-    .wallet-dropdown button.disconnect {
-      color: #ef4444;
+    .call-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
-    .wallet-dropdown button.disconnect:hover {
-      background: rgba(239, 68, 68, 0.1);
+    .call-response {
+      margin-top: 24px;
+      display: none;
     }
 
-    @media (max-width: 500px) {
-      .page-header {
-        flex-direction: column;
-        gap: 16px;
-        text-align: center;
-      }
-      .wallet-section {
-        align-self: center;
-      }
+    .call-response.visible {
+      display: block;
+    }
+
+    .call-response pre {
+      background: #18181b;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+      font-family: 'SF Mono', Monaco, monospace;
+      line-height: 1.5;
+      color: #a1a1aa;
+      max-height: 400px;
+    }
+
+    .not-connected-msg {
+      text-align: center;
+      padding: 32px;
+      color: #71717a;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -525,13 +559,8 @@ function generateToolboxHTML(): string {
 
   <div class="container">
     <div class="page-header">
-      <div class="title-section">
-        <h1>Toolbox</h1>
-        <p class="subtitle">Interactive tools for the curious</p>
-      </div>
-      <div class="wallet-section" id="wallet-section">
-        <button class="connect-btn" id="connect-btn">Connect Wallet</button>
-      </div>
+      <h1>Toolbox</h1>
+      <p class="subtitle">Interactive tools for the curious</p>
     </div>
 
     <div class="tool-card">
@@ -574,6 +603,59 @@ function generateToolboxHTML(): string {
 
       <div class="tool-footer">
         Learn more about <a href="/about">X402 payments</a> or browse the <a href="/guide">endpoint guide</a>.
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <h2 style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">&#9889;</span> Call an Endpoint</h2>
+      <p>Connect your wallet and make a paid API call</p>
+
+      <div class="wallet-status" id="wallet-status">
+        <div class="status-dot"></div>
+        <div class="status-text">Not connected</div>
+        <button class="connect-btn" id="connect-btn">Connect Wallet</button>
+      </div>
+
+      <div class="call-form" id="call-form">
+        <div class="form-row">
+          <label>Endpoint URL</label>
+          <div class="input-group" style="margin-bottom:0;">
+            <input type="url" id="call-url" placeholder="https://stx402.com/api/..." autocomplete="off">
+            <select id="call-quick-select">
+              <option value="">Quick select</option>
+              <optgroup label="Text (0.001 STX)">
+                <option value="/api/text/base64-encode">base64-encode (POST)</option>
+                <option value="/api/text/sha256">sha256 (POST)</option>
+              </optgroup>
+              <optgroup label="Random (0.001 STX)">
+                <option value="/api/random/uuid">uuid (GET)</option>
+                <option value="/api/random/password">password (GET)</option>
+              </optgroup>
+              <optgroup label="Stacks (0.001 STX)">
+                <option value="/api/stacks/block-height">block-height (GET)</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Request Body (for POST endpoints, optional)</label>
+          <textarea id="call-body" placeholder='{"text": "Hello World"}'></textarea>
+        </div>
+
+        <button class="call-btn" id="call-btn">Sign &amp; Call Endpoint</button>
+      </div>
+
+      <div class="not-connected-msg" id="not-connected-msg">
+        Connect your wallet above to make paid API calls
+      </div>
+
+      <div class="call-response" id="call-response">
+        <div class="results-header">
+          <span class="status-badge" id="call-status-badge">200</span>
+          <span class="checked-url" id="call-response-url"></span>
+        </div>
+        <pre id="call-response-body"></pre>
       </div>
     </div>
   </div>
@@ -787,9 +869,20 @@ function generateToolboxHTML(): string {
   <!-- Stacks Connect for wallet authentication -->
   <script src="https://cdn.jsdelivr.net/npm/@stacks/connect@8/dist/index.global.js"></script>
   <script>
-    // Wallet connection logic using @stacks/connect v8
-    const walletSection = document.getElementById('wallet-section');
-    const connectBtn = document.getElementById('connect-btn');
+    // Call Endpoint tool elements
+    const walletStatus = document.getElementById('wallet-status');
+    const callForm = document.getElementById('call-form');
+    const notConnectedMsg = document.getElementById('not-connected-msg');
+    const callUrl = document.getElementById('call-url');
+    const callQuickSelect = document.getElementById('call-quick-select');
+    const callBody = document.getElementById('call-body');
+    const callBtn = document.getElementById('call-btn');
+    const callResponse = document.getElementById('call-response');
+    const callStatusBadge = document.getElementById('call-status-badge');
+    const callResponseUrl = document.getElementById('call-response-url');
+    const callResponseBody = document.getElementById('call-response-body');
+
+    let connectedAddress = null;
 
     // Truncate address for display
     function truncateAddress(address) {
@@ -803,60 +896,40 @@ function generateToolboxHTML(): string {
 
       if (isConnected()) {
         const data = getLocalStorage();
-        const stxAddress = data?.addresses?.stx?.[0]?.address;
+        connectedAddress = data?.addresses?.stx?.[0]?.address;
 
-        if (stxAddress) {
-          walletSection.innerHTML = \`
-            <div class="wallet-connected">
-              <button class="wallet-address-btn" id="wallet-address-btn">
-                \${truncateAddress(stxAddress)}
-              </button>
-              <div class="wallet-dropdown" id="wallet-dropdown">
-                <button id="copy-address-btn" data-address="\${stxAddress}">Copy Address</button>
-                <button class="disconnect" id="disconnect-btn">Disconnect</button>
-              </div>
-            </div>
+        if (connectedAddress) {
+          walletStatus.classList.add('connected');
+          walletStatus.innerHTML = \`
+            <div class="status-dot"></div>
+            <div class="status-text">\${truncateAddress(connectedAddress)}</div>
+            <button class="disconnect-btn" id="disconnect-btn">Disconnect</button>
           \`;
 
-          // Setup dropdown toggle
-          const addressBtn = document.getElementById('wallet-address-btn');
-          const dropdown = document.getElementById('wallet-dropdown');
+          document.getElementById('disconnect-btn').addEventListener('click', handleDisconnect);
 
-          addressBtn.addEventListener('click', () => {
-            addressBtn.classList.toggle('open');
-            dropdown.classList.toggle('open');
-          });
-
-          // Close dropdown when clicking outside
-          document.addEventListener('click', (e) => {
-            if (!e.target.closest('.wallet-connected')) {
-              addressBtn.classList.remove('open');
-              dropdown.classList.remove('open');
-            }
-          });
-
-          // Copy address
-          document.getElementById('copy-address-btn').addEventListener('click', async (e) => {
-            const address = e.target.dataset.address;
-            await navigator.clipboard.writeText(address);
-            e.target.textContent = 'Copied!';
-            setTimeout(() => {
-              e.target.textContent = 'Copy Address';
-            }, 2000);
-          });
-
-          // Disconnect
-          document.getElementById('disconnect-btn').addEventListener('click', () => {
-            handleDisconnect();
-          });
-
+          // Show call form, hide message
+          callForm.classList.add('visible');
+          notConnectedMsg.style.display = 'none';
           return;
         }
       }
 
-      // Not connected - show connect button
-      walletSection.innerHTML = '<button class="connect-btn" id="connect-btn">Connect Wallet</button>';
+      // Not connected
+      connectedAddress = null;
+      walletStatus.classList.remove('connected');
+      walletStatus.innerHTML = \`
+        <div class="status-dot"></div>
+        <div class="status-text">Not connected</div>
+        <button class="connect-btn" id="connect-btn">Connect Wallet</button>
+      \`;
+
       document.getElementById('connect-btn').addEventListener('click', handleConnect);
+
+      // Hide call form, show message
+      callForm.classList.remove('visible');
+      notConnectedMsg.style.display = 'block';
+      callResponse.classList.remove('visible');
     }
 
     // Handle connect
@@ -884,10 +957,98 @@ function generateToolboxHTML(): string {
       updateWalletUI();
     }
 
-    // Initialize on page load
-    connectBtn.addEventListener('click', handleConnect);
+    // Quick select for call form
+    callQuickSelect.addEventListener('change', function() {
+      if (this.value) {
+        callUrl.value = window.location.origin + this.value;
+        this.value = '';
+      }
+    });
 
-    // Check if already connected
+    // Handle call endpoint
+    callBtn.addEventListener('click', async function() {
+      let url = callUrl.value.trim();
+      if (!url) {
+        callUrl.focus();
+        return;
+      }
+
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+        callUrl.value = url;
+      }
+
+      callBtn.disabled = true;
+      callBtn.textContent = 'Calling...';
+      callResponse.classList.remove('visible');
+
+      try {
+        // Determine method based on body
+        const bodyText = callBody.value.trim();
+        const hasBody = bodyText.length > 0;
+        const method = hasBody ? 'POST' : 'GET';
+
+        // First request - will return 402 with payment requirements
+        const options = {
+          method,
+          headers: { 'Content-Type': 'application/json' }
+        };
+        if (hasBody) {
+          options.body = bodyText;
+        }
+
+        const res = await fetch(url, options);
+        const status = res.status;
+
+        if (status === 402) {
+          // Got payment requirements - show them
+          const x402Header = res.headers.get('X-402');
+          callStatusBadge.className = 'status-badge payment-required';
+          callStatusBadge.textContent = '402 Payment Required';
+          callResponseUrl.textContent = url;
+
+          if (x402Header) {
+            try {
+              const x402 = JSON.parse(x402Header);
+              const first = x402.accepts?.[0];
+              const amount = first?.maxAmountRequired || first?.maxAmount;
+              const amountNum = amount ? (parseInt(amount) / 1000000).toFixed(6) : '?';
+
+              callResponseBody.textContent = 'Payment required: ' + amountNum + ' STX\\n\\n' +
+                'Full X-402 header:\\n' + JSON.stringify(x402, null, 2) +
+                '\\n\\n(Payment signing coming soon - for now use the X402 client library)';
+            } catch (e) {
+              callResponseBody.textContent = 'Could not parse payment requirements';
+            }
+          }
+        } else {
+          // Got response
+          callStatusBadge.className = status >= 200 && status < 300 ? 'status-badge free' : 'status-badge error';
+          callStatusBadge.textContent = status;
+          callResponseUrl.textContent = url;
+
+          try {
+            const data = await res.json();
+            callResponseBody.textContent = JSON.stringify(data, null, 2);
+          } catch (e) {
+            callResponseBody.textContent = await res.text() || '(empty response)';
+          }
+        }
+
+        callResponse.classList.add('visible');
+      } catch (err) {
+        callStatusBadge.className = 'status-badge error';
+        callStatusBadge.textContent = 'Error';
+        callResponseUrl.textContent = url;
+        callResponseBody.textContent = err.message;
+        callResponse.classList.add('visible');
+      } finally {
+        callBtn.disabled = false;
+        callBtn.textContent = 'Sign & Call Endpoint';
+      }
+    });
+
+    // Initialize wallet UI
     if (typeof StacksConnect !== 'undefined') {
       updateWalletUI();
     }
