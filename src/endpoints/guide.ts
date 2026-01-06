@@ -443,6 +443,43 @@ function generateGuideHTML(): string {
     }
     .intro p { color: #a1a1aa; margin: 0; }
     .intro strong { color: #fff; }
+    .search-container {
+      margin-bottom: 24px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 16px;
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 8px;
+      color: #e4e4e7;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus {
+      border-color: #f7931a;
+    }
+    .search-input::placeholder {
+      color: #52525b;
+    }
+    .search-results {
+      font-size: 13px;
+      color: #71717a;
+      margin-top: 8px;
+    }
+    .category-card.hidden {
+      display: none;
+    }
+    .no-results {
+      text-align: center;
+      padding: 48px;
+      color: #71717a;
+      display: none;
+    }
+    .no-results.visible {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -458,13 +495,18 @@ function generateGuideHTML(): string {
       </p>
     </div>
 
-    <div class="quick-nav">
+    <div class="search-container">
+      <input type="text" class="search-input" id="search" placeholder="Search categories or endpoints (e.g., sha256, json, stacks)" autocomplete="off" />
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <div class="quick-nav" id="quick-nav">
       ${categories.map(c => `<a href="#${c.name.toLowerCase()}">${c.name}</a>`).join("")}
     </div>
 
-    <div class="categories-grid">
+    <div class="categories-grid" id="categories-grid">
       ${categories.map(c => `
-        <div class="category-card" id="${c.name.toLowerCase()}">
+        <div class="category-card" id="${c.name.toLowerCase()}" data-category="${c.name.toLowerCase()}" data-endpoints="${c.examples.map(e => e.name.toLowerCase()).join(" ")}" data-description="${c.description.toLowerCase()} ${c.useFor.toLowerCase()}">
           <div class="category-header">
             <span class="category-icon">${c.icon}</span>
             <span class="category-name" style="color: ${c.color}">${c.name}</span>
@@ -484,6 +526,10 @@ function generateGuideHTML(): string {
       `).join("")}
     </div>
 
+    <div class="no-results" id="no-results">
+      No categories or endpoints match your search.
+    </div>
+
     <div class="footer">
       <p>
         <a href="/about">About X402</a> |
@@ -493,6 +539,74 @@ function generateGuideHTML(): string {
       </p>
     </div>
   </div>
+  <script>
+    (function() {
+      const searchInput = document.getElementById('search');
+      const searchResults = document.getElementById('search-results');
+      const cards = document.querySelectorAll('.category-card');
+      const noResults = document.getElementById('no-results');
+      const quickNav = document.getElementById('quick-nav');
+      const totalCategories = cards.length;
+
+      searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+
+        if (!query) {
+          // Show all cards when search is empty
+          cards.forEach(card => card.classList.remove('hidden'));
+          noResults.classList.remove('visible');
+          quickNav.style.display = 'flex';
+          searchResults.textContent = '';
+          return;
+        }
+
+        let visibleCount = 0;
+        cards.forEach(card => {
+          const category = card.dataset.category || '';
+          const endpoints = card.dataset.endpoints || '';
+          const description = card.dataset.description || '';
+
+          // Match against category name, endpoint names, or description
+          const matches = category.includes(query) ||
+                         endpoints.includes(query) ||
+                         description.includes(query);
+
+          if (matches) {
+            card.classList.remove('hidden');
+            visibleCount++;
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+
+        // Hide quick nav when searching
+        quickNav.style.display = 'none';
+
+        // Show/hide no results message
+        if (visibleCount === 0) {
+          noResults.classList.add('visible');
+          searchResults.textContent = '';
+        } else {
+          noResults.classList.remove('visible');
+          searchResults.textContent = visibleCount + ' of ' + totalCategories + ' categories';
+        }
+      });
+
+      // Focus search on '/' key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement !== searchInput) {
+          e.preventDefault();
+          searchInput.focus();
+        }
+        // Clear search on Escape
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+          searchInput.value = '';
+          searchInput.dispatchEvent(new Event('input'));
+          searchInput.blur();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>`;
 }
