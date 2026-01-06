@@ -102,8 +102,8 @@ export function getScalarHTML(specUrl: string): string {
       color: #f7931a !important;
     }
     .scalar-app [data-method="POST"] {
-      background: rgba(34, 197, 94, 0.15) !important;
-      color: #22c55e !important;
+      background: rgba(59, 130, 246, 0.15) !important;
+      color: #3b82f6 !important;
     }
 
     /* Search highlight */
