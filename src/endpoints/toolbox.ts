@@ -643,7 +643,7 @@ function generateToolboxHTML(): string {
           <textarea id="call-body" placeholder='{"text": "Hello World"}'></textarea>
         </div>
 
-        <button class="call-btn" id="call-btn">Sign &amp; Call Endpoint</button>
+        <button class="call-btn" id="call-btn">Call Endpoint</button>
       </div>
 
       <div class="not-connected-msg" id="not-connected-msg">
@@ -965,6 +965,9 @@ function generateToolboxHTML(): string {
       }
     });
 
+    // Store pending payment info
+    let pendingPayment = null;
+
     // Handle call endpoint
     callBtn.addEventListener('click', async function() {
       let url = callUrl.value.trim();
@@ -979,7 +982,7 @@ function generateToolboxHTML(): string {
       }
 
       callBtn.disabled = true;
-      callBtn.textContent = 'Calling...';
+      callBtn.textContent = 'Checking...';
       callResponse.classList.remove('visible');
 
       try {
@@ -1001,28 +1004,47 @@ function generateToolboxHTML(): string {
         const status = res.status;
 
         if (status === 402) {
-          // Got payment requirements - show them
-          const x402Header = res.headers.get('X-402');
+          // Got payment requirements - parse them
+          const paymentReq = await res.json();
+          const amount = paymentReq.maxAmountRequired;
+          const amountNum = amount ? (parseInt(amount) / 1000000).toFixed(6) : '?';
+          const payTo = paymentReq.payTo;
+          const tokenType = paymentReq.tokenType || 'STX';
+
+          // Store for payment
+          pendingPayment = { url, method, body: hasBody ? bodyText : null, paymentReq };
+
           callStatusBadge.className = 'status-badge payment-required';
           callStatusBadge.textContent = '402 Payment Required';
           callResponseUrl.textContent = url;
 
-          if (x402Header) {
-            try {
-              const x402 = JSON.parse(x402Header);
-              const first = x402.accepts?.[0];
-              const amount = first?.maxAmountRequired || first?.maxAmount;
-              const amountNum = amount ? (parseInt(amount) / 1000000).toFixed(6) : '?';
+          // Show payment info with Pay button
+          callResponseBody.innerHTML = \`
+<div style="margin-bottom:16px;">
+  <strong>Cost:</strong> <span style="color:#f7931a;font-weight:600;">\${amountNum} \${tokenType}</span>
+</div>
+<div style="margin-bottom:16px;">
+  <strong>Recipient:</strong> <code style="background:#27272a;padding:2px 6px;border-radius:4px;font-size:12px;">\${payTo}</code>
+</div>
+<button id="pay-btn" style="
+  padding:12px 24px;
+  background:linear-gradient(135deg,#f7931a 0%,#c2410c 100%);
+  border:none;
+  border-radius:8px;
+  color:#000;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  margin-right:12px;
+">Pay with Wallet</button>
+<span style="color:#71717a;font-size:13px;">Opens your Stacks wallet to sign the payment</span>
+\`;
 
-              callResponseBody.textContent = 'Payment required: ' + amountNum + ' STX\\n\\n' +
-                'Full X-402 header:\\n' + JSON.stringify(x402, null, 2) +
-                '\\n\\n(Payment signing coming soon - for now use the X402 client library)';
-            } catch (e) {
-              callResponseBody.textContent = 'Could not parse payment requirements';
-            }
-          }
+          // Add pay button listener
+          document.getElementById('pay-btn').addEventListener('click', handlePayment);
+
         } else {
-          // Got response
+          // Got response (free endpoint or already paid)
           callStatusBadge.className = status >= 200 && status < 300 ? 'status-badge free' : 'status-badge error';
           callStatusBadge.textContent = status;
           callResponseUrl.textContent = url;
@@ -1031,7 +1053,8 @@ function generateToolboxHTML(): string {
             const data = await res.json();
             callResponseBody.textContent = JSON.stringify(data, null, 2);
           } catch (e) {
-            callResponseBody.textContent = await res.text() || '(empty response)';
+            const text = await res.text();
+            callResponseBody.textContent = text || '(empty response)';
           }
         }
 
@@ -1044,9 +1067,81 @@ function generateToolboxHTML(): string {
         callResponse.classList.add('visible');
       } finally {
         callBtn.disabled = false;
-        callBtn.textContent = 'Sign & Call Endpoint';
+        callBtn.textContent = 'Call Endpoint';
       }
     });
+
+    // Handle payment via wallet
+    async function handlePayment() {
+      if (!pendingPayment || !connectedAddress) return;
+
+      const { url, method, body, paymentReq } = pendingPayment;
+      const payBtn = document.getElementById('pay-btn');
+
+      payBtn.disabled = true;
+      payBtn.textContent = 'Opening Wallet...';
+
+      try {
+        const { request } = StacksConnect;
+
+        // Use stx_transferStx to pay directly
+        const amount = paymentReq.maxAmountRequired;
+        const recipient = paymentReq.payTo;
+
+        const result = await request('stx_transferStx', {
+          recipient,
+          amount,
+          memo: 'X402 payment: ' + paymentReq.resource,
+        });
+
+        // Payment sent! Show txid
+        callStatusBadge.className = 'status-badge free';
+        callStatusBadge.textContent = 'Payment Sent';
+
+        callResponseBody.innerHTML = \`
+<div style="margin-bottom:16px;">
+  <strong style="color:#22c55e;">Payment submitted!</strong>
+</div>
+<div style="margin-bottom:16px;">
+  <strong>Transaction:</strong> <a href="https://explorer.hiro.so/txid/\${result.txid}?chain=\${paymentReq.network}" target="_blank" style="color:#f7931a;">\${result.txid.slice(0,20)}...</a>
+</div>
+<div style="padding:16px;background:#18181b;border-radius:8px;margin-top:16px;">
+  <p style="color:#a1a1aa;font-size:13px;margin-bottom:8px;">
+    <strong>Note:</strong> This is a direct wallet payment. The full X402 protocol (sign-without-broadcast)
+    requires wallet support that isn't available yet in @stacks/connect.
+  </p>
+  <p style="color:#71717a;font-size:12px;">
+    For production integrations, use the <a href="https://www.npmjs.com/package/x402-stacks" target="_blank" style="color:#f7931a;">x402-stacks</a> client library.
+  </p>
+</div>
+\`;
+
+        pendingPayment = null;
+
+      } catch (err) {
+        console.error('Payment error:', err);
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay with Wallet';
+
+        // Show error
+        callResponseBody.innerHTML = \`
+<div style="color:#ef4444;margin-bottom:16px;">
+  <strong>Payment failed:</strong> \${err.message || 'User cancelled or wallet error'}
+</div>
+<button id="pay-btn" style="
+  padding:12px 24px;
+  background:linear-gradient(135deg,#f7931a 0%,#c2410c 100%);
+  border:none;
+  border-radius:8px;
+  color:#000;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+">Try Again</button>
+\`;
+        document.getElementById('pay-btn').addEventListener('click', handlePayment);
+      }
+    }
 
     // Initialize wallet UI
     if (typeof StacksConnect !== 'undefined') {
