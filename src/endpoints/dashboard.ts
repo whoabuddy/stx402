@@ -533,7 +533,7 @@ function generateDashboardHTML(data: {
     <nav class="section-nav">
       <a href="#summary">Summary</a>
       <a href="#daily">Daily Activity</a>
-      <a href="#endpoint-metrics">Endpoint Metrics</a>
+      <a href="#endpoint-metrics">STX402 Endpoint Metrics</a>
       <a href="#x402-registry">X402 Registry</a>
       <a href="#agent-registry">Agent Registry</a>
     </nav>
@@ -640,7 +640,7 @@ function generateDashboardHTML(data: {
       </div>
     </div>
 
-    <h2 id="endpoint-metrics" class="section-title">Endpoint Metrics</h2>
+    <h2 id="endpoint-metrics" class="section-title">STX402 Endpoint Metrics</h2>
     <div class="table-container">
       <div class="table-scroll">
         <table>
@@ -708,6 +708,7 @@ function generateDashboardHTML(data: {
               <th data-sort="category">Category <span class="sort-icon">↕</span></th>
               <th data-sort="status">Status <span class="sort-icon">↕</span></th>
               <th data-sort="registered" class="sorted">Published <span class="sort-icon">↓</span></th>
+              <th data-sort="updated">Updated <span class="sort-icon">↕</span></th>
             </tr>
           </thead>
           <tbody>
@@ -716,7 +717,8 @@ function generateDashboardHTML(data: {
               const ownerShort = entry.owner.slice(0, 8) + "..." + entry.owner.slice(-4);
               const registeredTs = entry.registeredAt ? new Date(entry.registeredAt).getTime() : 0;
               const updatedTs = entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
-              const registeredDisplay = entry.registeredAt ? new Date(entry.registeredAt).toLocaleDateString() : "-";
+              const registeredDisplay = entry.registeredAt ? new Date(entry.registeredAt).toLocaleString() : "-";
+              const updatedDisplay = entry.updatedAt ? new Date(entry.updatedAt).toLocaleString() : "-";
               // Parse URL into host and path
               let host = "";
               let path = "";
@@ -748,6 +750,7 @@ function generateDashboardHTML(data: {
                   <td>${entry.category || "-"}</td>
                   <td class="${statusClass}">${entry.status}</td>
                   <td>${registeredDisplay}</td>
+                  <td>${updatedDisplay}</td>
                 </tr>
               `;
             }).join("")}
