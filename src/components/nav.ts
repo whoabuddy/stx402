@@ -94,8 +94,14 @@ export function getNavHTML(activePage: ActivePage): string {
   return `
   <nav class="stx402-nav">
     <a href="/" class="stx402-nav-brand">
-      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <rect fill="#f7931a" rx="12" width="100" height="100"/>
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(247, 147, 26, 0.3));">
+        <defs>
+          <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f7931a"/>
+            <stop offset="100%" stop-color="#c2410c"/>
+          </linearGradient>
+        </defs>
+        <rect fill="url(#logo-gradient)" rx="8" width="100" height="100"/>
         <text x="50" y="68" font-size="40" font-weight="800" text-anchor="middle" fill="#000">402</text>
       </svg>
       <span>STX402</span>
