@@ -464,6 +464,65 @@ function generateDashboardHTML(data: {
       margin-top: 4px;
       text-transform: uppercase;
     }
+    .copy-btn {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      color: #a1a1aa;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .copy-btn:hover {
+      background: #3f3f46;
+      color: #fff;
+      border-color: #52525b;
+    }
+    .copy-btn.copied {
+      background: #166534;
+      border-color: #22c55e;
+      color: #4ade80;
+    }
+    .copy-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+    .owner-link {
+      color: #f7931a;
+      text-decoration: none;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      background: #27272a;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .owner-link:hover {
+      background: #3f3f46;
+      color: #fbbf24;
+    }
+    .url-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .host-badge {
+      background: #1e3a5f;
+      color: #60a5fa;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+    .path-code {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      color: #a1a1aa;
+    }
   </style>
 </head>
 <body>
@@ -643,11 +702,12 @@ function generateDashboardHTML(data: {
             <tr>
               <th data-sort="owner">Owner <span class="sort-icon">↕</span></th>
               <th data-sort="name">Name <span class="sort-icon">↕</span></th>
-              <th data-sort="url">URL <span class="sort-icon">↕</span></th>
+              <th data-sort="host">Host <span class="sort-icon">↕</span></th>
+              <th data-sort="path">Path <span class="sort-icon">↕</span></th>
+              <th>URL</th>
               <th data-sort="category">Category <span class="sort-icon">↕</span></th>
               <th data-sort="status">Status <span class="sort-icon">↕</span></th>
               <th data-sort="registered" class="sorted">Published <span class="sort-icon">↓</span></th>
-              <th data-sort="updated">Updated <span class="sort-icon">↕</span></th>
             </tr>
           </thead>
           <tbody>
@@ -657,16 +717,37 @@ function generateDashboardHTML(data: {
               const registeredTs = entry.registeredAt ? new Date(entry.registeredAt).getTime() : 0;
               const updatedTs = entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
               const registeredDisplay = entry.registeredAt ? new Date(entry.registeredAt).toLocaleDateString() : "-";
-              const updatedDisplay = entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString() : "-";
+              // Parse URL into host and path
+              let host = "";
+              let path = "";
+              try {
+                const urlObj = new URL(entry.url);
+                host = urlObj.host;
+                path = urlObj.pathname + urlObj.search;
+              } catch {
+                host = entry.url;
+                path = "";
+              }
+              // Determine explorer URL based on address prefix
+              const explorerNetwork = entry.owner.startsWith("SP") ? "" : "?chain=testnet";
+              const explorerUrl = "https://explorer.hiro.so/address/" + entry.owner + explorerNetwork;
               return `
-                <tr data-owner="${entry.owner}" data-name="${entry.name}" data-url="${entry.url}" data-category="${entry.category || ""}" data-status="${entry.status}" data-registered="${registeredTs}" data-updated="${updatedTs}">
-                  <td><code style="font-size: 11px;">${ownerShort}</code></td>
+                <tr data-owner="${entry.owner}" data-name="${entry.name}" data-url="${entry.url}" data-host="${host}" data-path="${path}" data-category="${entry.category || ""}" data-status="${entry.status}" data-registered="${registeredTs}" data-updated="${updatedTs}">
+                  <td><a href="${explorerUrl}" target="_blank" class="owner-link" title="${entry.owner}">${ownerShort}</a></td>
                   <td><strong>${entry.name}</strong></td>
-                  <td><code style="font-size: 11px;">${entry.url.length > 40 ? entry.url.slice(0, 40) + "..." : entry.url}</code></td>
+                  <td><span class="host-badge">${host}</span></td>
+                  <td><span class="path-code">${path.length > 30 ? path.slice(0, 30) + "..." : path}</span></td>
+                  <td>
+                    <button class="copy-btn" data-url="${entry.url}" title="Copy full URL">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy
+                    </button>
+                  </td>
                   <td>${entry.category || "-"}</td>
                   <td class="${statusClass}">${entry.status}</td>
                   <td>${registeredDisplay}</td>
-                  <td>${updatedDisplay}</td>
                 </tr>
               `;
             }).join("")}
@@ -769,6 +850,26 @@ function generateDashboardHTML(data: {
         ['registered', 'updated'],
         { key: 'registered', dir: 'desc' }
       );
+
+      // Setup copy buttons
+      document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const url = btn.dataset.url;
+          if (!url) return;
+
+          try {
+            await navigator.clipboard.writeText(url);
+            btn.classList.add('copied');
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Copied!';
+            setTimeout(() => {
+              btn.classList.remove('copied');
+              btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> Copy';
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy:', err);
+          }
+        });
+      });
     })();
   </script>
 </body>
