@@ -13,6 +13,8 @@ import { Health } from "./endpoints/health";
 import { Dashboard } from "./endpoints/dashboard";
 import { Archive2025Page } from "./endpoints/archive-2025";
 import { docsHandler } from "./endpoints/docsPage";
+import { aboutHandler } from "./endpoints/aboutPage";
+import { guideHandler } from "./endpoints/guidePage";
 
 // Stacks endpoints
 import { GetBnsName } from "./endpoints/getBnsName";
@@ -247,8 +249,10 @@ const openapi = fromHono(app, {
   openapi_url: "/openapi.json",
 });
 
-// Custom themed docs page at root
+// Custom themed pages
 app.get("/", docsHandler);
+app.get("/about", aboutHandler);
+app.get("/guide", guideHandler);
 
 const paymentMiddleware = x402PaymentMiddleware();
 const trackMetrics = metricsMiddleware();
