@@ -54,17 +54,19 @@ function generateToolboxHTML(): string {
     }
 
     .page-header {
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 48px;
     }
 
-    .page-header h1 {
+    .page-header .title-section h1 {
       font-size: 32px;
       font-weight: 700;
       margin-bottom: 8px;
     }
 
-    .page-header .subtitle {
+    .page-header .title-section .subtitle {
       color: #a1a1aa;
       font-size: 16px;
     }
@@ -392,17 +394,6 @@ function generateToolboxHTML(): string {
     }
 
     /* Wallet connection */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      text-align: left;
-    }
-
-    .page-header .title-section {
-      flex: 1;
-    }
-
     .wallet-section {
       flex-shrink: 0;
     }
