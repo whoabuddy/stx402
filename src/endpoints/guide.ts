@@ -52,7 +52,7 @@ const categories: Category[] = [
   },
   {
     name: "AI",
-    color: "#a855f7",
+    color: "#3b82f6",
     icon: "&#129302;",
     description: "AI-powered text analysis, generation, and media processing",
     useFor: "Summarizing text, sentiment analysis, translation, text-to-speech, image generation, smart contract explanations",
