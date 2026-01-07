@@ -294,7 +294,7 @@ const aiEndpoints: TestConfig[] = [
 ];
 
 // =============================================================================
-// TEXT ENDPOINTS (24)
+// TEXT ENDPOINTS (26)
 // =============================================================================
 
 const textEndpoints: TestConfig[] = [
@@ -519,6 +519,27 @@ const textEndpoints: TestConfig[] = [
     body: { text: "A" },
     validateResponse: (data, tokenType) =>
       hasField(data, "characters") && hasTokenType(data, tokenType),
+  },
+  {
+    name: "compress",
+    endpoint: "/api/text/compress",
+    method: "POST",
+    body: { text: "Hello World! This is a test of gzip compression.", algorithm: "gzip" },
+    validateResponse: (data, tokenType) => {
+      const d = data as { compressed: string; compressionRatio: number; tokenType: string };
+      return typeof d.compressed === "string" && d.compressed.length > 0 && d.tokenType === tokenType;
+    },
+  },
+  {
+    name: "decompress",
+    endpoint: "/api/text/decompress",
+    method: "POST",
+    // Pre-compressed "Hello World!" using gzip (base64)
+    body: { compressed: "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUQQAlRmFGwwAAAA=", algorithm: "gzip" },
+    validateResponse: (data, tokenType) => {
+      const d = data as { text: string; tokenType: string };
+      return d.text === "Hello World!" && d.tokenType === tokenType;
+    },
   },
 ];
 
@@ -1758,10 +1779,10 @@ export const ENDPOINT_CATEGORIES: Record<string, TestConfig[]> = {
 
 // Export counts for verification
 export const ENDPOINT_COUNTS = {
-  total: ENDPOINT_REGISTRY.length, // 166 tests (163 paid + 3 free tested; health/dashboard excluded)
+  total: ENDPOINT_REGISTRY.length, // 168 tests (163 paid + 5 free tested; health/dashboard excluded)
   stacks: stacksEndpoints.length,  // 15
   ai: aiEndpoints.length,          // 13
-  text: textEndpoints.length,      // 24
+  text: textEndpoints.length,      // 26
   data: dataEndpoints.length,      // 8
   crypto: cryptoEndpoints.length,  // 2
   random: randomEndpoints.length,  // 7
