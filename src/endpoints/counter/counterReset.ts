@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class CounterReset extends BaseEndpoint {
   schema = {
@@ -100,7 +100,7 @@ export class CounterReset extends BaseEndpoint {
       const result = await stub.counterReset(name, resetTo);
       return c.json({ ...result, tokenType });
     } catch (error) {
-      console.error("Counter reset error:", error);
+      log.error("Counter reset error", { error: String(error) });
       return this.errorResponse(c, `Counter operation failed: ${error}`, 500);
     }
   }

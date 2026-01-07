@@ -1,3 +1,5 @@
+import { log } from "./logger";
+
 /**
  * Converts a hex string to ASCII text
  *
@@ -22,7 +24,8 @@ export function hexToAscii(hexString: string | bigint | Uint8Array): string {
     }
     return str;
   } catch (error) {
-    console.error("Failed to convert hex to ASCII:", error, {
+    log.warn("Failed to convert hex to ASCII", {
+      error: String(error),
       hexString: String(hexString),
     });
     // Return empty string on error rather than throwing

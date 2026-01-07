@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class MemorySearch extends BaseEndpoint {
   schema = {
@@ -160,7 +160,7 @@ export class MemorySearch extends BaseEndpoint {
 
       queryEmbedding = embeddingResult.data[0];
     } catch (error) {
-      console.error("Embedding generation error:", error);
+      log.error("Embedding generation error", { error: String(error) });
       return this.errorResponse(c, "Failed to generate query embedding", 500);
     }
 
@@ -184,7 +184,7 @@ export class MemorySearch extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Memory search error:", error);
+      log.error("Memory search error", { error: String(error) });
       return this.errorResponse(c, `Memory search failed: ${error}`, 500);
     }
   }

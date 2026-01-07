@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class SqlSchema extends BaseEndpoint {
   schema = {
@@ -63,7 +63,7 @@ export class SqlSchema extends BaseEndpoint {
       const result = await stub.sqlSchema();
       return c.json({ ...result, tokenType });
     } catch (error) {
-      console.error("SQL schema error:", error);
+      log.error("SQL schema error", { error: String(error) });
       return this.errorResponse(c, `Schema operation failed: ${error}`, 500);
     }
   }

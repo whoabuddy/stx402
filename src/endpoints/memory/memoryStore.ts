@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class MemoryStore extends BaseEndpoint {
   schema = {
@@ -182,7 +182,7 @@ export class MemoryStore extends BaseEndpoint {
           }
         }
       } catch (error) {
-        console.error("Embedding/summary generation error:", error);
+        log.error("Embedding/summary generation error", { error: String(error) });
         // Continue without embedding - non-fatal
       }
     }
@@ -207,7 +207,7 @@ export class MemoryStore extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Memory store error:", error);
+      log.error("Memory store error", { error: String(error) });
       return this.errorResponse(c, `Memory operation failed: ${error}`, 500);
     }
   }

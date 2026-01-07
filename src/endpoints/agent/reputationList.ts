@@ -13,7 +13,6 @@ import {
   type ERC8004Network,
   ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
-import { boolCV } from "@stacks/transactions";
 
 export class ReputationList extends BaseEndpoint {
   schema = {

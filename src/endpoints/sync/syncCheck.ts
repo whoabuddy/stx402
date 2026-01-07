@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class SyncCheck extends BaseEndpoint {
   schema = {
@@ -93,7 +93,7 @@ export class SyncCheck extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Lock check error:", error);
+      log.error("Lock check error", { error: String(error) });
       return this.errorResponse(c, `Lock operation failed: ${error}`, 500);
     }
   }

@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class QueueComplete extends BaseEndpoint {
   schema = {
@@ -92,7 +92,7 @@ export class QueueComplete extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Queue complete error:", error);
+      log.error("Queue complete error", { error: String(error) });
       return this.errorResponse(c, `Queue operation failed: ${error}`, 500);
     }
   }

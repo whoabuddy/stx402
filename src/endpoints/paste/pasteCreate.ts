@@ -1,4 +1,5 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 import { validateValueSize, validateTtl, KV_LIMITS } from "../../utils/namespace";
 
@@ -182,7 +183,7 @@ export class PasteCreate extends BaseEndpoint {
         metadata,
       });
     } catch (error) {
-      console.error("Paste create error:", error);
+      log.error("Paste create error", { error: String(error) });
       return this.errorResponse(c, "Failed to create paste", 500);
     }
 

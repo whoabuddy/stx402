@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class CounterDelete extends BaseEndpoint {
   schema = {
@@ -91,7 +91,7 @@ export class CounterDelete extends BaseEndpoint {
       const result = await stub.counterDelete(name);
       return c.json({ ...result, tokenType });
     } catch (error) {
-      console.error("Counter delete error:", error);
+      log.error("Counter delete error", { error: String(error) });
       return this.errorResponse(c, `Counter operation failed: ${error}`, 500);
     }
   }

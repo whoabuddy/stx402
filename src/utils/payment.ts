@@ -2,6 +2,7 @@ import {
   deserializeTransaction,
   Address,
 } from "@stacks/transactions";
+import { log } from "./logger";
 
 // Extended settle result that includes sender address
 export interface ExtendedSettleResult {
@@ -42,7 +43,7 @@ export function extractSenderHash160FromSignedTx(signedTxHex: string): string | 
 
     return null;
   } catch (error) {
-    console.error("Failed to extract sender hash160 from signed tx:", error);
+    log.warn("Failed to extract sender hash160 from signed tx", { error: String(error) });
     return null;
   }
 }

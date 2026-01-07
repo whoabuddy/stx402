@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class LinksDelete extends BaseEndpoint {
   schema = {
@@ -91,7 +91,7 @@ export class LinksDelete extends BaseEndpoint {
 
       return c.json({ ...result, tokenType });
     } catch (error) {
-      console.error("Link delete error:", error);
+      log.error("Link delete error", { error: String(error) });
       return this.errorResponse(c, `Link operation failed: ${error}`, 500);
     }
   }

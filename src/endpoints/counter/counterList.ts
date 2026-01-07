@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class CounterList extends BaseEndpoint {
   schema = {
@@ -71,7 +71,7 @@ export class CounterList extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Counter list error:", error);
+      log.error("Counter list error", { error: String(error) });
       return this.errorResponse(c, `Counter operation failed: ${error}`, 500);
     }
   }

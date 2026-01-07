@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class LinksStats extends BaseEndpoint {
   schema = {
@@ -111,7 +111,7 @@ export class LinksStats extends BaseEndpoint {
 
       return c.json({ ...stats, tokenType });
     } catch (error) {
-      console.error("Link stats error:", error);
+      log.error("Link stats error", { error: String(error) });
       return this.errorResponse(c, `Link operation failed: ${error}`, 500);
     }
   }

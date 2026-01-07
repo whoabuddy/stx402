@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class QueuePop extends BaseEndpoint {
   schema = {
@@ -120,7 +120,7 @@ export class QueuePop extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Queue pop error:", error);
+      log.error("Queue pop error", { error: String(error) });
       return this.errorResponse(c, `Queue operation failed: ${error}`, 500);
     }
   }

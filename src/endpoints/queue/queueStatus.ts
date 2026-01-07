@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class QueueStatus extends BaseEndpoint {
   schema = {
@@ -103,7 +103,7 @@ export class QueueStatus extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Queue status error:", error);
+      log.error("Queue status error", { error: String(error) });
       return this.errorResponse(c, `Queue operation failed: ${error}`, 500);
     }
   }

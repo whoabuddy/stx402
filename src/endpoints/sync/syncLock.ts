@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class SyncLock extends BaseEndpoint {
   schema = {
@@ -114,7 +114,7 @@ export class SyncLock extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Lock acquire error:", error);
+      log.error("Lock acquire error", { error: String(error) });
       return this.errorResponse(c, `Lock operation failed: ${error}`, 500);
     }
   }

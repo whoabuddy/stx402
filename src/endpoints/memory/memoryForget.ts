@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class MemoryForget extends BaseEndpoint {
   schema = {
@@ -92,7 +92,7 @@ export class MemoryForget extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Memory forget error:", error);
+      log.error("Memory forget error", { error: String(error) });
       return this.errorResponse(c, `Memory operation failed: ${error}`, 500);
     }
   }

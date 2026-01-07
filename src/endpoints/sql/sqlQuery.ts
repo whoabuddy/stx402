@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class SqlQuery extends BaseEndpoint {
   schema = {
@@ -100,7 +100,7 @@ export class SqlQuery extends BaseEndpoint {
       const result = await stub.sqlQuery(query, params);
       return c.json({ ...result, tokenType });
     } catch (error) {
-      console.error("SQL query error:", error);
+      log.error("SQL query error", { error: String(error) });
       const message = error instanceof Error ? error.message : String(error);
       return this.errorResponse(c, message, 400);
     }

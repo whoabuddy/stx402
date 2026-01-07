@@ -247,11 +247,11 @@ export const x402PaymentMiddleware = () => {
 
     // Verify/settle payment
     let settleResult: SettlePaymentResult;
-    console.log("settlePayment starting:", {
+    const paymentLog = createLogger({ path: c.req.path, tokenType });
+    paymentLog.debug("settlePayment starting", {
       facilitatorUrl: config.facilitatorUrl,
       expectedRecipient: config.address,
       minAmount: config.minAmount.toString(),
-      tokenType,
       signedTxLength: signedTx.length,
     });
     try {
@@ -260,11 +260,9 @@ export const x402PaymentMiddleware = () => {
         minAmount: config.minAmount,
         tokenType,
       })) as SettlePaymentResult;
-      const log = createLogger({ path: c.req.path, tokenType });
-      log.debug("settlePayment result", settleResult);
+      paymentLog.debug("settlePayment result", settleResult);
     } catch (error) {
-      const log = createLogger({ path: c.req.path, tokenType });
-      log.error("settlePayment exception", { error: String(error), type: typeof error });
+      paymentLog.error("settlePayment exception", { error: String(error), type: typeof error });
 
       // Classify the error and return appropriate response
       const classified = classifyPaymentError(error);
@@ -289,8 +287,7 @@ export const x402PaymentMiddleware = () => {
     }
 
     if (!settleResult.isValid) {
-      const log = createLogger({ path: c.req.path, tokenType });
-      log.error("Payment invalid/unconfirmed", settleResult);
+      paymentLog.error("Payment invalid/unconfirmed", settleResult);
 
       // Classify based on the settle result (check validationError first, then error)
       const classified = classifyPaymentError(

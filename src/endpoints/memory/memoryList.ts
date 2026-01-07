@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class MemoryList extends BaseEndpoint {
   schema = {
@@ -150,7 +150,7 @@ export class MemoryList extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      console.error("Memory list error:", error);
+      log.error("Memory list error", { error: String(error) });
       return this.errorResponse(c, `Memory operation failed: ${error}`, 500);
     }
   }

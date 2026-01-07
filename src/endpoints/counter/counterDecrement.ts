@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class CounterDecrement extends BaseEndpoint {
   schema = {
@@ -111,7 +111,7 @@ export class CounterDecrement extends BaseEndpoint {
       const result = await stub.counterDecrement(name, step, { min, max });
       return c.json({ ...result, tokenType });
     } catch (error) {
-      console.error("Counter decrement error:", error);
+      log.error("Counter decrement error", { error: String(error) });
       return this.errorResponse(c, `Counter operation failed: ${error}`, 500);
     }
   }

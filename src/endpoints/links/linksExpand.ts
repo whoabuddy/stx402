@@ -1,6 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
+import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
-import type { UserDurableObject } from "../../durable-objects/UserDurableObject";
 
 export class LinksExpand extends BaseEndpoint {
   schema = {
@@ -99,7 +99,7 @@ export class LinksExpand extends BaseEndpoint {
         clicks: link.clicks + 1, // Include this click
       });
     } catch (error) {
-      console.error("Link expand error:", error);
+      log.error("Link expand error", { error: String(error) });
       return this.errorResponse(c, `Link operation failed: ${error}`, 500);
     }
   }

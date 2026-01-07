@@ -9,6 +9,7 @@ import {
 } from "@stacks/transactions";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+import { log } from "./logger";
 
 // SIP-018 Domain for STX402 Registry
 export const STX402_DOMAIN = Cl.tuple({
@@ -185,7 +186,7 @@ function publicKeyToAddress(publicKey: string, network: "mainnet" | "testnet" = 
 
     return stacksPublicKeyToAddress(version, publicKey);
   } catch (error) {
-    console.error("Failed to convert public key to address:", error);
+    log.error("Failed to convert public key to address", { error: String(error), network });
     throw error;
   }
 }
