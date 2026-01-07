@@ -10,6 +10,7 @@ import {
   type PricingTier,
   validateTokenType,
 } from "../utils/pricing";
+import { createLogger } from "../utils/logger";
 
 // Correct mainnet token contracts (x402-stacks has outdated sBTC address)
 const TOKEN_CONTRACTS: Record<"mainnet" | "testnet", Record<"sBTC" | "USDCx", TokenContract>> = {
@@ -259,9 +260,11 @@ export const x402PaymentMiddleware = () => {
         minAmount: config.minAmount,
         tokenType,
       })) as SettlePaymentResult;
-      console.log("settlePayment result:", JSON.stringify(settleResult));
+      const log = createLogger({ path: c.req.path, tokenType });
+      log.debug("settlePayment result", settleResult);
     } catch (error) {
-      console.error("settlePayment exception:", error, "Type:", typeof error, "Message:", (error as Error)?.message);
+      const log = createLogger({ path: c.req.path, tokenType });
+      log.error("settlePayment exception", { error: String(error), type: typeof error });
 
       // Classify the error and return appropriate response
       const classified = classifyPaymentError(error);
@@ -286,7 +289,8 @@ export const x402PaymentMiddleware = () => {
     }
 
     if (!settleResult.isValid) {
-      console.error("Payment invalid/unconfirmed:", settleResult);
+      const log = createLogger({ path: c.req.path, tokenType });
+      log.error("Payment invalid/unconfirmed", settleResult);
 
       // Classify based on the settle result (check validationError first, then error)
       const classified = classifyPaymentError(

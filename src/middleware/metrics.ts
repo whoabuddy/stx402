@@ -5,6 +5,7 @@ import {
   type TokenType,
   validateTokenType,
 } from "../utils/pricing";
+import { log } from "../utils/logger";
 
 // =============================================================================
 // Types - Consolidated metrics storage
@@ -287,7 +288,7 @@ async function updateMetrics(
     await saveMetrics(kv, data);
   } catch (error) {
     // Log but don't fail the request
-    console.error("Failed to update metrics:", error);
+    log.error("Failed to update metrics", { error: String(error), path });
   }
 }
 

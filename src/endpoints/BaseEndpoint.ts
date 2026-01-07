@@ -4,6 +4,7 @@ import { validateTokenType } from "../utils/pricing";
 import type { AppContext } from "../types";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import type { SettlePaymentResult } from "../middleware/x402-stacks";
+import { log } from "../utils/logger";
 
 // Extended settle result that may have sender in different formats
 interface ExtendedSettleResult extends SettlePaymentResult {
@@ -23,7 +24,7 @@ export class BaseEndpoint extends OpenAPIRoute {
       const addressObj = Address.parse(address);
       return Address.stringify(addressObj);
     } catch (e) {
-      console.error(String(e));
+      log.warn("Invalid address format", { address, error: String(e) });
       return null;
     }
   }
@@ -69,7 +70,7 @@ export class BaseEndpoint extends OpenAPIRoute {
           }
         }
       } catch (error) {
-        console.error("Failed to extract sender from signed tx:", error);
+        log.warn("Failed to extract sender from signed tx", { error: String(error) });
       }
     }
 
