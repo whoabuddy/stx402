@@ -8,10 +8,6 @@
     "start": "wrangler dev",
     "cf-typegen": "wrangler types",
     "sync-counts": "bun run scripts/sync-endpoint-counts.ts",
-    "kv:get": "wrangler kv key get --env-file .env --binding METRICS --text --remote",
-    "kv:put": "wrangler kv key put --env-file .env --binding METRICS --remote",
-    "cleanup-metrics": "bun run scripts/cleanup-orphaned-metrics.ts",
-    "cleanup-metrics:apply": "bun run scripts/cleanup-orphaned-metrics.ts --apply",
     "postinstall": "patch-package"
   },
   "dependencies": {
