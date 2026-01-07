@@ -5,32 +5,6 @@ import { getDashboardMetrics, type EndpointMetrics } from "../middleware/metrics
 import { listAllEntries, type RegistryEntryMinimal } from "../utils/registry";
 import { getNavCSS, getNavHTML } from "../components/nav";
 
-// Format number compactly while preserving precision via tooltip
-// Returns { display: string, full: string } for use with title attribute
-function formatEarnings(value: number, maxDecimals: number): { display: string; full: string } {
-  const full = value.toFixed(maxDecimals);
-
-  // Remove trailing zeros after decimal point
-  let display = full.replace(/\.?0+$/, "");
-
-  // If display is empty or just "-", show "0"
-  if (!display || display === "-") display = "0";
-
-  // If still too long (>10 chars), use compact notation
-  if (display.length > 10) {
-    // Find first significant digit after decimal
-    const match = full.match(/^0\.(0*)([1-9])/);
-    if (match) {
-      const zeros = match[1].length;
-      // Show as "0.0₄123" where subscript indicates zero count
-      const significant = full.slice(zeros + 2, zeros + 6).replace(/0+$/, "");
-      display = `0.0₍${zeros}₎${significant}`;
-    }
-  }
-
-  return { display, full };
-}
-
 // Extract category from path (e.g., /api/stacks/... → Stacks)
 function getCategoryFromPath(path: string): string {
   const match = path.match(/^\/api\/([^/]+)/);
@@ -266,7 +240,6 @@ function generateDashboardHTML(data: {
     .card .value.sbtc { color: var(--accent); }
     .card .value.usdcx { color: #3b82f6; }
     .card .value.success { color: #22c55e; }
-    .card .value[title] { cursor: help; }
     .tier-badges {
       display: flex;
       gap: 8px;
@@ -578,11 +551,6 @@ function generateDashboardHTML(data: {
       <div class="card">
         <h3>Total Endpoints</h3>
         <div class="value">${totals.endpoints}</div>
-        <div class="tier-badges">
-          <span class="tier-badge simple">${tierCounts.simple} simple</span>
-          <span class="tier-badge ai">${tierCounts.ai} ai</span>
-          <span class="tier-badge heavy_ai">${tierCounts.heavy_ai} heavy</span>
-        </div>
       </div>
       <div class="card">
         <h3>Total Calls</h3>
@@ -590,15 +558,15 @@ function generateDashboardHTML(data: {
       </div>
       <div class="card">
         <h3>STX Earned</h3>
-        <div class="value stx" title="${totals.stx.toFixed(6)}">${formatEarnings(totals.stx, 6).display}</div>
+        <div class="value stx">${totals.stx.toFixed(6)}</div>
       </div>
       <div class="card">
-        <h3>sBTC Earned</h3>
-        <div class="value sbtc" title="${totals.sbtc.toFixed(8)}">${formatEarnings(totals.sbtc, 8).display}</div>
+        <h3>Sats Earned</h3>
+        <div class="value sbtc">${Math.round(totals.sbtc * 100_000_000).toLocaleString()}</div>
       </div>
       <div class="card">
         <h3>USDCx Earned</h3>
-        <div class="value usdcx" title="${totals.usdcx.toFixed(6)}">${formatEarnings(totals.usdcx, 6).display}</div>
+        <div class="value usdcx">${totals.usdcx.toFixed(2)}</div>
       </div>
       <div class="card">
         <h3>Avg Success Rate</h3>
