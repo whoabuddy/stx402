@@ -52,12 +52,12 @@ export class Dashboard extends OpenAPIRoute {
       // Generate placeholder data when KV is not configured
       metrics = paths.map((path) => ({
         path,
-        tier: ENDPOINT_TIERS[path] || "simple",
         totalCalls: 0,
         successfulCalls: 0,
         avgLatencyMs: 0,
         successRate: "N/A",
         earnings: { STX: "0", sBTC: "0", USDCx: "0" },
+        created: "Never",
         lastCall: "Never",
       }));
     }
@@ -89,13 +89,6 @@ export class Dashboard extends OpenAPIRoute {
           ).toFixed(1)
         : "N/A";
 
-    // Count by tier
-    const tierCounts = {
-      simple: metrics.filter((m) => m.tier === "simple").length,
-      ai: metrics.filter((m) => m.tier === "ai").length,
-      heavy_ai: metrics.filter((m) => m.tier === "heavy_ai").length,
-    };
-
     // Count by category with calls
     const categoryStats: Record<string, { count: number; calls: number; stx: number }> = {};
     for (const m of metrics) {
@@ -119,7 +112,6 @@ export class Dashboard extends OpenAPIRoute {
         usdcx: totalUSDCx,
         avgSuccessRate,
       },
-      tierCounts,
       categoryStats,
       activeEndpoints,
       kvConfigured: !!c.env.METRICS,
@@ -141,13 +133,12 @@ function generateDashboardHTML(data: {
     usdcx: number;
     avgSuccessRate: string;
   };
-  tierCounts: { simple: number; ai: number; heavy_ai: number };
   categoryStats: Record<string, { count: number; calls: number; stx: number }>;
   activeEndpoints: EndpointMetrics[];
   kvConfigured: boolean;
   registryEntries: RegistryEntryMinimal[];
 }): string {
-  const { metrics, dailyStats, totals, tierCounts, categoryStats, activeEndpoints, kvConfigured, registryEntries } = data;
+  const { metrics, dailyStats, totals, categoryStats, activeEndpoints, kvConfigured, registryEntries } = data;
 
   // Sort by total calls descending
   const sortedMetrics = [...metrics].sort((a, b) => b.totalCalls - a.totalCalls);
@@ -598,12 +589,12 @@ function generateDashboardHTML(data: {
             <tr>
               <th data-sort="path">Endpoint <span class="sort-icon">↕</span></th>
               <th data-sort="category">Category <span class="sort-icon">↕</span></th>
-              <th data-sort="tier">Tier <span class="sort-icon">↕</span></th>
               <th data-sort="calls" class="sorted">Calls <span class="sort-icon">↓</span></th>
               <th data-sort="success">Success <span class="sort-icon">↕</span></th>
               <th data-sort="latency">Latency <span class="sort-icon">↕</span></th>
               <th data-sort="stx">STX <span class="sort-icon">↕</span></th>
               <th data-sort="sbtc">sBTC <span class="sort-icon">↕</span></th>
+              <th data-sort="created">Created <span class="sort-icon">↕</span></th>
               <th data-sort="lastcall">Last Call <span class="sort-icon">↕</span></th>
             </tr>
           </thead>
@@ -618,6 +609,11 @@ function generateDashboardHTML(data: {
                   : parseFloat(m.successRate) >= 80
                   ? "success-med"
                   : "success-low";
+              const createdTs = m.created === "Never" ? 0 : new Date(m.created).getTime();
+              const createdDisplay =
+                m.created === "Never"
+                  ? "-"
+                  : new Date(m.created).toLocaleDateString();
               const lastCallTs = m.lastCall === "Never" ? 0 : new Date(m.lastCall).getTime();
               const lastCallDisplay =
                 m.lastCall === "Never"
@@ -625,15 +621,15 @@ function generateDashboardHTML(data: {
                   : new Date(m.lastCall).toLocaleString();
               const successNum = m.successRate === "N/A" ? -1 : parseFloat(m.successRate);
               return `
-                <tr data-path="${m.path}" data-category="${category}" data-tier="${m.tier}" data-calls="${m.totalCalls}" data-success="${successNum}" data-latency="${m.avgLatencyMs}" data-stx="${m.earnings.STX}" data-sbtc="${m.earnings.sBTC}" data-lastcall="${lastCallTs}">
+                <tr data-path="${m.path}" data-category="${category}" data-calls="${m.totalCalls}" data-success="${successNum}" data-latency="${m.avgLatencyMs}" data-stx="${m.earnings.STX}" data-sbtc="${m.earnings.sBTC}" data-created="${createdTs}" data-lastcall="${lastCallTs}">
                   <td><code>${m.path}</code></td>
                   <td class="cat-${category.toLowerCase()}">${category}</td>
-                  <td class="tier-${m.tier}">${m.tier}</td>
                   <td>${m.totalCalls.toLocaleString()}</td>
                   <td class="${successClass}">${m.successRate}%</td>
                   <td>${m.avgLatencyMs}ms</td>
                   <td>${m.earnings.STX}</td>
                   <td>${m.earnings.sBTC}</td>
+                  <td>${createdDisplay}</td>
                   <td>${lastCallDisplay}</td>
                 </tr>
               `;
