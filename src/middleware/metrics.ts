@@ -21,7 +21,8 @@ export interface EndpointStats {
     sBTC: number;
     USDCx: number;
   };
-  lastCall: string; // ISO timestamp
+  created: string; // ISO timestamp of first call
+  lastCall: string; // ISO timestamp of most recent call
 }
 
 /** Daily aggregate stats */
@@ -40,7 +41,6 @@ export interface MetricsData {
 /** Public interface for dashboard display */
 export interface EndpointMetrics {
   path: string;
-  tier: string;
   totalCalls: number;
   successfulCalls: number;
   avgLatencyMs: number;
@@ -50,6 +50,7 @@ export interface EndpointMetrics {
     sBTC: string;
     USDCx: string;
   };
+  created: string;
   lastCall: string;
 }
 
@@ -101,12 +102,12 @@ export async function getAllMetrics(
     if (!stats) {
       return {
         path,
-        tier: getEndpointTier(path),
         totalCalls: 0,
         successfulCalls: 0,
         avgLatencyMs: 0,
         successRate: "N/A",
         earnings: { STX: "0", sBTC: "0", USDCx: "0" },
+        created: "Never",
         lastCall: "Never",
       };
     }
@@ -116,7 +117,6 @@ export async function getAllMetrics(
 
     return {
       path,
-      tier: getEndpointTier(path),
       totalCalls,
       successfulCalls,
       avgLatencyMs: totalCalls > 0 ? Math.round(stats.latencySum / totalCalls) : 0,
@@ -129,6 +129,7 @@ export async function getAllMetrics(
         sBTC: stats.earnings.sBTC.toFixed(8),
         USDCx: stats.earnings.USDCx.toFixed(6),
       },
+      created: stats.created || "Never",
       lastCall: stats.lastCall || "Never",
     };
   });
@@ -176,12 +177,12 @@ function extractEndpointMetrics(
     if (!stats) {
       return {
         path,
-        tier: getEndpointTier(path),
         totalCalls: 0,
         successfulCalls: 0,
         avgLatencyMs: 0,
         successRate: "N/A",
         earnings: { STX: "0", sBTC: "0", USDCx: "0" },
+        created: "Never",
         lastCall: "Never",
       };
     }
@@ -191,7 +192,6 @@ function extractEndpointMetrics(
 
     return {
       path,
-      tier: getEndpointTier(path),
       totalCalls,
       successfulCalls,
       avgLatencyMs: totalCalls > 0 ? Math.round(stats.latencySum / totalCalls) : 0,
@@ -204,6 +204,7 @@ function extractEndpointMetrics(
         sBTC: stats.earnings.sBTC.toFixed(8),
         USDCx: stats.earnings.USDCx.toFixed(6),
       },
+      created: stats.created || "Never",
       lastCall: stats.lastCall || "Never",
     };
   });
@@ -250,12 +251,14 @@ async function updateMetrics(
     const data = await loadMetrics(kv);
 
     // Initialize endpoint if needed
+    const now = new Date().toISOString();
     if (!data.endpoints[path]) {
       data.endpoints[path] = {
         calls: 0,
         success: 0,
         latencySum: 0,
         earnings: { STX: 0, sBTC: 0, USDCx: 0 },
+        created: now,
         lastCall: "",
       };
     }
@@ -266,7 +269,7 @@ async function updateMetrics(
     endpoint.success += isSuccess ? 1 : 0;
     endpoint.latencySum += latency;
     endpoint.earnings[tokenType] += parseFloat(amount);
-    endpoint.lastCall = new Date().toISOString();
+    endpoint.lastCall = now;
 
     // Update daily stats
     if (!data.daily[today]) {
