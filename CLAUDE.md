@@ -4,9 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-STX402 is a Cloudflare Workers API providing **165 useful endpoints** via X402 micropayments.
+STX402 is a Cloudflare Workers API providing useful endpoints via X402 micropayments.
 
 **Vision**: A marketplace of useful API endpoints where the best ones surface to the top based on usage and earnings. Each endpoint is simple, composable, and pays for itself through micropayments.
+
+**Source of Truth**: Endpoint counts are defined in `tests/endpoint-registry.ts` which exports `ENDPOINT_COUNTS`. Run `bun run tests/_validate_endpoints.ts` to verify sync with `src/index.ts`.
 
 ## Commands
 
@@ -65,30 +67,32 @@ X402_NETWORK=testnet X402_WORKER_URL=https://stx402-staging.whoabuddy.workers.de
 
 ## Architecture
 
-### Endpoint Categories (165 total)
+### Endpoint Categories
+
+Counts from `tests/endpoint-registry.ts:ENDPOINT_COUNTS` (166 tested + 5 free = 171 total routes):
 
 | Category | Count | Path Pattern | Tier | Description |
 |----------|-------|--------------|------|-------------|
-| Health | 2 | `/api/health`, `/dashboard` | free | Monitoring endpoints |
+| Health | 5 | `/api/health`, `/dashboard`, `/about`, `/guide`, `/toolbox` | free | Monitoring & docs |
 | Stacks | 15 | `/api/stacks/*` | simple | Blockchain queries, Clarity utilities |
 | AI | 13 | `/api/ai/*` | ai/heavy_ai | AI-powered analysis and generation |
-| Text | 26 | `/api/text/*` | simple | Encoding, hashing, compression |
+| Text | 24 | `/api/text/*` | simple | Encoding, hashing, compression |
 | Data | 8 | `/api/data/*` | simple | JSON/CSV processing |
 | Crypto | 2 | `/api/crypto/*` | simple | Cryptographic operations |
 | Random | 7 | `/api/random/*` | simple | Secure random generation |
 | Math | 6 | `/api/math/*` | simple | Mathematical operations |
 | Utility | 23 | `/api/util/*` | simple | General utilities |
 | Network | 6 | `/api/net/*` | simple | Network utilities |
-| Registry | 7 | `/api/registry/*` | ai | Endpoint registry management |
+| Registry | 10 | `/api/registry/*` | ai | Endpoint registry management |
 | KV Storage | 4 | `/api/kv/*` | storage_* | Stateful key-value storage |
-| Paste | 2 | `/api/paste/*` | storage_* | Text paste with short codes |
+| Paste | 3 | `/api/paste/*` | storage_* | Text paste with short codes |
 | Counter | 6 | `/api/counter/*` | storage_* | Atomic counters (Durable Objects) |
 | SQL | 3 | `/api/sql/*` | storage_* | Direct SQLite access (Durable Objects) |
-| Links | 4 | `/api/links/*` | storage_* | URL shortener with click tracking |
+| Links | 5 | `/api/links/*` | storage_* | URL shortener with click tracking |
 | Sync | 5 | `/api/sync/*` | storage_* | Distributed locks with auto-expiration |
 | Queue | 5 | `/api/queue/*` | storage_* | Job queue with priority and retries |
 | Memory | 5 | `/api/memory/*` | storage_ai | Agent memory with semantic search |
-| Agent | 15 | `/api/agent/*` | simple | ERC-8004 agent registry (identity, reputation, validation) |
+| Agent | 16 | `/api/agent/*` | simple | ERC-8004 agent registry (identity, reputation, validation) |
 
 ### Pricing Tiers
 
@@ -139,7 +143,9 @@ export class MyEndpoint extends BaseEndpoint {
    openapi.post("/api/category/endpoint", paymentMiddleware, trackMetrics, NewEndpoint as any);
    ```
 3. Add to `ENDPOINT_TIERS` in `src/utils/pricing.ts`
-4. Run `npm run cf-typegen` if using new env bindings
+4. Add test config to `tests/endpoint-registry.ts` in the appropriate category array
+5. Run `bun run tests/_validate_endpoints.ts` to verify counts stay in sync
+6. Run `npm run cf-typegen` if using new env bindings
 
 ### Key Files
 
@@ -179,6 +185,14 @@ export class MyEndpoint extends BaseEndpoint {
 - `src/utils/bns.ts` - BNS contract queries
 - `src/utils/clarity.ts` - Clarity value decoder
 - `src/utils/erc8004.ts` - ERC-8004 contract addresses, read-only call helpers, SIP-018 signing
+
+**Tests:**
+- `tests/endpoint-registry.ts` - **Source of truth** for endpoint counts and test configs
+- `tests/_run_all_tests.ts` - E2E payment test runner for all endpoints
+- `tests/_validate_endpoints.ts` - Validates registry stays in sync with index.ts
+- `tests/*-lifecycle.test.ts` - Stateful endpoint lifecycle tests (registry, links, DO)
+- `tests/admin-verify.ts` - Admin registry verification script (requires server wallet)
+- `tests/registry-manage.ts` - User endpoint management script
 
 ### X402 Payment Flow
 
