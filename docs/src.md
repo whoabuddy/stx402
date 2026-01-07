@@ -17,7 +17,7 @@ has_children: true
 |------|---------|
 | [`index.ts`](https://github.com/whoabuddy/stx402/blob/master/src/index.ts) | Application entry point, route registration |
 | [`types.ts`](https://github.com/whoabuddy/stx402/blob/master/src/types.ts) | TypeScript type definitions (AppContext, Env) |
-| [`endpoints/`](src/endpoints.md) | 171 endpoint implementations |
+| [`endpoints/`](src/endpoints.md) | 173 endpoint implementations |
 | [`middleware/`](src/middleware.md) | X402 payment verification, metrics tracking |
 | [`durable-objects/`](src/durable-objects.md) | Per-user SQLite-backed Durable Object |
 | [`utils/`](src/utils.md) | Shared utilities (pricing, network, BNS, etc.) |

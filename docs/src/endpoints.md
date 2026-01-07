@@ -10,7 +10,7 @@ has_children: true
 
 # endpoints
 
-> 171 API endpoint implementations across 20 categories.
+> 173 API endpoint implementations across 20 categories.
 
 ## Contents
 

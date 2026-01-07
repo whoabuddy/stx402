@@ -8,7 +8,7 @@ STX402 is a Cloudflare Workers API providing useful endpoints via X402 micropaym
 
 **Vision**: A marketplace of useful API endpoints where the best ones surface to the top based on usage and earnings. Each endpoint is simple, composable, and pays for itself through micropayments.
 
-**Source of Truth**: Endpoint counts are defined in `tests/endpoint-registry.ts` which exports `ENDPOINT_COUNTS`. Run `bun run tests/_validate_endpoints.ts` to verify sync with `src/index.ts`.
+**Source of Truth**: Endpoint counts are defined in `tests/endpoint-registry.ts` which exports `ENDPOINT_COUNTS`. Run `npm run sync-counts` to update all documentation files with current counts.
 
 ## Commands
 
@@ -16,6 +16,7 @@ STX402 is a Cloudflare Workers API providing useful endpoints via X402 micropaym
 npm run dev          # Local development with hot reload (Wrangler)
 npm run deploy       # Deploy to Cloudflare Workers
 npm run cf-typegen   # Regenerate Env types from wrangler bindings
+npm run sync-counts  # Sync endpoint counts to all documentation
 ```
 
 ### Running Tests
@@ -144,7 +145,7 @@ export class MyEndpoint extends BaseEndpoint {
    ```
 3. Add to `ENDPOINT_TIERS` in `src/utils/pricing.ts`
 4. Add test config to `tests/endpoint-registry.ts` in the appropriate category array
-5. Run `bun run tests/_validate_endpoints.ts` to verify counts stay in sync
+5. Run `npm run sync-counts` to update all documentation with new counts
 6. Run `npm run cf-typegen` if using new env bindings
 
 ### Key Files

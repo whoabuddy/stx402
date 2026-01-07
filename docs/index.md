@@ -8,7 +8,7 @@ nav_order: 1
 
 > A marketplace of useful API endpoints powered by X402 micropayments on Stacks.
 
-STX402 is a Cloudflare Workers API providing **171 endpoints** across 20 categories. Each endpoint is simple, composable, and pays for itself through micropayments using STX, sBTC, or USDCx.
+STX402 is a Cloudflare Workers API providing **173 endpoints** across 20 categories. Each endpoint is simple, composable, and pays for itself through micropayments using STX, sBTC, or USDCx.
 
 ---
 
@@ -30,7 +30,7 @@ curl https://stx402.com/api/stacks/bns-name/SP000000000000000000002Q6VF78
 |----------|-------|-------------|
 | [Stacks](src/endpoints.html#stacks) | 15 | Blockchain queries, BNS, Clarity utilities |
 | [AI](src/endpoints.html#ai) | 13 | Text analysis, translation, image generation |
-| [Text](src/endpoints.html#text) | 24 | Encoding, hashing, compression |
+| [Text](src/endpoints.html#text) | 26 | Encoding, hashing, compression |
 | [Data](src/endpoints.html#data) | 8 | JSON/CSV processing |
 | [Random](src/endpoints.html#random) | 7 | Secure random generation |
 | [Math](src/endpoints.html#math) | 6 | Calculations, statistics |
@@ -38,7 +38,7 @@ curl https://stx402.com/api/stacks/bns-name/SP000000000000000000002Q6VF78
 | [Network](src/endpoints.html#network) | 6 | Geo-IP, ASN, SSL checks |
 | [Crypto](src/endpoints.html#crypto) | 2 | RIPEMD-160, random bytes |
 | [Registry](src/endpoints.html#registry) | 10 | Endpoint marketplace |
-| [Storage](src/endpoints.html#storage) | 52 | KV, paste, counters, SQL, links, sync, queue, memory |
+| [Storage](src/endpoints.html#storage) | 36 | KV, paste, counters, SQL, links, sync, queue, memory |
 | [Agent](src/endpoints.html#agent) | 16 | ERC-8004 agent registry |
 
 ---
