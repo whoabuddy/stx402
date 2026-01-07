@@ -6,6 +6,7 @@ import {
   validateTokenType,
 } from "../utils/pricing";
 import { log } from "../utils/logger";
+import { ENDPOINT_CREATED_DATES } from "../utils/endpoint-created-dates";
 
 // =============================================================================
 // Types - Consolidated metrics storage
@@ -68,6 +69,18 @@ const METRICS_KEY = "metrics:v1";
 async function loadMetrics(kv: KVNamespace): Promise<MetricsData> {
   const data = await kv.get<MetricsData>(METRICS_KEY, "json");
   if (data && data.version === 1) {
+    // Backfill created dates for existing endpoints (one-time migration)
+    let needsSave = false;
+    for (const [path, stats] of Object.entries(data.endpoints)) {
+      if (!stats.created && ENDPOINT_CREATED_DATES[path]) {
+        stats.created = ENDPOINT_CREATED_DATES[path];
+        needsSave = true;
+      }
+    }
+    if (needsSave) {
+      // Save the migrated data back to KV
+      await saveMetrics(kv, data);
+    }
     return data;
   }
   // Return empty structure if not found or wrong version
