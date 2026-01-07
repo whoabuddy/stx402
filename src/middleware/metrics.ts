@@ -319,7 +319,10 @@ export const metricsMiddleware = () => {
     next: () => Promise<Response | void>
   ) => {
     const start = Date.now();
-    const path = c.req.path;
+    // Use routePath to get the template (e.g., /api/stacks/get-bns-name/:address)
+    // Then normalize to base path for metrics (e.g., /api/stacks/get-bns-name)
+    const routePath = c.req.routePath;
+    const path = routePath.replace(/\/:[^/]+/g, "");
 
     // Execute the actual handler
     await next();
