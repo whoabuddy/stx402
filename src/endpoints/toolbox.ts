@@ -570,15 +570,14 @@ function generateToolboxHTML(): string {
         <input type="url" id="url-input" placeholder="https://stx402.com/api/..." autocomplete="off">
         <select id="quick-select">
           <option value="">Quick select</option>
-          <optgroup label="Text (0.001 STX)">
-            <option value="/api/text/base64-encode">base64-encode</option>
-            <option value="/api/text/sha256">sha256</option>
-            <option value="/api/text/word-count">word-count</option>
+          <optgroup label="Hash (0.001 STX)">
+            <option value="/api/hash/sha256">sha256</option>
+            <option value="/api/hash/keccak256">keccak256</option>
+            <option value="/api/hash/hash160">hash160</option>
           </optgroup>
-          <optgroup label="Stacks (0.001 STX)">
-            <option value="/api/stacks/bns-address">bns-address</option>
-            <option value="/api/stacks/contract-source">contract-source</option>
-            <option value="/api/stacks/stx-balance">stx-balance</option>
+          <optgroup label="Stacks (0.001-0.003 STX)">
+            <option value="/api/stacks/profile/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9">profile</option>
+            <option value="/api/stacks/contract-info/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait">contract-info</option>
           </optgroup>
           <optgroup label="AI (0.003 STX)">
             <option value="/api/ai/summarize">summarize</option>
@@ -588,9 +587,9 @@ function generateToolboxHTML(): string {
             <option value="/api/kv/get">kv/get</option>
             <option value="/api/kv/set">kv/set</option>
           </optgroup>
-          <optgroup label="Random (0.001 STX)">
-            <option value="/api/random/uuid">uuid</option>
-            <option value="/api/random/password">password</option>
+          <optgroup label="Free">
+            <option value="/api/data/json-validate">json-validate</option>
+            <option value="/api/data/json-minify">json-minify</option>
           </optgroup>
         </select>
         <button id="check-btn">Check</button>
@@ -622,16 +621,15 @@ function generateToolboxHTML(): string {
             <input type="url" id="call-url" placeholder="https://stx402.com/api/..." autocomplete="off">
             <select id="call-quick-select">
               <option value="">Quick select</option>
-              <optgroup label="Text (0.001 STX)">
-                <option value="/api/text/base64-encode">base64-encode (POST)</option>
-                <option value="/api/text/sha256">sha256 (POST)</option>
+              <optgroup label="Hash (0.001 STX)">
+                <option value="/api/hash/sha256">sha256 (POST)</option>
+                <option value="/api/hash/keccak256">keccak256 (POST)</option>
               </optgroup>
-              <optgroup label="Random (0.001 STX)">
-                <option value="/api/random/uuid">uuid (GET)</option>
-                <option value="/api/random/password">password (GET)</option>
+              <optgroup label="Stacks (0.001-0.003 STX)">
+                <option value="/api/stacks/profile/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9">profile (GET)</option>
               </optgroup>
-              <optgroup label="Stacks (0.001 STX)">
-                <option value="/api/stacks/block-height">block-height (GET)</option>
+              <optgroup label="Free">
+                <option value="/api/data/json-validate">json-validate (POST)</option>
               </optgroup>
             </select>
           </div>

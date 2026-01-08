@@ -1,13 +1,10 @@
-import { sha256 } from "@noble/hashes/sha256";
-import { ripemd160 } from "@noble/hashes/ripemd160";
-import { bytesToHex } from "@noble/hashes/utils";
-import { BaseEndpoint } from "./BaseEndpoint";
-import type { AppContext } from "../types";
+import { BaseEndpoint } from "../BaseEndpoint";
+import type { AppContext } from "../../types";
 
-export class TextHash160 extends BaseEndpoint {
+export class HashSha512 extends BaseEndpoint {
   schema = {
-    tags: ["Text"],
-    summary: "(paid) Compute Hash160: RIPEMD160(SHA256(x)) - Bitcoin/Clarity compatible",
+    tags: ["Hash"],
+    summary: "(paid) Compute SHA-512 hash using SubtleCrypto",
     requestBody: {
       required: true,
       content: {
@@ -45,7 +42,7 @@ export class TextHash160 extends BaseEndpoint {
     ],
     responses: {
       "200": {
-        description: "Hash160 result",
+        description: "SHA-512 hash",
         content: {
           "application/json": {
             schema: {
@@ -94,21 +91,23 @@ export class TextHash160 extends BaseEndpoint {
     const encoder = new TextEncoder();
     const data = encoder.encode(text);
 
-    // Compute Hash160: RIPEMD160(SHA256(data))
-    const sha256Hash = sha256(data);
-    const hashArray = ripemd160(sha256Hash);
+    // Compute SHA-512 hash using SubtleCrypto
+    const hashBuffer = await crypto.subtle.digest("SHA-512", data);
+    const hashArray = new Uint8Array(hashBuffer);
 
     // Convert to requested encoding
     let hash: string;
     if (encoding === "hex") {
-      hash = bytesToHex(hashArray);
+      hash = Array.from(hashArray)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
     } else {
       hash = btoa(String.fromCharCode(...hashArray));
     }
 
     return c.json({
       hash,
-      algorithm: "Hash160 (RIPEMD160(SHA256(x)))",
+      algorithm: "SHA-512",
       encoding,
       inputLength: text.length,
       tokenType,

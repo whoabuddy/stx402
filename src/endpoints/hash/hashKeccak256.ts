@@ -1,10 +1,12 @@
-import { BaseEndpoint } from "./BaseEndpoint";
-import type { AppContext } from "../types";
+import { keccak_256 } from "@noble/hashes/sha3";
+import { bytesToHex } from "@noble/hashes/utils";
+import { BaseEndpoint } from "../BaseEndpoint";
+import type { AppContext } from "../../types";
 
-export class TextBase64Encode extends BaseEndpoint {
+export class HashKeccak256 extends BaseEndpoint {
   schema = {
-    tags: ["Text"],
-    summary: "(paid) Encode text to base64 (UTF-8 safe)",
+    tags: ["Hash"],
+    summary: "(paid) Compute Keccak-256 hash (Ethereum/Clarity compatible)",
     requestBody: {
       required: true,
       content: {
@@ -15,12 +17,13 @@ export class TextBase64Encode extends BaseEndpoint {
             properties: {
               text: {
                 type: "string" as const,
-                description: "Text to encode",
+                description: "Text to hash",
               },
-              urlSafe: {
-                type: "boolean" as const,
-                default: false,
-                description: "Use URL-safe base64 (- and _ instead of + and /, no padding)",
+              encoding: {
+                type: "string" as const,
+                enum: ["hex", "base64"] as const,
+                default: "hex",
+                description: "Output encoding format",
               },
             },
           },
@@ -41,16 +44,16 @@ export class TextBase64Encode extends BaseEndpoint {
     ],
     responses: {
       "200": {
-        description: "Base64 encoded text",
+        description: "Keccak-256 hash",
         content: {
           "application/json": {
             schema: {
               type: "object" as const,
               properties: {
-                encoded: { type: "string" as const },
-                urlSafe: { type: "boolean" as const },
+                hash: { type: "string" as const },
+                algorithm: { type: "string" as const },
+                encoding: { type: "string" as const },
                 inputLength: { type: "integer" as const },
-                outputLength: { type: "integer" as const },
                 tokenType: { type: "string" as const },
               },
             },
@@ -69,36 +72,43 @@ export class TextBase64Encode extends BaseEndpoint {
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
 
-    let body: { text?: string; urlSafe?: boolean };
+    let body: { text?: string; encoding?: string };
     try {
       body = await c.req.json();
     } catch {
       return this.errorResponse(c, "Invalid JSON body", 400);
     }
 
-    const { text, urlSafe = false } = body;
+    const { text, encoding = "hex" } = body;
 
     if (typeof text !== "string") {
       return this.errorResponse(c, "text field is required and must be a string", 400);
     }
 
-    // Encode to UTF-8 bytes, then to base64
+    if (encoding !== "hex" && encoding !== "base64") {
+      return this.errorResponse(c, "encoding must be 'hex' or 'base64'", 400);
+    }
+
+    // Encode text to UTF-8 bytes
     const encoder = new TextEncoder();
-    const bytes = encoder.encode(text);
+    const data = encoder.encode(text);
 
-    // Convert bytes to base64
-    let encoded = btoa(String.fromCharCode(...bytes));
+    // Compute Keccak-256 hash
+    const hashArray = keccak_256(data);
 
-    // Convert to URL-safe if requested
-    if (urlSafe) {
-      encoded = encoded.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    // Convert to requested encoding
+    let hash: string;
+    if (encoding === "hex") {
+      hash = bytesToHex(hashArray);
+    } else {
+      hash = btoa(String.fromCharCode(...hashArray));
     }
 
     return c.json({
-      encoded,
-      urlSafe,
+      hash,
+      algorithm: "Keccak-256",
+      encoding,
       inputLength: text.length,
-      outputLength: encoded.length,
       tokenType,
     });
   }
