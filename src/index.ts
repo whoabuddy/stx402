@@ -233,6 +233,9 @@ import {
 // Wallet Intelligence endpoints
 import { WalletAnalyzeEndpoint, WalletQuickEndpoint } from "./endpoints/wallet";
 
+// sBTC Agent endpoints
+import { SbtcTreasury, SbtcYields, SbtcActions } from "./endpoints/sbtc";
+
 // Durable Objects
 export { UserDurableObject } from "./durable-objects/UserDurableObject";
 
@@ -524,6 +527,11 @@ openapi.post("/api/agent/discover", paymentMiddleware, trackMetrics, AgentDiscov
 // === WALLET INTELLIGENCE ENDPOINTS ===
 openapi.get("/api/wallet/analyze/:address", paymentMiddleware, trackMetrics, WalletAnalyzeEndpoint as any);
 openapi.get("/api/wallet/quick/:address", paymentMiddleware, trackMetrics, WalletQuickEndpoint as any);
+
+// === sBTC AGENT ENDPOINTS ===
+openapi.get("/api/sbtc/treasury/:address", paymentMiddleware, trackMetrics, SbtcTreasury as any);
+openapi.post("/api/sbtc/yields", paymentMiddleware, trackMetrics, SbtcYields as any);
+openapi.post("/api/sbtc/actions", paymentMiddleware, trackMetrics, SbtcActions as any);
 
 // Export the Hono app
 export default app;

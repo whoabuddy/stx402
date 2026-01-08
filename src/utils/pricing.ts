@@ -270,6 +270,11 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   // === AGENT INTELLIGENCE ENDPOINTS (2 paid) ===
   "/api/agent/profile": "ai",
   "/api/agent/discover": "ai",
+
+  // === sBTC AGENT ENDPOINTS (3 paid) ===
+  "/api/sbtc/treasury": "ai",
+  "/api/sbtc/yields": "ai",
+  "/api/sbtc/actions": "ai",
 };
 
 // Get pricing tier for an endpoint path (strips path params like :address)
