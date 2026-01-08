@@ -228,6 +228,9 @@ import {
   AgentLookup,
 } from "./endpoints/agent";
 
+// Wallet Intelligence endpoints
+import { WalletAnalyzeEndpoint, WalletQuickEndpoint } from "./endpoints/wallet";
+
 // Durable Objects
 export { UserDurableObject } from "./durable-objects/UserDurableObject";
 
@@ -512,6 +515,10 @@ openapi.post("/api/agent/validation/status", paymentMiddleware, trackMetrics, Va
 openapi.post("/api/agent/validation/summary", paymentMiddleware, trackMetrics, ValidationSummary as any);
 openapi.post("/api/agent/validation/list", paymentMiddleware, trackMetrics, ValidationList as any);
 openapi.post("/api/agent/validation/requests", paymentMiddleware, trackMetrics, ValidationRequests as any);
+
+// === WALLET INTELLIGENCE ENDPOINTS ===
+openapi.get("/api/wallet/analyze/:address", paymentMiddleware, trackMetrics, WalletAnalyzeEndpoint as any);
+openapi.get("/api/wallet/quick/:address", paymentMiddleware, trackMetrics, WalletQuickEndpoint as any);
 
 // Export the Hono app
 export default app;

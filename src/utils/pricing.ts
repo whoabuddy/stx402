@@ -262,6 +262,10 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/agent/validation/list": "simple",
   "/api/agent/validation/requests": "simple",
   // Note: /api/agent/registry is free - not in tier list
+
+  // === WALLET INTELLIGENCE ENDPOINTS (2 paid) ===
+  "/api/wallet/analyze": "ai",
+  "/api/wallet/quick": "simple",
 };
 
 // Get pricing tier for an endpoint path (strips path params like :address)
