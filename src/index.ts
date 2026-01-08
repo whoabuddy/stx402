@@ -26,6 +26,10 @@ import { StacksDecodeTx } from "./endpoints/stacksDecodeTx";
 import { StacksProfile } from "./endpoints/stacksProfile";
 import { StacksContractInfo } from "./endpoints/stacksContractInfo";
 
+// Wallet endpoints (intelligence layer on top of raw data)
+import { WalletAnalyze } from "./endpoints/walletAnalyze";
+import { WalletQuick } from "./endpoints/walletQuick";
+
 // AI endpoints
 import { DadJoke } from "./endpoints/dadJoke";
 import { ImageDescribe } from "./endpoints/imageDescribe";
@@ -208,6 +212,10 @@ openapi.post("/api/stacks/from-consensus-buff", paymentMiddleware, trackMetrics,
 openapi.post("/api/stacks/decode-tx", paymentMiddleware, trackMetrics, StacksDecodeTx as any);
 openapi.get("/api/stacks/profile/:address", paymentMiddleware, trackMetrics, StacksProfile as any);
 openapi.get("/api/stacks/contract-info/:contract_id", paymentMiddleware, trackMetrics, StacksContractInfo as any);
+
+// Wallet endpoints (paid) - intelligence layer
+openapi.get("/api/wallet/analyze/:address", paymentMiddleware, trackMetrics, WalletAnalyze as any);
+openapi.get("/api/wallet/quick/:address", paymentMiddleware, trackMetrics, WalletQuick as any);
 
 // AI endpoints (paid)
 openapi.get("/api/ai/dad-joke", paymentMiddleware, trackMetrics, DadJoke as any);
