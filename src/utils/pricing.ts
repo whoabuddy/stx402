@@ -66,6 +66,9 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/stacks/profile": "ai", // Multiple API calls
   "/api/stacks/contract-info": "simple", // Cacheable
 
+  // === sBTC ENDPOINTS (1) ===
+  "/api/sbtc/treasury": "ai", // Multiple API calls + intelligence
+
   // === AI ENDPOINTS (13) ===
   "/api/ai/dad-joke": "ai",
   "/api/ai/summarize": "ai",

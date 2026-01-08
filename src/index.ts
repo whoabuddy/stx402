@@ -25,6 +25,7 @@ import { StacksFromConsensusBuff } from "./endpoints/stacksFromConsensusBuff";
 import { StacksDecodeTx } from "./endpoints/stacksDecodeTx";
 import { StacksProfile } from "./endpoints/stacksProfile";
 import { StacksContractInfo } from "./endpoints/stacksContractInfo";
+import { SbtcTreasury } from "./endpoints/sbtcTreasury";
 
 // AI endpoints
 import { DadJoke } from "./endpoints/dadJoke";
@@ -208,6 +209,9 @@ openapi.post("/api/stacks/from-consensus-buff", paymentMiddleware, trackMetrics,
 openapi.post("/api/stacks/decode-tx", paymentMiddleware, trackMetrics, StacksDecodeTx as any);
 openapi.get("/api/stacks/profile/:address", paymentMiddleware, trackMetrics, StacksProfile as any);
 openapi.get("/api/stacks/contract-info/:contract_id", paymentMiddleware, trackMetrics, StacksContractInfo as any);
+
+// sBTC endpoints (paid)
+openapi.get("/api/sbtc/treasury/:address", paymentMiddleware, trackMetrics, SbtcTreasury as any);
 
 // AI endpoints (paid)
 openapi.get("/api/ai/dad-joke", paymentMiddleware, trackMetrics, DadJoke as any);
