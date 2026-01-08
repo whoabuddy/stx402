@@ -8,7 +8,7 @@ nav_order: 1
 
 > A marketplace of useful API endpoints powered by X402 micropayments on Stacks.
 
-STX402 is a Cloudflare Workers API providing **173 endpoints** across 20 categories. Each endpoint is simple, composable, and pays for itself through micropayments using STX, sBTC, or USDCx.
+STX402 is a Cloudflare Workers API providing **~97 endpoints** across 16 categories. Each endpoint is simple, composable, and pays for itself through micropayments using STX, sBTC, or USDCx.
 
 ---
 
@@ -16,7 +16,7 @@ STX402 is a Cloudflare Workers API providing **173 endpoints** across 20 categor
 
 ```bash
 # Get a 402 response with payment requirements
-curl https://stx402.com/api/stacks/bns-name/SP000000000000000000002Q6VF78
+curl https://stx402.com/api/stacks/profile/SP000000000000000000002Q6VF78
 
 # Pay with X402 client, get response
 # See /guide for full integration details
@@ -28,15 +28,11 @@ curl https://stx402.com/api/stacks/bns-name/SP000000000000000000002Q6VF78
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| [Stacks](src/endpoints.html#stacks) | 15 | Blockchain queries, BNS, Clarity utilities |
+| [Stacks](src/endpoints.html#stacks) | 7 | Clarity utilities, profile, contract-info |
 | [AI](src/endpoints.html#ai) | 13 | Text analysis, translation, image generation |
-| [Text](src/endpoints.html#text) | 26 | Encoding, hashing, compression |
-| [Data](src/endpoints.html#data) | 8 | JSON/CSV processing |
-| [Random](src/endpoints.html#random) | 7 | Secure random generation |
-| [Math](src/endpoints.html#math) | 6 | Calculations, statistics |
-| [Utility](src/endpoints.html#utility) | 23 | Timestamps, DNS, QR codes |
-| [Network](src/endpoints.html#network) | 6 | Geo-IP, ASN, SSL checks |
-| [Crypto](src/endpoints.html#crypto) | 2 | RIPEMD-160, random bytes |
+| [Hash](src/endpoints.html#hash) | 6 | SHA, Keccak, Hash160, RIPEMD160, HMAC |
+| [Data](src/endpoints.html#data) | 2 | JSON minify/validate (free) |
+| [Utility](src/endpoints.html#utility) | 2 | QR codes, signature verification |
 | [Registry](src/endpoints.html#registry) | 10 | Endpoint marketplace |
 | [Storage](src/endpoints.html#storage) | 36 | KV, paste, counters, SQL, links, sync, queue, memory |
 | [Agent](src/endpoints.html#agent) | 16 | ERC-8004 agent registry |
@@ -59,7 +55,7 @@ curl https://stx402.com/api/stacks/bns-name/SP000000000000000000002Q6VF78
 
 ```
 src/
-├── endpoints/       # 171 endpoint implementations
+├── endpoints/       # ~97 endpoint implementations
 ├── middleware/      # X402 payment verification
 ├── durable-objects/ # Per-user stateful storage
 ├── utils/           # Shared utilities

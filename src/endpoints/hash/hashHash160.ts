@@ -1,12 +1,13 @@
-import { keccak_256 } from "@noble/hashes/sha3";
+import { sha256 } from "@noble/hashes/sha256";
+import { ripemd160 } from "@noble/hashes/ripemd160";
 import { bytesToHex } from "@noble/hashes/utils";
-import { BaseEndpoint } from "./BaseEndpoint";
-import type { AppContext } from "../types";
+import { BaseEndpoint } from "../BaseEndpoint";
+import type { AppContext } from "../../types";
 
-export class TextKeccak256 extends BaseEndpoint {
+export class HashHash160 extends BaseEndpoint {
   schema = {
-    tags: ["Text"],
-    summary: "(paid) Compute Keccak-256 hash (Ethereum/Clarity compatible)",
+    tags: ["Hash"],
+    summary: "(paid) Compute Hash160: RIPEMD160(SHA256(x)) - Bitcoin/Clarity compatible",
     requestBody: {
       required: true,
       content: {
@@ -44,7 +45,7 @@ export class TextKeccak256 extends BaseEndpoint {
     ],
     responses: {
       "200": {
-        description: "Keccak-256 hash",
+        description: "Hash160 result",
         content: {
           "application/json": {
             schema: {
@@ -93,8 +94,9 @@ export class TextKeccak256 extends BaseEndpoint {
     const encoder = new TextEncoder();
     const data = encoder.encode(text);
 
-    // Compute Keccak-256 hash
-    const hashArray = keccak_256(data);
+    // Compute Hash160: RIPEMD160(SHA256(data))
+    const sha256Hash = sha256(data);
+    const hashArray = ripemd160(sha256Hash);
 
     // Convert to requested encoding
     let hash: string;
@@ -106,7 +108,7 @@ export class TextKeccak256 extends BaseEndpoint {
 
     return c.json({
       hash,
-      algorithm: "Keccak-256",
+      algorithm: "Hash160 (RIPEMD160(SHA256(x)))",
       encoding,
       inputLength: text.length,
       tokenType,

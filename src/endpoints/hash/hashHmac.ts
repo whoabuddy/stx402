@@ -1,9 +1,9 @@
-import { BaseEndpoint } from "./BaseEndpoint";
-import type { AppContext } from "../types";
+import { BaseEndpoint } from "../BaseEndpoint";
+import type { AppContext } from "../../types";
 
-export class TextHmac extends BaseEndpoint {
+export class HashHmac extends BaseEndpoint {
   schema = {
-    tags: ["Text"],
+    tags: ["Hash"],
     summary: "(paid) Generate HMAC signature",
     requestBody: {
       required: true,

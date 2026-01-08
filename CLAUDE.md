@@ -70,20 +70,16 @@ X402_NETWORK=testnet X402_WORKER_URL=https://stx402-staging.whoabuddy.workers.de
 
 ### Endpoint Categories
 
-Counts from `tests/endpoint-registry.ts:ENDPOINT_COUNTS` (168 tested + 5 free = 173 total routes):
+Counts from `tests/endpoint-registry.ts:ENDPOINT_COUNTS` (~90 tested + 7 free = ~97 total routes):
 
 | Category | Count | Path Pattern | Tier | Description |
 |----------|-------|--------------|------|-------------|
 | Health | 5 | `/api/health`, `/dashboard`, `/about`, `/guide`, `/toolbox` | free | Monitoring & docs |
-| Stacks | 15 | `/api/stacks/*` | simple | Blockchain queries, Clarity utilities |
+| Stacks | 7 | `/api/stacks/*` | simple/ai | Clarity utilities + aggregated profile/contract-info |
 | AI | 13 | `/api/ai/*` | ai/heavy_ai | AI-powered analysis and generation |
-| Text | 26 | `/api/text/*` | simple | Encoding, hashing, compression |
-| Data | 8 | `/api/data/*` | simple | JSON/CSV processing |
-| Crypto | 2 | `/api/crypto/*` | simple | Cryptographic operations |
-| Random | 7 | `/api/random/*` | simple | Secure random generation |
-| Math | 6 | `/api/math/*` | simple | Mathematical operations |
-| Utility | 23 | `/api/util/*` | simple | General utilities |
-| Network | 6 | `/api/net/*` | simple | Network utilities |
+| Hash | 6 | `/api/hash/*` | simple | Cryptographic hashing (SHA, Keccak, Hash160, HMAC) |
+| Data | 2 | `/api/data/*` | free | JSON minify/validate |
+| Utility | 2 | `/api/util/*` | simple | QR codes, signature verification |
 | Registry | 10 | `/api/registry/*` | ai | Endpoint registry management |
 | KV Storage | 4 | `/api/kv/*` | storage_* | Stateful key-value storage |
 | Paste | 3 | `/api/paste/*` | storage_* | Text paste with short codes |
@@ -152,15 +148,11 @@ export class MyEndpoint extends BaseEndpoint {
 
 **Endpoints:**
 - `src/endpoints/BaseEndpoint.ts` - Shared methods: `getTokenType()`, `getPayerAddress()`, `validateAddress()`, `errorResponse()`
-- `src/endpoints/stacks*.ts` - Stacks/Clarity endpoints (BNS, contracts, consensus buffers)
+- `src/endpoints/stacks*.ts` - Stacks/Clarity endpoints (consensus buffers, profile, contract-info)
 - `src/endpoints/ai*.ts` - AI endpoints (summarize, TTS, image generation, contract analysis)
-- `src/endpoints/text*.ts` - Hashing (SHA, Keccak, Hash160), encoding (base64, URL, hex)
-- `src/endpoints/data*.ts` - JSON/CSV transformation and validation
-- `src/endpoints/crypto*.ts` - RIPEMD-160, random bytes
-- `src/endpoints/random*.ts` - Secure random (UUID, numbers, strings, passwords)
-- `src/endpoints/math*.ts` - Calculate, statistics, prime check, factorial
-- `src/endpoints/util*.ts` - Timestamps, DNS, QR codes, URL parsing, etc.
-- `src/endpoints/net*.ts` - Network utilities (geo-IP, ASN, SSL checks)
+- `src/endpoints/hash/*.ts` - Hashing endpoints (SHA, Keccak, Hash160, RIPEMD160, HMAC)
+- `src/endpoints/data*.ts` - JSON minify/validate (free)
+- `src/endpoints/util*.ts` - QR codes, signature verification
 - `src/endpoints/registry*.ts` - Endpoint registry management
 - `src/endpoints/kv/*.ts` - KV storage endpoints (set, get, delete, list)
 - `src/endpoints/paste/*.ts` - Paste endpoints (create, get, delete)

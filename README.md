@@ -1,6 +1,6 @@
 # STX402
 
-API marketplace with **168 paid endpoints** via [X402 micropayments](https://x402.org). Pay-per-use with STX, sBTC, or USDCx.
+API marketplace with **92 paid endpoints** via [X402 micropayments](https://x402.org). Pay-per-use with STX, sBTC, or USDCx.
 
 **[API Docs](https://stx402.com)** · **[Guide](https://stx402.com/guide)** · **[About](https://stx402.com/about)** · **[Dashboard](https://stx402.com/dashboard)**
 

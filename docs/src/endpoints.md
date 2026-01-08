@@ -10,22 +10,23 @@ has_children: true
 
 # endpoints
 
-> 173 API endpoint implementations across 20 categories.
+> ~97 API endpoint implementations across 14 categories.
 
 ## Contents
 
 | Folder | Count | Purpose |
 |--------|-------|---------|
-| Root files | ~125 | Individual endpoint classes (Stacks, AI, Text, etc.) |
-| [`agent/`](endpoints/agent.md) | 17 | ERC-8004 agent registry |
-| [`counter/`](endpoints/counter.md) | 7 | Atomic counters (Durable Object) |
-| [`kv/`](endpoints/kv.md) | 5 | Key-value storage |
-| [`links/`](endpoints/links.md) | 6 | URL shortener with click tracking |
-| [`memory/`](endpoints/memory.md) | 6 | Agent memory with semantic search |
-| [`paste/`](endpoints/paste.md) | 4 | Text paste service |
-| [`queue/`](endpoints/queue.md) | 6 | Job queue with priority |
-| [`sql/`](endpoints/sql.md) | 4 | Direct SQLite access |
-| [`sync/`](endpoints/sync.md) | 6 | Distributed locks |
+| Root files | ~30 | Individual endpoint classes (Stacks, AI, Utility, etc.) |
+| [`hash/`](endpoints/hash.md) | 6 | Cryptographic hashing (SHA, Keccak, Hash160, HMAC) |
+| [`agent/`](endpoints/agent.md) | 16 | ERC-8004 agent registry |
+| [`counter/`](endpoints/counter.md) | 6 | Atomic counters (Durable Object) |
+| [`kv/`](endpoints/kv.md) | 4 | Key-value storage |
+| [`links/`](endpoints/links.md) | 5 | URL shortener with click tracking |
+| [`memory/`](endpoints/memory.md) | 5 | Agent memory with semantic search |
+| [`paste/`](endpoints/paste.md) | 3 | Text paste service |
+| [`queue/`](endpoints/queue.md) | 5 | Job queue with priority |
+| [`sql/`](endpoints/sql.md) | 3 | Direct SQLite access |
+| [`sync/`](endpoints/sync.md) | 5 | Distributed locks |
 
 ## Endpoint Pattern
 
@@ -54,25 +55,17 @@ export class MyEndpoint extends BaseEndpoint {
 ## Categories by Path
 
 ### Stacks (`/api/stacks/*`)
-Blockchain queries, BNS resolution, Clarity utilities, contract analysis.
+Clarity utilities and aggregated blockchain queries.
 
 | Endpoint | File | Purpose |
 |----------|------|---------|
-| `bns-name/:address` | `getBnsName.ts` | Resolve BNS name for address |
-| `validate-address/:address` | `validateStacksAddress.ts` | Validate Stacks address format |
 | `convert-address/:address` | `convertAddressToNetwork.ts` | Convert address between networks |
 | `decode-clarity-hex` | `decodeClarityHex.ts` | Decode Clarity hex values |
-| `contract-source/:principal` | `stacksContractSource.ts` | Get contract source code |
-| `contract-abi/:principal` | `stacksContractAbi.ts` | Get contract ABI |
 | `to-consensus-buff` | `stacksToConsensusBuff.ts` | Encode to consensus buffer |
 | `from-consensus-buff` | `stacksFromConsensusBuff.ts` | Decode from consensus buffer |
 | `decode-tx` | `stacksDecodeTx.ts` | Decode transaction hex |
-| `call-readonly` | `stacksCallReadonly.ts` | Call read-only function |
-| `stx-balance/:address` | `stacksStxBalance.ts` | Get STX balance |
-| `block-height` | `stacksBlockHeight.ts` | Get current block height |
-| `ft-balance` | `stacksFtBalance.ts` | Get fungible token balance |
-| `nft-holdings` | `stacksNftHoldings.ts` | Get NFT holdings |
-| `tx-status/:txid` | `stacksTxStatus.ts` | Get transaction status |
+| `profile/:address` | `stacksProfile.ts` | Aggregated BNS + balances + NFTs + block height |
+| `contract-info/:contract_id` | `stacksContractInfo.ts` | Contract source + ABI + summary |
 
 ### AI (`/api/ai/*`)
 Text analysis, translation, image generation.
@@ -93,45 +86,33 @@ Text analysis, translation, image generation.
 | `tts` | `tts.ts` | Text-to-speech |
 | `generate-image` | `generateImage.ts` | AI image generation |
 
-### Text (`/api/text/*`)
-Encoding, hashing, compression, manipulation.
+### Hash (`/api/hash/*`)
+Cryptographic hashing (Clarity-compatible).
 
-- `base64-encode/decode`, `url-encode/decode`, `html-encode/decode`, `hex-encode/decode`
-- `sha256`, `sha512`, `keccak256`, `hash160`, `hmac`
-- `compress/decompress` (gzip)
-- `case-convert`, `word-count`, `reverse`, `truncate`, `regex-test`
-- `rot13`, `lorem-ipsum`, `validate-url`, `diff`, `unicode-info`
+| Endpoint | File | Purpose |
+|----------|------|---------|
+| `sha256` | `hash/hashSha256.ts` | SHA-256 hash |
+| `sha512` | `hash/hashSha512.ts` | SHA-512 hash |
+| `keccak256` | `hash/hashKeccak256.ts` | Keccak-256 (Ethereum) |
+| `hash160` | `hash/hashHash160.ts` | RIPEMD160(SHA256(x)) |
+| `ripemd160` | `hash/hashRipemd160.ts` | RIPEMD-160 hash |
+| `hmac` | `hash/hashHmac.ts` | HMAC signature |
 
 ### Data (`/api/data/*`)
-JSON/CSV processing and transformation.
+JSON utilities (free).
 
-- `csv-to-json`, `json-to-csv`, `json-format`, `json-flatten`, `json-merge`
-- `json-validate`, `json-query`, `json-diff`
-
-### Random (`/api/random/*`)
-Secure random generation.
-
-- `uuid`, `number`, `string`, `password`, `color`, `dice`, `shuffle`
-
-### Math (`/api/math/*`)
-Calculations and statistics.
-
-- `calculate`, `percentage`, `statistics`, `prime-check`, `gcd-lcm`, `factorial`
+| Endpoint | File | Purpose |
+|----------|------|---------|
+| `json-validate` | `dataJsonValidate.ts` | Validate JSON syntax (free) |
+| `json-minify` | `dataJsonMinify.ts` | Minify JSON (free) |
 
 ### Utility (`/api/util/*`)
 General utilities.
 
-- Timestamps, DNS lookup, QR codes, URL parsing, Markdown rendering, etc.
-
-### Network (`/api/net/*`)
-Network utilities.
-
-- Geo-IP, ASN lookup, SSL certificate check, ping, WHOIS
-
-### Crypto (`/api/crypto/*`)
-Cryptographic operations.
-
-- `ripemd160`, `random-bytes`
+| Endpoint | File | Purpose |
+|----------|------|---------|
+| `qr-generate` | `utilQrGenerate.ts` | Generate QR codes |
+| `verify-signature` | `utilVerifySignature.ts` | Verify Stacks signatures |
 
 ## Relationships
 

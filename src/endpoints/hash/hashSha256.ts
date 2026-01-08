@@ -1,10 +1,10 @@
-import { BaseEndpoint } from "./BaseEndpoint";
-import type { AppContext } from "../types";
+import { BaseEndpoint } from "../BaseEndpoint";
+import type { AppContext } from "../../types";
 
-export class TextSha512 extends BaseEndpoint {
+export class HashSha256 extends BaseEndpoint {
   schema = {
-    tags: ["Text"],
-    summary: "(paid) Compute SHA-512 hash using SubtleCrypto",
+    tags: ["Hash"],
+    summary: "(paid) Compute SHA-256 hash using SubtleCrypto",
     requestBody: {
       required: true,
       content: {
@@ -42,7 +42,7 @@ export class TextSha512 extends BaseEndpoint {
     ],
     responses: {
       "200": {
-        description: "SHA-512 hash",
+        description: "SHA-256 hash",
         content: {
           "application/json": {
             schema: {
@@ -91,8 +91,8 @@ export class TextSha512 extends BaseEndpoint {
     const encoder = new TextEncoder();
     const data = encoder.encode(text);
 
-    // Compute SHA-512 hash using SubtleCrypto
-    const hashBuffer = await crypto.subtle.digest("SHA-512", data);
+    // Compute SHA-256 hash using SubtleCrypto
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = new Uint8Array(hashBuffer);
 
     // Convert to requested encoding
@@ -107,7 +107,7 @@ export class TextSha512 extends BaseEndpoint {
 
     return c.json({
       hash,
-      algorithm: "SHA-512",
+      algorithm: "SHA-256",
       encoding,
       inputLength: text.length,
       tokenType,

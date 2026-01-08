@@ -1,11 +1,11 @@
-import { BaseEndpoint } from "./BaseEndpoint";
-import type { AppContext } from "../types";
+import { BaseEndpoint } from "../BaseEndpoint";
+import type { AppContext } from "../../types";
 import { ripemd160 } from "@noble/hashes/ripemd160";
 import { bytesToHex } from "@noble/hashes/utils";
 
-export class CryptoRipemd160 extends BaseEndpoint {
+export class HashRipemd160 extends BaseEndpoint {
   schema = {
-    tags: ["Crypto"],
+    tags: ["Hash"],
     summary: "(paid) Generate RIPEMD-160 hash",
     requestBody: {
       required: true,

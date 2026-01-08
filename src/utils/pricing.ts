@@ -52,24 +52,19 @@ export const TIER_AMOUNTS: Record<PricingTier, Record<TokenType, string>> = {
   },
 };
 
-// Endpoint path to pricing tier mapping (163 paid endpoints + 5 free = 168 total)
+// Endpoint path to pricing tier mapping
+// ~90 paid endpoints + ~7 free = ~97 total
 export const ENDPOINT_TIERS: Record<string, PricingTier> = {
-  // === STACKS ENDPOINTS (15) ===
-  "/api/stacks/get-bns-name": "simple",
-  "/api/stacks/validate-address": "simple",
+  // === STACKS ENDPOINTS (7) ===
+  // Clarity utilities
   "/api/stacks/convert-address": "simple",
   "/api/stacks/decode-clarity-hex": "simple",
-  "/api/stacks/contract-source": "simple",
-  "/api/stacks/contract-abi": "simple",
   "/api/stacks/to-consensus-buff": "simple",
   "/api/stacks/from-consensus-buff": "simple",
   "/api/stacks/decode-tx": "simple",
-  "/api/stacks/call-readonly": "simple",
-  "/api/stacks/stx-balance": "simple",
-  "/api/stacks/block-height": "simple",
-  "/api/stacks/ft-balance": "simple",
-  "/api/stacks/nft-holdings": "simple",
-  "/api/stacks/tx-status": "simple",
+  // Aggregated endpoints
+  "/api/stacks/profile": "ai", // Multiple API calls
+  "/api/stacks/contract-info": "simple", // Cacheable
 
   // === AI ENDPOINTS (13) ===
   "/api/ai/dad-joke": "ai",
@@ -86,64 +81,17 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/ai/grammar-check": "ai",
   "/api/ai/question-answer": "ai",
 
-  // === TEXT ENDPOINTS (26) ===
-  "/api/text/base64-encode": "simple",
-  "/api/text/base64-decode": "simple",
-  "/api/text/sha256": "simple",
-  "/api/text/sha512": "simple",
-  "/api/text/keccak256": "simple",
-  "/api/text/hash160": "simple",
-  "/api/text/url-encode": "simple",
-  "/api/text/url-decode": "simple",
-  "/api/text/jwt-decode": "simple",
-  "/api/text/hmac": "simple",
-  "/api/text/html-encode": "simple",
-  "/api/text/html-decode": "simple",
-  "/api/text/hex-encode": "simple",
-  "/api/text/hex-decode": "simple",
-  "/api/text/case-convert": "simple",
-  "/api/text/word-count": "simple",
-  "/api/text/reverse": "simple",
-  "/api/text/truncate": "simple",
-  "/api/text/regex-test": "simple",
-  "/api/text/rot13": "simple",
-  "/api/text/lorem-ipsum": "simple",
-  "/api/text/validate-url": "simple",
-  "/api/text/diff": "simple",
-  "/api/text/unicode-info": "simple",
-  "/api/text/compress": "simple",
-  "/api/text/decompress": "simple",
+  // === HASH ENDPOINTS (6) ===
+  "/api/hash/sha256": "simple",
+  "/api/hash/sha512": "simple",
+  "/api/hash/keccak256": "simple",
+  "/api/hash/hash160": "simple",
+  "/api/hash/ripemd160": "simple",
+  "/api/hash/hmac": "simple",
 
-  // === DATA ENDPOINTS (8) ===
-  "/api/data/csv-to-json": "simple",
-  "/api/data/json-to-csv": "simple",
-  "/api/data/json-format": "simple",
-  "/api/data/json-minify": "simple",
-  "/api/data/json-validate": "simple",
-  "/api/data/json-path": "simple",
-  "/api/data/json-flatten": "simple",
-  "/api/data/json-merge": "simple",
-
-  // === CRYPTO ENDPOINTS (2) ===
-  "/api/crypto/ripemd160": "simple",
-  "/api/crypto/random-bytes": "simple",
-
-  // === RANDOM ENDPOINTS (7) ===
-  "/api/random/uuid": "simple",
-  "/api/random/number": "simple",
-  "/api/random/string": "simple",
-  "/api/random/password": "simple",
-  "/api/random/color": "simple",
-  "/api/random/dice": "simple",
-  "/api/random/shuffle": "simple",
-
-  // === MATH ENDPOINTS (6) ===
-  "/api/math/calculate": "simple",
-  "/api/math/percentage": "simple",
-  "/api/math/statistics": "simple",
-  "/api/math/prime-check": "simple",
-  "/api/math/gcd-lcm": "simple",
-  "/api/math/factorial": "simple",
+  // === UTILITY ENDPOINTS (2) ===
+  "/api/util/qr-generate": "simple",
+  "/api/util/verify-signature": "simple",
 
   // === REGISTRY ENDPOINTS (9 paid + 1 free) ===
   "/api/registry/probe": "ai",
@@ -156,39 +104,6 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/api/registry/transfer": "ai",
   "/api/admin/registry/verify": "ai",
   "/api/admin/registry/pending": "ai",
-
-  // === NETWORK ENDPOINTS (6) ===
-  "/api/net/geo-ip": "simple",
-  "/api/net/asn-lookup": "simple",
-  "/api/net/request-fingerprint": "simple",
-  "/api/net/http-probe": "simple",
-  "/api/net/cors-proxy": "simple",
-  "/api/net/ssl-check": "simple",
-
-  // === UTILITY ENDPOINTS (23) ===
-  "/api/util/timestamp": "simple",
-  "/api/util/dns-lookup": "simple",
-  "/api/util/ip-info": "simple",
-  "/api/util/qr-generate": "simple",
-  "/api/util/timestamp-convert": "simple",
-  "/api/util/date-diff": "simple",
-  "/api/util/date-add": "simple",
-  "/api/util/cron-parse": "simple",
-  "/api/util/user-agent-parse": "simple",
-  "/api/util/url-parse": "simple",
-  "/api/util/color-convert": "simple",
-  "/api/util/markdown-to-html": "simple",
-  "/api/util/http-status": "simple",
-  "/api/util/validate-email": "simple",
-  "/api/util/url-build": "simple",
-  "/api/util/html-to-text": "simple",
-  "/api/util/base64-image": "simple",
-  "/api/util/bytes-format": "simple",
-  "/api/util/slugify": "simple",
-  "/api/util/mime-type": "simple",
-  "/api/util/regex-escape": "simple",
-  "/api/util/string-distance": "simple",
-  "/api/util/verify-signature": "simple",
 
   // === KV STORAGE ENDPOINTS (4) ===
   "/api/kv/set": "storage_write",
