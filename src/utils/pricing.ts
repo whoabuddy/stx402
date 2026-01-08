@@ -266,6 +266,10 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   // === WALLET INTELLIGENCE ENDPOINTS (2 paid) ===
   "/api/wallet/analyze": "ai",
   "/api/wallet/quick": "simple",
+
+  // === AGENT INTELLIGENCE ENDPOINTS (2 paid) ===
+  "/api/agent/profile": "ai",
+  "/api/agent/discover": "ai",
 };
 
 // Get pricing tier for an endpoint path (strips path params like :address)

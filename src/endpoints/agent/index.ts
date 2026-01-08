@@ -21,3 +21,7 @@ export { ValidationRequests } from "./validationRequests";
 // Meta endpoints
 export { RegistryInfo } from "./registryInfo";
 export { AgentLookup } from "./agentLookup";
+
+// Intelligence endpoints
+export { AgentProfile } from "./agentProfile";
+export { AgentDiscover } from "./agentDiscover";

@@ -226,6 +226,8 @@ import {
   ValidationRequests,
   RegistryInfo,
   AgentLookup,
+  AgentProfile,
+  AgentDiscover,
 } from "./endpoints/agent";
 
 // Wallet Intelligence endpoints
@@ -515,6 +517,9 @@ openapi.post("/api/agent/validation/status", paymentMiddleware, trackMetrics, Va
 openapi.post("/api/agent/validation/summary", paymentMiddleware, trackMetrics, ValidationSummary as any);
 openapi.post("/api/agent/validation/list", paymentMiddleware, trackMetrics, ValidationList as any);
 openapi.post("/api/agent/validation/requests", paymentMiddleware, trackMetrics, ValidationRequests as any);
+// Agent Intelligence
+openapi.post("/api/agent/profile", paymentMiddleware, trackMetrics, AgentProfile as any);
+openapi.post("/api/agent/discover", paymentMiddleware, trackMetrics, AgentDiscover as any);
 
 // === WALLET INTELLIGENCE ENDPOINTS ===
 openapi.get("/api/wallet/analyze/:address", paymentMiddleware, trackMetrics, WalletAnalyzeEndpoint as any);
