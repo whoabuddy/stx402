@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class SqlQuery extends BaseEndpoint {
@@ -100,7 +99,7 @@ export class SqlQuery extends BaseEndpoint {
       const result = await stub.sqlQuery(query, params);
       return c.json({ ...result, tokenType });
     } catch (error) {
-      log.error("SQL query error", { error: String(error) });
+      c.var.logger.error("SQL query error", { error: String(error) });
       const message = error instanceof Error ? error.message : String(error);
       return this.errorResponse(c, message, 400);
     }

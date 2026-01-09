@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class CounterList extends BaseEndpoint {
@@ -52,7 +51,7 @@ export class CounterList extends BaseEndpoint {
   };
 
   async handle(c: AppContext) {
-    const tokenType = this.getTokenType(c);
+        const tokenType = this.getTokenType(c);
     const payerAddress = this.getPayerAddress(c);
 
     if (!payerAddress) {
@@ -71,7 +70,7 @@ export class CounterList extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      log.error("Counter list error", { error: String(error) });
+      c.var.logger.error("Counter list error", { error: String(error) });
       return this.errorResponse(c, `Counter operation failed: ${error}`, 500);
     }
   }

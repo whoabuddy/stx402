@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class SyncLock extends BaseEndpoint {
@@ -114,7 +113,7 @@ export class SyncLock extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      log.error("Lock acquire error", { error: String(error) });
+      c.var.logger.error("Lock acquire error", { error: String(error) });
       return this.errorResponse(c, `Lock operation failed: ${error}`, 500);
     }
   }

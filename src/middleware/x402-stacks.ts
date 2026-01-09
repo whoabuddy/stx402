@@ -10,7 +10,7 @@ import {
   type PricingTier,
   validateTokenType,
 } from "../utils/pricing";
-import { createLogger } from "../utils/logger";
+import type { AppVariables } from "../types";
 
 // Correct mainnet token contracts (x402-stacks has outdated sBTC address)
 const TOKEN_CONTRACTS: Record<"mainnet" | "testnet", Record<"sBTC" | "USDCx", TokenContract>> = {
@@ -190,7 +190,7 @@ function classifyPaymentError(error: unknown, settleResult?: SettlePaymentResult
 
 export const x402PaymentMiddleware = () => {
   return async (
-    c: Context<{ Bindings: Env }>,
+    c: Context<{ Bindings: Env; Variables: AppVariables }>,
     next: () => Promise<Response | void>
   ) => {
     const queryTokenType = c.req.query("tokenType") ?? "STX";
@@ -247,7 +247,7 @@ export const x402PaymentMiddleware = () => {
 
     // Verify/settle payment
     let settleResult: SettlePaymentResult;
-    const paymentLog = createLogger({ path: c.req.path, tokenType });
+    const paymentLog = c.var.logger.child({ tokenType });
     paymentLog.debug("settlePayment starting", {
       facilitatorUrl: config.facilitatorUrl,
       expectedRecipient: config.address,

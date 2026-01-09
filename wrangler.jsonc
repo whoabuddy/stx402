@@ -16,8 +16,15 @@
     }
   ],
   "observability": {
-    "enabled": true
+    "enabled": false
   },
+  "services": [
+    {
+      "binding": "LOGS",
+      "service": "worker-logs",
+      "entrypoint": "LogsRPC"
+    }
+  ],
   "ai": {
     "binding": "AI"
   },
@@ -56,6 +63,16 @@
     "staging": {
       "name": "stx402-staging",
       "workers_dev": true,
+      "observability": {
+        "enabled": false
+      },
+      "services": [
+        {
+          "binding": "LOGS",
+          "service": "worker-logs",
+          "entrypoint": "LogsRPC"
+        }
+      ],
       "vars": {
         "X402_FACILITATOR_URL": "https://facilitator.x402stacks.xyz",
         "X402_NETWORK": "testnet",

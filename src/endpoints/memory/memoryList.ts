@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class MemoryList extends BaseEndpoint {
@@ -150,7 +149,7 @@ export class MemoryList extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      log.error("Memory list error", { error: String(error) });
+      c.var.logger.error("Memory list error", { error: String(error) });
       return this.errorResponse(c, `Memory operation failed: ${error}`, 500);
     }
   }

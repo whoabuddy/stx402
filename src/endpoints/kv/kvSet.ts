@@ -184,7 +184,7 @@ export class KvSet extends BaseEndpoint {
         },
       });
     } catch (error) {
-      log.error("KV put error", { error: String(error) });
+      c.var.logger.error("KV put error", { error: String(error) });
       return this.errorResponse(c, "Failed to store value", 500);
     }
 

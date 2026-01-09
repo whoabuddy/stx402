@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class CounterDecrement extends BaseEndpoint {
@@ -73,7 +72,7 @@ export class CounterDecrement extends BaseEndpoint {
   };
 
   async handle(c: AppContext) {
-    const tokenType = this.getTokenType(c);
+        const tokenType = this.getTokenType(c);
     const payerAddress = this.getPayerAddress(c);
 
     if (!payerAddress) {
@@ -111,7 +110,7 @@ export class CounterDecrement extends BaseEndpoint {
       const result = await stub.counterDecrement(name, step, { min, max });
       return c.json({ ...result, tokenType });
     } catch (error) {
-      log.error("Counter decrement error", { error: String(error) });
+      c.var.logger.error("Counter decrement error", { error: String(error) });
       return this.errorResponse(c, `Counter operation failed: ${error}`, 500);
     }
   }

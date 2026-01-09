@@ -1,25 +1,20 @@
 /**
- * Structured Logger for Cloudflare Workers
+ * Centralized Logger for Cloudflare Workers
  *
- * Provides consistent structured logging across the application.
- * Designed for Cloudflare Workers environment:
- * - JSON output for log aggregation (Cloudflare dashboard, Logpush)
- * - Request context tracking (request ID, path, payer)
- * - Log levels with filtering
- * - No buffer (Workers are stateless)
+ * Sends logs to worker-logs service via RPC binding.
+ * Uses CF-Ray ID for request correlation with Cloudflare dashboard.
  *
  * Usage:
- *   import { createLogger, log } from "../utils/logger";
+ *   // In middleware (creates logger and stores in context)
+ *   app.use('*', loggerMiddleware)
  *
- *   // Simple logging
- *   log.info("Server started");
- *   log.error("Payment failed", { reason: "insufficient funds" });
- *
- *   // With request context
- *   const logger = createLogger({ requestId: "abc123", path: "/api/stacks/..." });
- *   logger.info("Processing request");
- *   logger.warn("Rate limit approaching", { remaining: 5 });
+ *   // In endpoints
+ *   const log = getLogger(c)
+ *   log.info("Processing request")
+ *   log.error("Payment failed", { reason: "insufficient funds" })
  */
+
+import type { Context, ExecutionContext } from "hono";
 
 // =============================================================================
 // Types
@@ -28,213 +23,195 @@
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface LogContext {
-  requestId?: string;
+  rayId?: string;
   path?: string;
   payer?: string;
   [key: string]: unknown;
 }
 
-export interface LogEntry {
-  timestamp: string;
-  level: LogLevel;
-  message: string;
-  context?: LogContext;
-  data?: unknown;
-}
-
 export interface Logger {
-  debug(message: string, data?: unknown): void;
-  info(message: string, data?: unknown): void;
-  warn(message: string, data?: unknown): void;
-  error(message: string, data?: unknown): void;
+  debug(message: string, data?: Record<string, unknown>): void;
+  info(message: string, data?: Record<string, unknown>): void;
+  warn(message: string, data?: Record<string, unknown>): void;
+  error(message: string, data?: Record<string, unknown>): void;
   child(additionalContext: LogContext): Logger;
 }
 
-// =============================================================================
-// Configuration
-// =============================================================================
-
-// Log level priority (higher = more severe)
-const LOG_LEVELS: Record<LogLevel, number> = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
-};
-
-// Minimum log level (can be configured via env)
-let minLevel: LogLevel = "info";
-
 /**
- * Set minimum log level
+ * LogsRPC interface matching worker-logs service binding
+ * Defined locally since worker-logs isn't a published package
  */
-export function setLogLevel(level: LogLevel): void {
-  minLevel = level;
+interface LogsRPC {
+  debug(appId: string, message: string, context?: Record<string, unknown>): Promise<unknown>;
+  info(appId: string, message: string, context?: Record<string, unknown>): Promise<unknown>;
+  warn(appId: string, message: string, context?: Record<string, unknown>): Promise<unknown>;
+  error(appId: string, message: string, context?: Record<string, unknown>): Promise<unknown>;
 }
 
-/**
- * Check if a level should be logged
- */
-function shouldLog(level: LogLevel): boolean {
-  return LOG_LEVELS[level] >= LOG_LEVELS[minLevel];
-}
+// App identifier for worker-logs
+const APP_ID = "stx402";
 
 // =============================================================================
-// Formatting
+// Console Fallback (for local dev without LOGS binding)
 // =============================================================================
 
-/**
- * Format a log entry as JSON for structured logging
- */
-function formatJson(entry: LogEntry): string {
-  return JSON.stringify(entry);
-}
-
-/**
- * Format a log entry for console (development)
- * Includes ANSI colors for readability
- */
-function formatConsole(entry: LogEntry): string {
-  const colors: Record<LogLevel, string> = {
-    debug: "\x1b[90m", // gray
-    info: "\x1b[36m", // cyan
-    warn: "\x1b[33m", // yellow
-    error: "\x1b[31m", // red
-  };
-  const reset = "\x1b[0m";
-
-  const color = colors[entry.level];
-  const levelStr = entry.level.toUpperCase().padEnd(5);
-  const timestamp = entry.timestamp.split("T")[1].split(".")[0]; // HH:MM:SS
-
-  let output = `${color}[${timestamp}] ${levelStr}${reset} ${entry.message}`;
-
-  if (entry.context && Object.keys(entry.context).length > 0) {
-    output += ` ${color}ctx=${reset}${JSON.stringify(entry.context)}`;
-  }
-
-  if (entry.data !== undefined) {
-    output += ` ${color}data=${reset}${JSON.stringify(entry.data)}`;
-  }
-
-  return output;
-}
-
-// =============================================================================
-// Core Logging
-// =============================================================================
-
-/**
- * Write a log entry
- * Uses console methods that map to Cloudflare's log levels
- */
-function writeLog(entry: LogEntry): void {
-  // In production (Workers), use JSON format
-  // In development, use colored console format
-  const isDev = typeof process !== "undefined" && process.env?.NODE_ENV === "development";
-  const formatted = isDev ? formatConsole(entry) : formatJson(entry);
-
-  // Map to appropriate console method
-  // Cloudflare Workers captures these at different severity levels
-  switch (entry.level) {
-    case "debug":
-      console.debug(formatted);
-      break;
-    case "info":
-      console.info(formatted);
-      break;
-    case "warn":
-      console.warn(formatted);
-      break;
-    case "error":
-      console.error(formatted);
-      break;
-  }
-}
-
-/**
- * Create a log entry and write it
- */
-function logWithContext(
-  level: LogLevel,
-  message: string,
-  context?: LogContext,
-  data?: unknown
-): void {
-  if (!shouldLog(level)) return;
-
-  const entry: LogEntry = {
-    timestamp: new Date().toISOString(),
-    level,
-    message,
+function createConsoleLogger(baseContext?: LogContext): Logger {
+  const formatMessage = (level: LogLevel, message: string, data?: Record<string, unknown>) => {
+    const timestamp = new Date().toISOString();
+    const ctx = { ...baseContext, ...data };
+    const ctxStr = Object.keys(ctx).length > 0 ? ` ${JSON.stringify(ctx)}` : "";
+    return `[${timestamp}] ${level.toUpperCase().padEnd(5)} ${message}${ctxStr}`;
   };
 
-  if (context && Object.keys(context).length > 0) {
-    entry.context = context;
-  }
-
-  if (data !== undefined) {
-    entry.data = data;
-  }
-
-  writeLog(entry);
-}
-
-// =============================================================================
-// Logger Factory
-// =============================================================================
-
-/**
- * Create a logger with optional context
- * Context is included in all log entries from this logger
- */
-export function createLogger(context?: LogContext): Logger {
   return {
-    debug: (message: string, data?: unknown) =>
-      logWithContext("debug", message, context, data),
-    info: (message: string, data?: unknown) =>
-      logWithContext("info", message, context, data),
-    warn: (message: string, data?: unknown) =>
-      logWithContext("warn", message, context, data),
-    error: (message: string, data?: unknown) =>
-      logWithContext("error", message, context, data),
-    child: (additionalContext: LogContext) =>
-      createLogger({ ...context, ...additionalContext }),
+    debug: (msg, data) => console.debug(formatMessage("debug", msg, data)),
+    info: (msg, data) => console.info(formatMessage("info", msg, data)),
+    warn: (msg, data) => console.warn(formatMessage("warn", msg, data)),
+    error: (msg, data) => console.error(formatMessage("error", msg, data)),
+    child: (additionalContext) => createConsoleLogger({ ...baseContext, ...additionalContext }),
   };
 }
 
 // =============================================================================
-// Default Logger
+// RPC Logger (production)
 // =============================================================================
 
 /**
- * Default logger without context
- * Use for application-level logging that doesn't need request context
+ * Create a logger that sends to worker-logs via RPC
+ *
+ * @param logs - The LOGS service binding from env
+ * @param ctx - Execution context for waitUntil
+ * @param baseContext - Base context included in all log entries
  */
-export const log = createLogger();
+export function createLogger(
+  logs: LogsRPC,
+  ctx: ExecutionContext,
+  baseContext?: LogContext
+): Logger {
+  const sendLog = (
+    level: LogLevel,
+    message: string,
+    data?: Record<string, unknown>
+  ) => {
+    const context = { ...baseContext, ...data };
+    const method = logs[level].bind(logs);
+
+    // Fire and forget - don't block the request
+    ctx.waitUntil(
+      method(APP_ID, message, context).catch((err) => {
+        // Fallback to console if RPC fails
+        console.error(`[logger] Failed to send ${level} log: ${err}`);
+        console.error(`[logger] Original message: ${message}`, context);
+      })
+    );
+  };
+
+  return {
+    debug: (msg, data) => sendLog("debug", msg, data),
+    info: (msg, data) => sendLog("info", msg, data),
+    warn: (msg, data) => sendLog("warn", msg, data),
+    error: (msg, data) => sendLog("error", msg, data),
+    child: (additionalContext) =>
+      createLogger(logs, ctx, { ...baseContext, ...additionalContext }),
+  };
+}
 
 // =============================================================================
-// Request Logger Helper
+// Hono Integration
+// =============================================================================
+
+// Context key for storing logger
+const LOGGER_KEY = "logger";
+
+/**
+ * Hono middleware that creates a logger and stores it in context
+ *
+ * Usage in index.ts:
+ *   import { loggerMiddleware } from "./utils/logger"
+ *   app.use('*', loggerMiddleware)
+ */
+export function loggerMiddleware(
+  c: Context<{ Bindings: Env }>,
+  next: () => Promise<void>
+) {
+  const rayId = c.req.header("cf-ray") || "local";
+  const path = c.req.path;
+  const baseContext: LogContext = { rayId, path };
+
+  // Use RPC logger if LOGS binding available, otherwise console
+  const logger = c.env.LOGS
+    ? createLogger(c.env.LOGS as unknown as LogsRPC, c.executionCtx, baseContext)
+    : createConsoleLogger(baseContext);
+
+  c.set(LOGGER_KEY, logger);
+  return next();
+}
+
+/**
+ * Get logger from Hono context
+ *
+ * Usage in endpoints:
+ *   const log = getLogger(c)
+ *   log.info("Processing request")
+ */
+export function getLogger(c: Context): Logger {
+  const logger = c.get(LOGGER_KEY) as Logger | undefined;
+  if (!logger) {
+    // Fallback if middleware wasn't applied (shouldn't happen in production)
+    console.warn("[logger] No logger in context, using console fallback");
+    return createConsoleLogger({ path: c.req.path });
+  }
+  return logger;
+}
+
+// =============================================================================
+// Standalone Logger (for utilities without Hono context)
 // =============================================================================
 
 /**
- * Create a logger for a specific request
- * Extracts common context from the request
+ * Create a standalone logger for use outside of request handlers
+ * Requires env and executionCtx to be passed explicitly
+ *
+ * Usage:
+ *   const log = createStandaloneLogger(env, ctx, { component: "cron" })
+ */
+export function createStandaloneLogger(
+  env: Env,
+  ctx: ExecutionContext,
+  baseContext?: LogContext
+): Logger {
+  if (env.LOGS) {
+    return createLogger(env.LOGS as unknown as LogsRPC, ctx, baseContext);
+  }
+  return createConsoleLogger(baseContext);
+}
+
+// =============================================================================
+// Legacy Exports (for gradual migration)
+// =============================================================================
+
+/**
+ * @deprecated Use getLogger(c) instead. This is a console-only fallback.
+ */
+export const log = createConsoleLogger();
+
+/**
+ * @deprecated Use createLogger() with env.LOGS instead
  */
 export function createRequestLogger(
   requestId: string,
   path: string,
   payer?: string
 ): Logger {
-  return createLogger({
-    requestId,
+  return createConsoleLogger({
+    rayId: requestId,
     path,
     ...(payer && { payer }),
   });
 }
 
 /**
- * Generate a short request ID
+ * @deprecated Request IDs now come from CF-Ray header
  */
 export function generateRequestId(): string {
   return Math.random().toString(36).substring(2, 10);

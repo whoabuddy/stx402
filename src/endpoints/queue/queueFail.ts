@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class QueueFail extends BaseEndpoint {
@@ -68,7 +67,7 @@ export class QueueFail extends BaseEndpoint {
   };
 
   async handle(c: AppContext) {
-    const tokenType = this.getTokenType(c);
+        const tokenType = this.getTokenType(c);
     const payerAddress = this.getPayerAddress(c);
 
     if (!payerAddress) {
@@ -102,7 +101,7 @@ export class QueueFail extends BaseEndpoint {
         tokenType,
       });
     } catch (err) {
-      log.error("Queue fail error", { error: String(err) });
+      c.var.logger.error("Queue fail error", { error: String(err) });
       return this.errorResponse(c, `Queue operation failed: ${err}`, 500);
     }
   }

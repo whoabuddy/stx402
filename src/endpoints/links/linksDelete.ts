@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class LinksDelete extends BaseEndpoint {
@@ -91,7 +90,7 @@ export class LinksDelete extends BaseEndpoint {
 
       return c.json({ ...result, tokenType });
     } catch (error) {
-      log.error("Link delete error", { error: String(error) });
+      c.var.logger.error("Link delete error", { error: String(error) });
       return this.errorResponse(c, `Link operation failed: ${error}`, 500);
     }
   }

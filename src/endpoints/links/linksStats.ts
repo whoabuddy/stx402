@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class LinksStats extends BaseEndpoint {
@@ -111,7 +110,7 @@ export class LinksStats extends BaseEndpoint {
 
       return c.json({ ...stats, tokenType });
     } catch (error) {
-      log.error("Link stats error", { error: String(error) });
+      c.var.logger.error("Link stats error", { error: String(error) });
       return this.errorResponse(c, `Link operation failed: ${error}`, 500);
     }
   }

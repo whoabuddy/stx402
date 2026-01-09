@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class LinksExpand extends BaseEndpoint {
@@ -99,7 +98,7 @@ export class LinksExpand extends BaseEndpoint {
         clicks: link.clicks + 1, // Include this click
       });
     } catch (error) {
-      log.error("Link expand error", { error: String(error) });
+      c.var.logger.error("Link expand error", { error: String(error) });
       return this.errorResponse(c, `Link operation failed: ${error}`, 500);
     }
   }

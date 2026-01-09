@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class SyncCheck extends BaseEndpoint {
@@ -93,7 +92,7 @@ export class SyncCheck extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      log.error("Lock check error", { error: String(error) });
+      c.var.logger.error("Lock check error", { error: String(error) });
       return this.errorResponse(c, `Lock operation failed: ${error}`, 500);
     }
   }

@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class LinksCreate extends BaseEndpoint {
@@ -163,7 +162,7 @@ export class LinksCreate extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      log.error("Link create error", { error: String(error) });
+      c.var.logger.error("Link create error", { error: String(error) });
       const message = error instanceof Error ? error.message : String(error);
       return this.errorResponse(c, message, 400);
     }

@@ -151,9 +151,11 @@ export { UserDurableObject } from "./durable-objects/UserDurableObject";
 
 import { x402PaymentMiddleware } from "./middleware/x402-stacks";
 import { metricsMiddleware } from "./middleware/metrics";
+import { loggerMiddleware } from "./utils/logger";
+import type { AppVariables } from "./types";
 
 // Start a Hono app
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 app.use(
   "/*",
@@ -163,6 +165,9 @@ app.use(
     allowHeaders: ["X-PAYMENT", "X-PAYMENT-TOKEN-TYPE"],
   })
 );
+
+// Logger middleware - creates logger with CF-Ray ID and stores in context
+app.use("/*", loggerMiddleware);
 
 // Serve themed Scalar API docs at root (aibtc.com branding)
 app.get("/", (c) => c.html(getScalarHTML("/openapi.json")));

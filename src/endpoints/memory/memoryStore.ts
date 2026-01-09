@@ -1,5 +1,4 @@
 import { BaseEndpoint } from "../BaseEndpoint";
-import { log } from "../../utils/logger";
 import type { AppContext } from "../../types";
 
 export class MemoryStore extends BaseEndpoint {
@@ -182,7 +181,7 @@ export class MemoryStore extends BaseEndpoint {
           }
         }
       } catch (error) {
-        log.error("Embedding/summary generation error", { error: String(error) });
+        c.var.logger.error("Embedding/summary generation error", { error: String(error) });
         // Continue without embedding - non-fatal
       }
     }
@@ -207,7 +206,7 @@ export class MemoryStore extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
-      log.error("Memory store error", { error: String(error) });
+      c.var.logger.error("Memory store error", { error: String(error) });
       return this.errorResponse(c, `Memory operation failed: ${error}`, 500);
     }
   }
