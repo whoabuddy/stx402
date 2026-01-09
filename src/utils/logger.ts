@@ -88,18 +88,16 @@ export function createLogger(
   ctx: ExecutionContext,
   baseContext?: LogContext
 ): Logger {
-  const sendLog = (
-    level: LogLevel,
+  // Helper to merge context and send via RPC
+  // Uses direct method calls instead of dynamic access for RPC Proxy compatibility
+  const send = (
+    rpcCall: Promise<unknown>,
+    level: string,
     message: string,
-    data?: Record<string, unknown>
+    context: Record<string, unknown>
   ) => {
-    const context = { ...baseContext, ...data };
-    const method = logs[level].bind(logs);
-
-    // Fire and forget - don't block the request
     ctx.waitUntil(
-      method(APP_ID, message, context).catch((err) => {
-        // Fallback to console if RPC fails
+      rpcCall.catch((err) => {
         console.error(`[logger] Failed to send ${level} log: ${err}`);
         console.error(`[logger] Original message: ${message}`, context);
       })
@@ -107,10 +105,22 @@ export function createLogger(
   };
 
   return {
-    debug: (msg, data) => sendLog("debug", msg, data),
-    info: (msg, data) => sendLog("info", msg, data),
-    warn: (msg, data) => sendLog("warn", msg, data),
-    error: (msg, data) => sendLog("error", msg, data),
+    debug: (msg, data) => {
+      const context = { ...baseContext, ...data };
+      send(logs.debug(APP_ID, msg, context), "debug", msg, context);
+    },
+    info: (msg, data) => {
+      const context = { ...baseContext, ...data };
+      send(logs.info(APP_ID, msg, context), "info", msg, context);
+    },
+    warn: (msg, data) => {
+      const context = { ...baseContext, ...data };
+      send(logs.warn(APP_ID, msg, context), "warn", msg, context);
+    },
+    error: (msg, data) => {
+      const context = { ...baseContext, ...data };
+      send(logs.error(APP_ID, msg, context), "error", msg, context);
+    },
     child: (additionalContext) =>
       createLogger(logs, ctx, { ...baseContext, ...additionalContext }),
   };
