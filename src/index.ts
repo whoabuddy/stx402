@@ -169,6 +169,45 @@ app.use(
 // Logger middleware - creates logger with CF-Ray ID and stores in context
 app.use("/*", loggerMiddleware);
 
+// Temporary debug endpoint to test LOGS binding - remove after testing
+app.get('/debug/logs-test', async (c) => {
+  const hasBinding = !!c.env.LOGS;
+  const bindingType = typeof c.env.LOGS;
+
+  // Try to get method names (may not work with RPC proxy)
+  let methods: string[] = [];
+  try {
+    methods = c.env.LOGS ? Object.getOwnPropertyNames(Object.getPrototypeOf(c.env.LOGS)) : [];
+  } catch {
+    methods = ['(could not enumerate)'];
+  }
+
+  if (c.env.LOGS) {
+    try {
+      // Direct RPC call - not using the logger utility
+      const result = await c.env.LOGS.info('stx402', 'Test log from debug endpoint', { test: true, timestamp: new Date().toISOString() });
+      return c.json({
+        hasBinding,
+        bindingType,
+        methods,
+        rpcResult: result,
+        success: true
+      });
+    } catch (err) {
+      return c.json({
+        hasBinding,
+        bindingType,
+        methods,
+        error: String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        success: false
+      });
+    }
+  }
+
+  return c.json({ hasBinding, bindingType, methods, success: false, reason: 'No LOGS binding' });
+});
+
 // Serve themed Scalar API docs at root (aibtc.com branding)
 app.get("/", (c) => c.html(getScalarHTML("/openapi.json")));
 
