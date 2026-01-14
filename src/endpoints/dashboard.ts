@@ -709,9 +709,9 @@ function generateDashboardHTML(data: {
 
     <div class="footer">
       <p>
-        <a href="/about">About X402</a> |
         <a href="/guide">Endpoint Guide</a> |
         <a href="/docs">API Docs</a> |
+        <a href="/toolbox">Toolbox</a> |
         Built on <a href="https://stacks.co" target="_blank">Stacks</a>
       </p>
     </div>

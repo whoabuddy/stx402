@@ -25,7 +25,6 @@ import { ENDPOINT_COUNTS, ENDPOINT_REGISTRY } from "./endpoint-registry";
 const FREE_ENDPOINTS = [
   "/api/health",
   "/dashboard",
-  "/about",
   "/guide",
   "/toolbox",
 ];

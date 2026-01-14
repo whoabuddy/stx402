@@ -2,7 +2,7 @@
 
 The meta layer for the X402 ecosystem - endpoint discovery and ERC-8004 agent identity on Stacks.
 
-**[API Docs](https://stx402.com/docs)** · **[Guide](https://stx402.com/guide)** · **[About](https://stx402.com/about)** · **[Dashboard](https://stx402.com/dashboard)**
+**[API Docs](https://stx402.com/docs)** · **[Guide](https://stx402.com/guide)** · **[Toolbox](https://stx402.com/toolbox)** · **[Dashboard](https://stx402.com/dashboard)**
 
 ## What is STX402?
 

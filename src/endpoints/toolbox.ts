@@ -465,7 +465,7 @@ function generateToolboxHTML(): string {
       </div>
 
       <div class="tool-footer">
-        Learn more about <a href="/about">X402 payments</a> or browse the <a href="/guide">endpoint guide</a>.
+        Learn more about <a href="https://x402.org" target="_blank">X402 payments</a> or browse the <a href="/guide">endpoint guide</a>.
       </div>
     </div>
   </div>

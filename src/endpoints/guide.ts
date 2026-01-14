@@ -317,6 +317,7 @@ function generateGuideHTML(): string {
         endpoints (hashing, storage, AI, Stacks utilities) have moved to
         <a href="https://x402.aibtc.com" target="_blank" style="color: #f7931a;">x402.aibtc.com</a>.
         STX402 now focuses on directory and identity services.
+        See <a href="#ecosystem" style="color: #f7931a;">ecosystem links</a> below.
       </p>
     </div>
 
@@ -355,11 +356,42 @@ function generateGuideHTML(): string {
       No categories or endpoints match your search.
     </div>
 
+    <div id="ecosystem" style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #27272a;">
+      <h2 style="font-size: 22px; font-weight: 600; color: #fff; margin-bottom: 16px;">
+        <span style="color: #f7931a;">&#127760;</span> Ecosystem Links
+      </h2>
+      <p style="color: #a1a1aa; margin-bottom: 20px;">
+        Learn more about X402 and the Stacks ecosystem.
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+        <a href="https://x402.org" target="_blank" style="display: block; background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 16px; text-decoration: none; transition: border-color 0.15s;">
+          <div style="font-size: 18px; margin-bottom: 4px;">&#128220;</div>
+          <div style="color: #fff; font-weight: 500; margin-bottom: 4px;">X402 Protocol</div>
+          <div style="color: #71717a; font-size: 13px;">Official specification for HTTP 402 micropayments</div>
+        </a>
+        <a href="https://x402.aibtc.com" target="_blank" style="display: block; background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 16px; text-decoration: none; transition: border-color 0.15s;">
+          <div style="font-size: 18px; margin-bottom: 4px;">&#9889;</div>
+          <div style="color: #fff; font-weight: 500; margin-bottom: 4px;">X402 AIBTC API</div>
+          <div style="color: #71717a; font-size: 13px;">General-purpose utilities: hashing, storage, AI, Stacks tools</div>
+        </a>
+        <a href="https://stacks.co" target="_blank" style="display: block; background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 16px; text-decoration: none; transition: border-color 0.15s;">
+          <div style="font-size: 18px; margin-bottom: 4px;">&#9939;</div>
+          <div style="color: #fff; font-weight: 500; margin-bottom: 4px;">Stacks Blockchain</div>
+          <div style="color: #71717a; font-size: 13px;">Smart contracts secured by Bitcoin</div>
+        </a>
+        <a href="https://github.com/coinbase/x402" target="_blank" style="display: block; background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 16px; text-decoration: none; transition: border-color 0.15s;">
+          <div style="font-size: 18px; margin-bottom: 4px;">&#128187;</div>
+          <div style="color: #fff; font-weight: 500; margin-bottom: 4px;">X402 Reference</div>
+          <div style="color: #71717a; font-size: 13px;">Open source reference implementation by Coinbase</div>
+        </a>
+      </div>
+    </div>
+
     <div class="footer">
       <p>
-        <a href="/about">About X402</a> |
         <a href="/dashboard">Dashboard</a> |
-        <a href="/">API Docs</a> |
+        <a href="/docs">API Docs</a> |
+        <a href="/toolbox">Toolbox</a> |
         Built on <a href="https://stacks.co" target="_blank">Stacks</a>
       </p>
     </div>

@@ -12,7 +12,6 @@ import { getFaviconSVG } from "./endpoints/favicon";
 // Health/Info endpoints
 import { Health } from "./endpoints/health";
 import { Dashboard } from "./endpoints/dashboard";
-import { AboutPage } from "./endpoints/about";
 import { GuidePage } from "./endpoints/guide";
 import { ToolboxPage } from "./endpoints/toolbox";
 
@@ -153,7 +152,6 @@ const trackMetrics = metricsMiddleware();
 
 openapi.get("/health", Health);
 openapi.get("/dashboard", Dashboard);
-openapi.get("/about", AboutPage);
 openapi.get("/guide", GuidePage);
 openapi.get("/toolbox", ToolboxPage);
 

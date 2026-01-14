@@ -205,10 +205,9 @@ Preview environments should show staging URLs, not production URLs in OpenAPI sp
   - [ ] Root `/` returns JSON service info
   - [ ] `/docs` shows Swagger UI
   - [ ] `/dashboard` loads with metrics
-  - [ ] `/guide` shows 5 categories (Registry, Links, Agent Identity/Reputation/Validation)
-  - [ ] `/about` loads with correct content
+  - [ ] `/guide` shows 5 categories (Registry, Links, Agent Identity/Reputation/Validation) + Ecosystem Links section
   - [ ] `/toolbox` loads and 402 Checker works
-  - [ ] All nav links work correctly
+  - [ ] All nav links work correctly (Docs, Dashboard, Guide, Toolbox)
 
 - [ ] Test 402 Checker with various URLs
   - [ ] stx402.com/registry/probe (should show 402)
@@ -238,6 +237,7 @@ bun run tests/_validate_endpoints.ts
 - [ ] All page footers link to `/docs` not `/`
 - [ ] No references to `/api/` prefix paths
 - [ ] No references to removed endpoints (hash, ai, storage, etc.)
+- [ ] No references to `/about` (removed - content merged to Guide)
 - [ ] OpenAPI spec tags match endpoint tags
 - [ ] Pricing in guide/toolbox matches pricing.ts
 
@@ -290,13 +290,13 @@ bun run tests/_validate_endpoints.ts
 
 ## Notes
 
-- Total endpoint count: 36 (not 31)
-  - Info: 5 (health, dashboard, about, guide, toolbox)
+- Total endpoint count: 35 (not 31)
+  - Info: 4 (health, dashboard, guide, toolbox)
   - Registry: 10 (probe, register, list, details, update, delete, my-endpoints, transfer, admin-verify, admin-pending)
   - Links: 5 (create, expand, stats, delete, list)
   - Agent: 16 (registry, info, owner, uri, metadata, version, lookup, reputation×5, validation×4)
 
 - Paid endpoints: 27
-- Free endpoints: 9 (5 info + registry/list + links/expand + agent/registry + 2 admin)
+- Free endpoints: 8 (4 info + registry/list + links/expand + agent/registry + 2 admin)
 
 Last updated: 2025-01-14

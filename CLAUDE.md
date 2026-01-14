@@ -61,11 +61,11 @@ X402_PK="..." bun run tests/admin-verify.ts reject https://example.com/api/endpo
 
 ### Endpoint Categories
 
-From `tests/endpoint-registry.ts:ENDPOINT_COUNTS` (36 total):
+From `tests/endpoint-registry.ts:ENDPOINT_COUNTS` (35 total):
 
 | Category | Count | Path Pattern | Tier | Description |
 |----------|-------|--------------|------|-------------|
-| Info | 5 | `/health`, `/dashboard`, `/about`, `/guide`, `/toolbox` | free | Service info & docs |
+| Info | 4 | `/health`, `/dashboard`, `/guide`, `/toolbox` | free | Service info & docs |
 | Registry | 10 | `/registry/*` | ai | X402 endpoint directory |
 | Links | 5 | `/links/*` | storage_* | URL shortener with analytics |
 | Agent | 16 | `/agent/*` | simple | ERC-8004 agent registry |
