@@ -16,14 +16,15 @@ nav_order: 3
 |------|---------|
 | [`endpoint-registry.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/endpoint-registry.ts) | **Source of truth** for endpoint counts and test configs |
 | [`_run_all_tests.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/_run_all_tests.ts) | E2E payment test runner for all endpoints |
-| [`_validate_endpoints.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/_validate_endpoints.ts) | Validates registry stays in sync with index.ts |
 | [`_shared_utils.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/_shared_utils.ts) | Shared test utilities |
-| [`_test_generator.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/_test_generator.ts) | Generate test boilerplate |
+| [`_test_generator.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/_test_generator.ts) | Test config types |
+| [`info-endpoints.test.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/info-endpoints.test.ts) | Free info endpoint tests |
+| [`registry-lifecycle.test.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/registry-lifecycle.test.ts) | Registry CRUD lifecycle tests |
+| [`links-lifecycle.test.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/links-lifecycle.test.ts) | Links CRUD lifecycle tests |
+| [`agent-registry.test.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/agent-registry.test.ts) | Agent registry tests |
 | [`admin-verify.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/admin-verify.ts) | Admin registry verification script |
 | [`registry-manage.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/registry-manage.ts) | User endpoint management script |
-| [`cleanup-registry.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/cleanup-registry.ts) | Registry cleanup utilities |
-| `*-lifecycle.test.ts` | Stateful endpoint lifecycle tests |
-| `*.test.ts` | Individual endpoint tests |
+| [`check-setup.ts`](https://github.com/whoabuddy/stx402/blob/master/tests/check-setup.ts) | Environment setup validation |
 
 ## Running Tests
 
@@ -34,12 +35,23 @@ npm run dev
 # Run all tests (requires .env with X402_CLIENT_PK testnet mnemonic)
 bun run tests/_run_all_tests.ts
 
-# Run individual test
-bun run tests/kv-storage.test.ts
+# Run specific category
+bun run tests/_run_all_tests.ts --category=info      # Free info endpoints
+bun run tests/_run_all_tests.ts --category=registry  # Registry lifecycle
+bun run tests/_run_all_tests.ts --category=links     # Links lifecycle
+bun run tests/_run_all_tests.ts --category=agent     # Agent endpoints
 
-# Validate endpoint counts
-bun run tests/_validate_endpoints.ts
+# Run info tests directly
+bun run tests/info-endpoints.test.ts
 ```
+
+## Test Modes
+
+| Mode | Command | Description |
+|------|---------|-------------|
+| Quick | `--mode=quick` (default) | Stateless endpoints only |
+| Full | `--mode=full` | Stateless + all lifecycle tests |
+| Category | `--category=X` | Single category (info, registry, links, agent) |
 
 ## Registry Management
 
@@ -69,12 +81,23 @@ Each test config in `endpoint-registry.ts`:
 
 ```typescript
 {
-  path: "/api/text/sha256",
+  name: "registry-probe",
+  endpoint: "/registry/probe",
   method: "POST",
-  body: { text: "hello" },
-  validate: (res) => res.hash?.length === 64,
+  body: { url: "https://example.com/api/test" },
+  validateResponse: (data, tokenType) =>
+    hasField(data, "success") && hasTokenType(data, tokenType),
 }
 ```
+
+## Test Coverage
+
+| Category | Endpoints | Tests |
+|----------|-----------|-------|
+| Info | 8 | info-endpoints.test.ts |
+| Registry | 10 | registry-lifecycle.test.ts |
+| Links | 5 | links-lifecycle.test.ts |
+| Agent | 16 | agent-registry.test.ts |
 
 ## Relationships
 
@@ -82,4 +105,4 @@ Each test config in `endpoint-registry.ts`:
 - **Uses**: `x402-stacks` client for payment signing
 
 ---
-*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/tests) · Updated: 2025-01-07*
+*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/tests)*

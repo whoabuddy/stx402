@@ -112,6 +112,7 @@ Defined in `src/utils/pricing.ts`:
 **Tests:**
 - `tests/endpoint-registry.ts` - Source of truth for endpoint counts
 - `tests/_run_all_tests.ts` - E2E payment test runner
+- `tests/info-endpoints.test.ts` - Free info endpoint tests (health, guide, etc.)
 - `tests/registry-lifecycle.test.ts` - Registry CRUD tests
 - `tests/links-lifecycle.test.ts` - Links CRUD tests
 - `tests/agent-registry.test.ts` - ERC-8004 endpoint tests

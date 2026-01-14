@@ -10,47 +10,79 @@ nav_order: 1
 
 # agent
 
-> ERC-8004 agent registry endpoints for identity, reputation, and validation.
+> ERC-8004 agent registry endpoints for identity, reputation, and validation on Stacks.
 
 ## Contents
 
-| Item | Purpose |
+| File | Purpose |
 |------|---------|
-| `AgentRegister.ts` | Register new agent identity |
-| `AgentLookup.ts` | Look up agent by address |
-| `AgentUpdate.ts` | Update agent metadata |
-| `AgentVerify.ts` | Verify agent signature |
-| `AgentRevoke.ts` | Revoke agent registration |
-| `AgentList.ts` | List registered agents |
-| `AgentReputation.ts` | Get agent reputation score |
-| `AgentEndorse.ts` | Endorse an agent |
-| `AgentReport.ts` | Report agent violation |
-| `AgentChallenge.ts` | Challenge agent identity |
-| `AgentResolve.ts` | Resolve challenge |
-| `AgentDelegate.ts` | Delegate agent authority |
-| `AgentRevokeDelegate.ts` | Revoke delegation |
-| `AgentGetDelegates.ts` | List agent delegates |
-| `AgentValidateCapability.ts` | Check agent capability |
-| `AgentGetHistory.ts` | Get agent action history |
-| `types.ts` | Shared type definitions |
+| `registryInfo.ts` | Contract addresses and specification |
+| `agentInfo.ts` | Get agent info by ID |
+| `agentOwner.ts` | Get agent owner address |
+| `agentUri.ts` | Get agent URI |
+| `agentMetadata.ts` | Get agent metadata by key |
+| `agentVersion.ts` | Get registry version |
+| `agentLookup.ts` | Find agents by owner |
+| `reputationSummary.ts` | Get reputation summary |
+| `reputationFeedback.ts` | Get specific feedback |
+| `reputationList.ts` | List all feedback |
+| `reputationClients.ts` | List feedback clients |
+| `reputationAuthHash.ts` | Generate SIP-018 auth hash |
+| `validationStatus.ts` | Get validation status |
+| `validationSummary.ts` | Get validation summary |
+| `validationList.ts` | List validations |
+| `validationRequests.ts` | List validation requests |
 
 ## ERC-8004 Overview
 
-Decentralized agent registry for AI agents and autonomous systems:
+Interface for the Stacks implementation of ERC-8004 agent registries:
 
-- **Identity**: On-chain agent registration with metadata
-- **Reputation**: Trust scores based on endorsements and reports
-- **Delegation**: Hierarchical authority delegation
-- **Validation**: SIP-018 signed capability proofs
+- **Identity**: Query agent metadata, URIs, and ownership
+- **Reputation**: View feedback summaries and client interactions
+- **Validation**: Check validation status and history
+- **Auth**: Generate SIP-018 structured data for feedback submission
+
+## Endpoints
+
+### Identity Registry
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/agent/registry` | GET | Contract addresses (free) |
+| `/agent/info` | POST | Agent info by ID |
+| `/agent/owner` | GET | Agent owner |
+| `/agent/uri` | GET | Agent URI |
+| `/agent/metadata` | POST | Metadata by key |
+| `/agent/version` | GET | Registry version |
+| `/agent/lookup` | POST | Find by owner |
+
+### Reputation Registry
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/agent/reputation/summary` | POST | Reputation summary |
+| `/agent/reputation/feedback` | POST | Specific feedback |
+| `/agent/reputation/list` | POST | All feedback |
+| `/agent/reputation/clients` | POST | Feedback clients |
+| `/agent/reputation/auth-hash` | POST | Generate auth hash |
+
+### Validation Registry
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/agent/validation/status` | POST | Validation status |
+| `/agent/validation/summary` | POST | Validation summary |
+| `/agent/validation/list` | POST | List validations |
+| `/agent/validation/requests` | POST | List requests |
 
 ## Pricing
 
-All agent endpoints use the `simple` tier (0.001 STX).
+All agent endpoints use the `simple` tier (0.001 STX), except `/agent/registry` which is free.
 
 ## Relationships
 
-- **Uses**: `src/utils/erc8004.ts` for contract calls
-- **Uses**: `src/utils/signatures.ts` for SIP-018 verification
+- **Uses**: `src/utils/erc8004.ts` for contract addresses
+- **Uses**: `src/utils/hiro.ts` for blockchain queries
 
 ---
-*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/src/endpoints/agent) · Updated: 2025-01-07*
+*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/src/endpoints/agent)*
