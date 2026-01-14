@@ -1,6 +1,6 @@
 /**
  * Shared navigation bar component for all pages
- * Matches aibtc.com branding: black background, orange accents
+ * STX402 Directory branding: dark background, orange accents
  */
 
 export function getNavCSS(): string {

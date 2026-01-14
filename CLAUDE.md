@@ -61,7 +61,7 @@ X402_PK="..." bun run tests/admin-verify.ts reject https://example.com/api/endpo
 
 ### Endpoint Categories
 
-From `tests/endpoint-registry.ts:ENDPOINT_COUNTS` (31 total):
+From `tests/endpoint-registry.ts:ENDPOINT_COUNTS` (36 total):
 
 | Category | Count | Path Pattern | Tier | Description |
 |----------|-------|--------------|------|-------------|

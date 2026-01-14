@@ -4,8 +4,8 @@ import { getNavCSS, getNavHTML } from "../components/nav";
 
 export class ToolboxPage extends OpenAPIRoute {
   schema = {
-    tags: ["System"],
-    summary: "Interactive toolbox for curious developers (free)",
+    tags: ["Info"],
+    summary: "402 Checker - test any URL for X402 payment requirements (free)",
     responses: {
       "200": {
         description: "HTML page",
@@ -26,7 +26,7 @@ function generateToolboxHTML(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Toolbox - STX402</title>
+  <title>402 Checker - STX402</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://rsms.me/">
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
@@ -48,7 +48,7 @@ function generateToolboxHTML(): string {
     }
 
     .container {
-      max-width: 1600px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 24px;
     }
@@ -75,11 +75,6 @@ function generateToolboxHTML(): string {
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 16px;
       padding: 32px;
-      margin-bottom: 24px;
-    }
-
-    .tool-card:last-child {
-      margin-bottom: 0;
     }
 
     .tool-card h2 {
@@ -89,10 +84,6 @@ function generateToolboxHTML(): string {
       display: flex;
       align-items: center;
       gap: 10px;
-    }
-
-    .tool-card h2::before {
-      content: "🔍";
     }
 
     .tool-card > p {
@@ -198,6 +189,7 @@ function generateToolboxHTML(): string {
       margin-bottom: 16px;
       padding-bottom: 16px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      flex-wrap: wrap;
     }
 
     .status-badge {
@@ -212,7 +204,7 @@ function generateToolboxHTML(): string {
       color: #f7931a;
     }
 
-    .status-badge.free {
+    .status-badge.success {
       background: rgba(34, 197, 94, 0.15);
       color: #22c55e;
     }
@@ -222,6 +214,11 @@ function generateToolboxHTML(): string {
       color: #ef4444;
     }
 
+    .status-badge.info {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+    }
+
     .checked-url {
       font-size: 13px;
       color: #71717a;
@@ -229,101 +226,89 @@ function generateToolboxHTML(): string {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      flex: 1;
+      min-width: 0;
     }
 
-    .human-friendly {
+    .result-section {
       background: #18181b;
       border-radius: 8px;
       padding: 20px;
       margin-bottom: 16px;
     }
 
-    .human-friendly h3 {
-      font-size: 15px;
+    .result-section h3 {
+      font-size: 14px;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      color: #fafafa;
     }
 
-    .human-friendly p {
+    .result-section p {
       color: #a1a1aa;
       font-size: 14px;
       line-height: 1.6;
+      margin-bottom: 8px;
     }
 
-    .human-friendly .price-highlight {
+    .result-section p:last-child {
+      margin-bottom: 0;
+    }
+
+    .price-highlight {
       color: #f7931a;
       font-weight: 600;
     }
 
-    .human-friendly .tokens-accepted {
+    .tokens-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
       margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
     }
 
-    .token-chip {
-      padding: 4px 10px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 4px;
-      font-size: 12px;
-      color: #a1a1aa;
+    .token-card {
+      background: #27272a;
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .token-card .token-name {
+      font-size: 11px;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .token-card .token-amount {
+      font-size: 16px;
+      font-weight: 600;
       font-family: 'SF Mono', Monaco, monospace;
     }
 
-    /* Dev details collapsible */
-    .dev-details {
+    .token-card.stx .token-amount { color: #06b6d4; }
+    .token-card.sbtc .token-amount { color: #f7931a; }
+    .token-card.usdcx .token-amount { color: #3b82f6; }
+
+    .code-block {
+      background: #0f0f12;
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .dev-details summary {
-      padding: 12px 16px;
-      background: #18181b;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      color: #a1a1aa;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      user-select: none;
-    }
-
-    .dev-details summary:hover {
-      color: #fafafa;
-    }
-
-    .dev-details summary::marker {
-      content: "";
-    }
-
-    .dev-details summary::before {
-      content: "▶";
-      font-size: 10px;
-      transition: transform 0.15s ease;
-    }
-
-    .dev-details[open] summary::before {
-      transform: rotate(90deg);
-    }
-
-    .dev-details-content {
       padding: 16px;
-      background: #0f0f12;
-    }
-
-    .dev-details pre {
-      background: #18181b;
-      padding: 16px;
-      border-radius: 6px;
       overflow-x: auto;
       font-size: 12px;
       font-family: 'SF Mono', Monaco, monospace;
-      line-height: 1.5;
+      line-height: 1.6;
       color: #a1a1aa;
+      margin-top: 12px;
     }
+
+    .code-block .comment { color: #6b7280; }
+    .code-block .keyword { color: #c084fc; }
+    .code-block .string { color: #4ade80; }
+    .code-block .property { color: #60a5fa; }
 
     .copy-btn {
       margin-top: 8px;
@@ -348,6 +333,37 @@ function generateToolboxHTML(): string {
       color: #22c55e;
     }
 
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #71717a;
+      font-size: 13px;
+    }
+
+    .info-value {
+      color: #fafafa;
+      font-size: 13px;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .info-value a {
+      color: #f7931a;
+      text-decoration: none;
+    }
+
+    .info-value a:hover {
+      text-decoration: underline;
+    }
+
     /* Loading state */
     .loading {
       display: flex;
@@ -355,6 +371,7 @@ function generateToolboxHTML(): string {
       gap: 12px;
       color: #a1a1aa;
       font-size: 14px;
+      padding: 20px;
     }
 
     .spinner {
@@ -370,16 +387,7 @@ function generateToolboxHTML(): string {
       to { transform: rotate(360deg); }
     }
 
-    /* Free endpoint message */
-    .free-message {
-      color: #22c55e;
-    }
-
-    .error-message {
-      color: #ef4444;
-    }
-
-    /* Footer hint */
+    /* Footer */
     .tool-footer {
       margin-top: 24px;
       padding-top: 24px;
@@ -397,161 +405,22 @@ function generateToolboxHTML(): string {
       text-decoration: underline;
     }
 
-    /* Call Endpoint Tool */
-    .wallet-status {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
+    .help-text {
+      background: #18181b;
+      border-radius: 8px;
       padding: 16px;
-      background: #18181b;
-      border-radius: 8px;
-    }
-
-    .wallet-status .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ef4444;
-    }
-
-    .wallet-status.connected .status-dot {
-      background: #22c55e;
-    }
-
-    .wallet-status .status-text {
-      flex: 1;
-      font-size: 14px;
+      margin-top: 16px;
+      font-size: 13px;
       color: #a1a1aa;
     }
 
-    .wallet-status.connected .status-text {
-      color: #fafafa;
+    .help-text code {
+      background: #27272a;
+      padding: 2px 6px;
+      border-radius: 4px;
       font-family: 'SF Mono', Monaco, monospace;
-      font-size: 13px;
-    }
-
-    .wallet-status button {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .wallet-status .connect-btn {
-      background: linear-gradient(135deg, #f7931a 0%, #c2410c 100%);
-      color: #000;
-    }
-
-    .wallet-status .connect-btn:hover {
-      opacity: 0.9;
-    }
-
-    .wallet-status .connect-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .wallet-status .disconnect-btn {
-      background: rgba(255, 255, 255, 0.06);
-      color: #a1a1aa;
-    }
-
-    .wallet-status .disconnect-btn:hover {
-      background: rgba(239, 68, 68, 0.1);
-      color: #ef4444;
-    }
-
-    .call-form {
-      display: none;
-    }
-
-    .call-form.visible {
-      display: block;
-    }
-
-    .call-form .form-row {
-      margin-bottom: 16px;
-    }
-
-    .call-form label {
-      display: block;
-      font-size: 13px;
-      color: #a1a1aa;
-      margin-bottom: 8px;
-    }
-
-    .call-form textarea {
-      width: 100%;
-      min-height: 80px;
-      padding: 12px;
-      background: #18181b;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      color: #fafafa;
-      font-size: 13px;
-      font-family: 'SF Mono', Monaco, monospace;
-      resize: vertical;
-    }
-
-    .call-form textarea:focus {
-      outline: none;
-      border-color: #f7931a;
-    }
-
-    .call-btn {
-      width: 100%;
-      padding: 14px 24px;
-      background: linear-gradient(135deg, #f7931a 0%, #c2410c 100%);
-      border: none;
-      border-radius: 8px;
-      color: #000;
-      font-size: 15px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .call-btn:hover {
-      opacity: 0.9;
-    }
-
-    .call-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .call-response {
-      margin-top: 24px;
-      display: none;
-    }
-
-    .call-response.visible {
-      display: block;
-    }
-
-    .call-response pre {
-      background: #18181b;
-      padding: 16px;
-      border-radius: 8px;
-      overflow-x: auto;
       font-size: 12px;
-      font-family: 'SF Mono', Monaco, monospace;
-      line-height: 1.5;
-      color: #a1a1aa;
-      max-height: 400px;
-    }
-
-    .not-connected-msg {
-      text-align: center;
-      padding: 32px;
-      color: #71717a;
-      font-size: 14px;
+      color: #22d3ee;
     }
   </style>
 </head>
@@ -559,36 +428,29 @@ function generateToolboxHTML(): string {
   ${getNavHTML("toolbox")}
 
   <div class="container">
-    <h1><span class="accent">STX402</span> Toolbox</h1>
-    <p class="subtitle">Interactive tools for the curious</p>
+    <h1><span class="accent">402</span> Checker</h1>
+    <p class="subtitle">Test any URL to see if it requires X402 payment</p>
 
     <div class="tool-card">
-      <h2>402 Checker</h2>
-      <p>Test any URL to see if it requires X402 payment</p>
+      <h2>Check an Endpoint</h2>
+      <p>Enter a URL to probe for X402 payment requirements. Works with any X402-compatible API.</p>
 
       <div class="input-group">
-        <input type="url" id="url-input" placeholder="https://stx402.com/registry/..." autocomplete="off">
+        <input type="url" id="url-input" placeholder="https://stx402.com/registry/probe" autocomplete="off">
         <select id="quick-select">
-          <option value="">Quick select</option>
-          <optgroup label="Registry (0.003 STX)">
-            <option value="/registry/probe">probe</option>
-            <option value="/registry/register">register</option>
-            <option value="/registry/my-endpoints">my-endpoints</option>
+          <option value="">Try an example...</option>
+          <optgroup label="STX402 - Paid">
+            <option value="https://stx402.com/registry/probe">registry/probe (0.003 STX)</option>
+            <option value="https://stx402.com/links/create">links/create (0.001 STX)</option>
+            <option value="https://stx402.com/agent/info">agent/info (0.001 STX)</option>
           </optgroup>
-          <optgroup label="Links (0.0005-0.001 STX)">
-            <option value="/links/create">create</option>
-            <option value="/links/list">list</option>
-            <option value="/links/stats">stats</option>
+          <optgroup label="STX402 - Free">
+            <option value="https://stx402.com/registry/list">registry/list</option>
+            <option value="https://stx402.com/agent/registry">agent/registry</option>
           </optgroup>
-          <optgroup label="Agent (0.001 STX)">
-            <option value="/agent/info">info</option>
-            <option value="/agent/lookup">lookup</option>
-            <option value="/agent/reputation/summary">reputation/summary</option>
-          </optgroup>
-          <optgroup label="Free">
-            <option value="/registry/list">registry/list</option>
-            <option value="/agent/registry">agent/registry</option>
-            <option value="/links/expand/test">links/expand</option>
+          <optgroup label="X402 AIBTC">
+            <option value="https://x402.aibtc.com/hashing/sha256">hashing/sha256</option>
+            <option value="https://x402.aibtc.com/stacks/decode/clarity">stacks/decode/clarity</option>
           </optgroup>
         </select>
         <button id="check-btn">Check</button>
@@ -598,62 +460,12 @@ function generateToolboxHTML(): string {
         <!-- Populated by JavaScript -->
       </div>
 
+      <div class="help-text">
+        <strong>Tip:</strong> Press <code>/</code> to focus the URL input, <code>Enter</code> to check, <code>Esc</code> to clear.
+      </div>
+
       <div class="tool-footer">
         Learn more about <a href="/about">X402 payments</a> or browse the <a href="/guide">endpoint guide</a>.
-      </div>
-    </div>
-
-    <div class="tool-card">
-      <h2 style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">&#9889;</span> Call an Endpoint</h2>
-      <p>Connect your wallet and make a paid API call</p>
-
-      <div class="wallet-status" id="wallet-status">
-        <div class="status-dot"></div>
-        <div class="status-text">Not connected</div>
-        <button class="connect-btn" id="connect-btn">Connect Wallet</button>
-      </div>
-
-      <div class="call-form" id="call-form">
-        <div class="form-row">
-          <label>Endpoint URL</label>
-          <div class="input-group" style="margin-bottom:0;">
-            <input type="url" id="call-url" placeholder="https://stx402.com/registry/..." autocomplete="off">
-            <select id="call-quick-select">
-              <option value="">Quick select</option>
-              <optgroup label="Registry (0.003 STX)">
-                <option value="/registry/probe">probe (POST)</option>
-                <option value="/registry/my-endpoints">my-endpoints (POST)</option>
-              </optgroup>
-              <optgroup label="Links (0.001 STX)">
-                <option value="/links/create">create (POST)</option>
-                <option value="/links/list">list (GET)</option>
-              </optgroup>
-              <optgroup label="Free">
-                <option value="/registry/list">registry/list (GET)</option>
-                <option value="/agent/registry">agent/registry (GET)</option>
-              </optgroup>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <label>Request Body (for POST endpoints, optional)</label>
-          <textarea id="call-body" placeholder='{"text": "Hello World"}'></textarea>
-        </div>
-
-        <button class="call-btn" id="call-btn">Call Endpoint</button>
-      </div>
-
-      <div class="not-connected-msg" id="not-connected-msg">
-        Connect your wallet above to make paid API calls
-      </div>
-
-      <div class="call-response" id="call-response">
-        <div class="results-header">
-          <span class="status-badge" id="call-status-badge">200</span>
-          <span class="checked-url" id="call-response-url"></span>
-        </div>
-        <pre id="call-response-body"></pre>
       </div>
     </div>
   </div>
@@ -667,12 +479,25 @@ function generateToolboxHTML(): string {
     // Quick select populates URL input
     quickSelect.addEventListener('change', function() {
       if (this.value) {
-        urlInput.value = window.location.origin + this.value;
+        urlInput.value = this.value;
         this.value = '';
+        checkBtn.click();
       }
     });
 
-    // Enter key triggers check
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (e.key === '/' && document.activeElement !== urlInput) {
+        e.preventDefault();
+        urlInput.focus();
+      }
+      if (e.key === 'Escape' && document.activeElement === urlInput) {
+        urlInput.value = '';
+        results.classList.remove('visible');
+        urlInput.blur();
+      }
+    });
+
     urlInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
         checkBtn.click();
@@ -695,25 +520,21 @@ function generateToolboxHTML(): string {
 
       // Show loading
       results.classList.add('visible');
-      results.innerHTML = '<div class="loading"><div class="spinner"></div>Checking...</div>';
+      results.innerHTML = '<div class="loading"><div class="spinner"></div>Checking endpoint...</div>';
       checkBtn.disabled = true;
 
       try {
-        // Check if same origin
         const urlObj = new URL(url);
         const isSameOrigin = urlObj.origin === window.location.origin;
 
         if (isSameOrigin) {
-          // Same origin: can read headers
           const res = await fetch(url, { method: 'GET' });
-          displayResult(url, res);
+          await displayResult(url, res);
         } else {
-          // Cross-origin: try with mode cors, handle errors gracefully
           try {
             const res = await fetch(url, { method: 'GET', mode: 'cors' });
-            displayResult(url, res);
+            await displayResult(url, res);
           } catch (corsError) {
-            // CORS blocked - can't read response
             displayCorsBlocked(url);
           }
         }
@@ -724,108 +545,250 @@ function generateToolboxHTML(): string {
       }
     });
 
-    function displayResult(url, res) {
+    async function displayResult(url, res) {
       const status = res.status;
       const x402Header = res.headers.get('X-402');
 
       let html = '<div class="results-header">';
 
-      if (status === 402 && x402Header) {
-        // Payment required
+      if (status === 402) {
+        // Payment required - the interesting case!
         html += '<span class="status-badge payment-required">402 Payment Required</span>';
         html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
         html += '</div>';
 
+        // Try to get payment details from response body or header
+        let paymentInfo = null;
         try {
-          const x402 = JSON.parse(x402Header);
-          html += renderPaymentDetails(x402);
+          if (x402Header) {
+            paymentInfo = JSON.parse(x402Header);
+          } else {
+            paymentInfo = await res.json();
+          }
         } catch (e) {
-          html += '<div class="human-friendly"><p>Could not parse X-402 header</p></div>';
+          // Couldn't parse payment info
         }
+
+        if (paymentInfo) {
+          html += renderPaymentDetails(url, paymentInfo);
+        } else {
+          html += '<div class="result-section">';
+          html += '<h3>Payment Required</h3>';
+          html += '<p>This endpoint requires payment but we couldn\\'t parse the requirements.</p>';
+          html += '<p>Check the response headers for X-402 or the response body for payment details.</p>';
+          html += '</div>';
+        }
+
       } else if (status >= 200 && status < 300) {
-        // Free / successful
-        html += '<span class="status-badge free">✓ Free / No Payment</span>';
+        // Success - free endpoint
+        html += '<span class="status-badge success">' + status + ' OK</span>';
         html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
         html += '</div>';
-        html += '<div class="human-friendly"><p class="free-message">This endpoint returned ' + status + ' without requiring payment.</p></div>';
+
+        html += '<div class="result-section">';
+        html += '<h3>Free Endpoint</h3>';
+        html += '<p>This endpoint returned <strong>' + status + '</strong> without requiring payment.</p>';
+        html += '<p>You can call it directly without the X402 payment flow.</p>';
+        html += '</div>';
+
+        // Show response preview
+        try {
+          const data = await res.clone().json();
+          html += '<div class="result-section">';
+          html += '<h3>Response Preview</h3>';
+          html += '<div class="code-block"><pre>' + escapeHtml(JSON.stringify(data, null, 2).slice(0, 500));
+          if (JSON.stringify(data).length > 500) html += '\\n...';
+          html += '</pre></div>';
+          html += '</div>';
+        } catch (e) {
+          // Not JSON, skip preview
+        }
+
+      } else if (status >= 300 && status < 400) {
+        // Redirect
+        html += '<span class="status-badge info">' + status + ' Redirect</span>';
+        html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
+        html += '</div>';
+
+        html += '<div class="result-section">';
+        html += '<h3>Redirect Response</h3>';
+        const location = res.headers.get('Location');
+        if (location) {
+          html += '<p>This URL redirects to: <code>' + escapeHtml(location) + '</code></p>';
+        } else {
+          html += '<p>This URL returns a ' + status + ' redirect response.</p>';
+        }
+        html += '</div>';
+
+      } else if (status === 401) {
+        // Unauthorized
+        html += '<span class="status-badge error">401 Unauthorized</span>';
+        html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
+        html += '</div>';
+
+        html += '<div class="result-section">';
+        html += '<h3>Authentication Required</h3>';
+        html += '<p>This endpoint requires authentication (API key, bearer token, etc.).</p>';
+        html += '<p>This is different from X402 payment - you need credentials to access this API.</p>';
+        html += '</div>';
+
+      } else if (status === 403) {
+        // Forbidden
+        html += '<span class="status-badge error">403 Forbidden</span>';
+        html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
+        html += '</div>';
+
+        html += '<div class="result-section">';
+        html += '<h3>Access Forbidden</h3>';
+        html += '<p>This endpoint denied access. You may not have permission to call it.</p>';
+        html += '</div>';
+
+      } else if (status === 404) {
+        // Not found
+        html += '<span class="status-badge error">404 Not Found</span>';
+        html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
+        html += '</div>';
+
+        html += '<div class="result-section">';
+        html += '<h3>Endpoint Not Found</h3>';
+        html += '<p>This URL doesn\\'t exist or the endpoint has been removed.</p>';
+        html += '<p>Double-check the URL or try the <a href="/guide">endpoint guide</a> for valid paths.</p>';
+        html += '</div>';
+
       } else {
-        // Other status
-        html += '<span class="status-badge error">' + status + '</span>';
+        // Other error
+        html += '<span class="status-badge error">' + status + ' Error</span>';
         html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
         html += '</div>';
-        html += '<div class="human-friendly"><p class="error-message">Received HTTP ' + status + ' response.</p></div>';
+
+        html += '<div class="result-section">';
+        html += '<h3>Error Response</h3>';
+        html += '<p>The server returned HTTP ' + status + '.</p>';
+        try {
+          const data = await res.clone().json();
+          if (data.error || data.message) {
+            html += '<p><strong>Message:</strong> ' + escapeHtml(data.error || data.message) + '</p>';
+          }
+        } catch (e) {}
+        html += '</div>';
       }
 
       results.innerHTML = html;
       setupCopyButtons();
     }
 
-    function renderPaymentDetails(x402) {
-      // Parse the X-402 format
-      // Format: { accepts: [{scheme, network, maxAmount, resource, payTo, ...}], ...}
-      let html = '<div class="human-friendly">';
+    function renderPaymentDetails(url, info) {
+      let html = '';
 
-      if (x402.accepts && x402.accepts.length > 0) {
-        const first = x402.accepts[0];
-        const amount = first.maxAmountRequired || first.maxAmount;
-        const amountNum = amount ? (parseInt(amount) / 1000000).toFixed(6) : '?';
+      // Parse payment info - handle both X-402 header format and response body format
+      let amount = null;
+      let payTo = null;
+      let network = null;
+      let facilitator = null;
+      let tokens = [];
 
-        // Determine token from asset or default to STX
-        let token = 'STX';
-        if (first.asset) {
-          if (first.asset.includes('sbtc')) token = 'sBTC';
-          else if (first.asset.includes('usdc')) token = 'USDCx';
-        }
+      if (info.accepts && Array.isArray(info.accepts)) {
+        // X-402 header format: { accepts: [{scheme, network, maxAmount, payTo, ...}] }
+        const first = info.accepts[0];
+        amount = first.maxAmountRequired || first.maxAmount;
+        payTo = first.payTo;
+        network = first.network;
 
-        html += '<h3>Payment Required</h3>';
-        html += '<p>This endpoint costs <span class="price-highlight">' + amountNum + ' ' + token + '</span> per request.</p>';
-
-        // Show all accepted tokens
-        const tokens = x402.accepts.map(a => {
+        // Extract all tokens
+        info.accepts.forEach(a => {
+          let tokenName = 'STX';
+          let tokenAmount = a.maxAmountRequired || a.maxAmount;
           if (a.asset) {
-            if (a.asset.includes('sbtc')) return 'sBTC';
-            if (a.asset.includes('usdc')) return 'USDCx';
-            return a.asset.split('::')[1] || a.asset;
+            if (a.asset.includes('sbtc')) tokenName = 'sBTC';
+            else if (a.asset.includes('usdc')) tokenName = 'USDCx';
           }
-          return 'STX';
+          tokens.push({ name: tokenName, amount: tokenAmount });
         });
-        const uniqueTokens = [...new Set(tokens)];
-
-        if (uniqueTokens.length > 0) {
-          html += '<div class="tokens-accepted">';
-          html += '<span style="color:#71717a;font-size:12px;">Accepts:</span>';
-          uniqueTokens.forEach(t => {
-            html += '<span class="token-chip">' + t + '</span>';
-          });
-          html += '</div>';
-        }
       } else {
-        html += '<p>Payment required but no payment options found in header.</p>';
+        // Response body format: { maxAmountRequired, payTo, network, ... }
+        amount = info.maxAmountRequired || info.maxAmount;
+        payTo = info.payTo;
+        network = info.network;
+        facilitator = info.facilitator;
+
+        const tokenName = info.tokenType || 'STX';
+        tokens.push({ name: tokenName, amount: amount });
       }
 
+      // Payment summary section
+      html += '<div class="result-section">';
+      html += '<h3>Payment Required</h3>';
+
+      if (tokens.length > 0) {
+        html += '<p>This endpoint accepts payment in the following tokens:</p>';
+        html += '<div class="tokens-grid">';
+        tokens.forEach(t => {
+          const amountNum = t.amount ? (parseInt(t.amount) / 1000000).toFixed(6) : '?';
+          const tokenClass = t.name.toLowerCase().replace('x', '');
+          html += '<div class="token-card ' + tokenClass + '">';
+          html += '<div class="token-name">' + t.name + '</div>';
+          html += '<div class="token-amount">' + amountNum + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
       html += '</div>';
 
-      // Dev details
-      html += '<details class="dev-details">';
-      html += '<summary>Developer Details</summary>';
-      html += '<div class="dev-details-content">';
-      html += '<pre id="x402-json">' + escapeHtml(JSON.stringify(x402, null, 2)) + '</pre>';
-      html += '<button class="copy-btn" data-copy="x402-json">Copy JSON</button>';
-      html += '</div></details>';
+      // Technical details
+      html += '<div class="result-section">';
+      html += '<h3>Payment Details</h3>';
+      html += '<div class="info-row"><span class="info-label">Pay To</span><span class="info-value">' + (payTo ? escapeHtml(payTo.slice(0,12) + '...' + payTo.slice(-8)) : 'Unknown') + '</span></div>';
+      html += '<div class="info-row"><span class="info-label">Network</span><span class="info-value">' + (network || 'mainnet') + '</span></div>';
+      html += '<div class="info-row"><span class="info-label">Facilitator</span><span class="info-value"><a href="https://facilitator.x402stacks.xyz" target="_blank">facilitator.x402stacks.xyz</a></span></div>';
+      html += '</div>';
+
+      // Code example
+      const urlObj = new URL(url);
+      const endpoint = urlObj.pathname;
+      const host = urlObj.origin;
+
+      html += '<div class="result-section">';
+      html += '<h3>Code Example</h3>';
+      html += '<p>Use the <a href="https://www.npmjs.com/package/x402-stacks" target="_blank" style="color:#f7931a;">x402-stacks</a> client to call this endpoint:</p>';
+      html += '<div class="code-block" id="code-example">';
+      html += '<span class="keyword">import</span> { X402PaymentClient } <span class="keyword">from</span> <span class="string">"x402-stacks"</span>;\\n\\n';
+      html += '<span class="keyword">const</span> client = <span class="keyword">new</span> X402PaymentClient({\\n';
+      html += '  <span class="property">network</span>: <span class="string">"' + (network || 'mainnet') + '"</span>,\\n';
+      html += '  <span class="property">privateKey</span>: process.env.STACKS_PRIVATE_KEY,\\n';
+      html += '});\\n\\n';
+      html += '<span class="keyword">const</span> result = <span class="keyword">await</span> client.call(<span class="string">"' + escapeHtml(url) + '"</span>, {\\n';
+      html += '  <span class="property">method</span>: <span class="string">"POST"</span>,\\n';
+      html += '  <span class="property">body</span>: { <span class="comment">/* your request data */</span> },\\n';
+      html += '});\\n\\n';
+      html += '<span class="keyword">console</span>.log(result);';
+      html += '</div>';
+      html += '<button class="copy-btn" data-copy="code-example">Copy Code</button>';
+      html += '</div>';
 
       return html;
     }
 
     function displayCorsBlocked(url) {
       let html = '<div class="results-header">';
-      html += '<span class="status-badge error">CORS Blocked</span>';
+      html += '<span class="status-badge info">CORS Blocked</span>';
       html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
       html += '</div>';
-      html += '<div class="human-friendly">';
-      html += '<p class="error-message">Cannot check this URL due to browser security restrictions (CORS).</p>';
-      html += '<p style="margin-top:8px;color:#71717a;font-size:13px;">Try checking URLs from stx402.com, or use <code style="background:#18181b;padding:2px 6px;border-radius:4px;">curl -I ' + escapeHtml(url) + '</code> from your terminal.</p>';
+
+      html += '<div class="result-section">';
+      html += '<h3>Cross-Origin Request Blocked</h3>';
+      html += '<p>Your browser blocked this request due to CORS (Cross-Origin Resource Sharing) security policy.</p>';
+      html += '<p>The endpoint exists but doesn\\'t allow browser requests from other origins.</p>';
       html += '</div>';
+
+      html += '<div class="result-section">';
+      html += '<h3>Try from Terminal</h3>';
+      html += '<p>You can check this URL using curl:</p>';
+      html += '<div class="code-block" id="curl-cmd">curl -I ' + escapeHtml(url) + '</div>';
+      html += '<button class="copy-btn" data-copy="curl-cmd">Copy Command</button>';
+      html += '</div>';
+
       results.innerHTML = html;
+      setupCopyButtons();
     }
 
     function displayError(url, message) {
@@ -833,9 +796,13 @@ function generateToolboxHTML(): string {
       html += '<span class="status-badge error">Error</span>';
       html += '<span class="checked-url">' + escapeHtml(url) + '</span>';
       html += '</div>';
-      html += '<div class="human-friendly">';
-      html += '<p class="error-message">' + escapeHtml(message) + '</p>';
+
+      html += '<div class="result-section">';
+      html += '<h3>Request Failed</h3>';
+      html += '<p>' + escapeHtml(message) + '</p>';
+      html += '<p>This could be a network error, invalid URL, or the server is unreachable.</p>';
       html += '</div>';
+
       results.innerHTML = html;
     }
 
@@ -845,11 +812,13 @@ function generateToolboxHTML(): string {
           const targetId = this.dataset.copy;
           const target = document.getElementById(targetId);
           if (target) {
-            await navigator.clipboard.writeText(target.textContent);
+            // Get text content, stripping HTML tags
+            const text = target.textContent || target.innerText;
+            await navigator.clipboard.writeText(text);
             this.textContent = 'Copied!';
             this.classList.add('copied');
             setTimeout(() => {
-              this.textContent = 'Copy JSON';
+              this.textContent = this.dataset.copy === 'code-example' ? 'Copy Code' : 'Copy Command';
               this.classList.remove('copied');
             }, 2000);
           }
@@ -861,220 +830,6 @@ function generateToolboxHTML(): string {
       const div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
-    }
-  </script>
-
-  <!-- Stacks Connect for wallet authentication -->
-  <script src="https://cdn.jsdelivr.net/npm/@stacks/connect@8/dist/index.global.js"></script>
-  <script>
-    // Call Endpoint tool elements
-    const walletStatus = document.getElementById('wallet-status');
-    const callForm = document.getElementById('call-form');
-    const notConnectedMsg = document.getElementById('not-connected-msg');
-    const callUrl = document.getElementById('call-url');
-    const callQuickSelect = document.getElementById('call-quick-select');
-    const callBody = document.getElementById('call-body');
-    const callBtn = document.getElementById('call-btn');
-    const callResponse = document.getElementById('call-response');
-    const callStatusBadge = document.getElementById('call-status-badge');
-    const callResponseUrl = document.getElementById('call-response-url');
-    const callResponseBody = document.getElementById('call-response-body');
-
-    let connectedAddress = null;
-
-    // Truncate address for display
-    function truncateAddress(address) {
-      if (!address || address.length < 12) return address;
-      return address.slice(0, 5) + '...' + address.slice(-5);
-    }
-
-    // Update wallet UI based on connection state
-    function updateWalletUI() {
-      const { isConnected, getLocalStorage } = StacksConnect;
-
-      if (isConnected()) {
-        const data = getLocalStorage();
-        connectedAddress = data?.addresses?.stx?.[0]?.address;
-
-        if (connectedAddress) {
-          walletStatus.classList.add('connected');
-          walletStatus.innerHTML = \`
-            <div class="status-dot"></div>
-            <div class="status-text">\${truncateAddress(connectedAddress)}</div>
-            <button class="disconnect-btn" id="disconnect-btn">Disconnect</button>
-          \`;
-
-          document.getElementById('disconnect-btn').addEventListener('click', handleDisconnect);
-
-          // Show call form, hide message
-          callForm.classList.add('visible');
-          notConnectedMsg.style.display = 'none';
-          return;
-        }
-      }
-
-      // Not connected
-      connectedAddress = null;
-      walletStatus.classList.remove('connected');
-      walletStatus.innerHTML = \`
-        <div class="status-dot"></div>
-        <div class="status-text">Not connected</div>
-        <button class="connect-btn" id="connect-btn">Connect Wallet</button>
-      \`;
-
-      document.getElementById('connect-btn').addEventListener('click', handleConnect);
-
-      // Hide call form, show message
-      callForm.classList.remove('visible');
-      notConnectedMsg.style.display = 'block';
-      callResponse.classList.remove('visible');
-    }
-
-    // Handle connect
-    async function handleConnect() {
-      const { connect } = StacksConnect;
-      const btn = document.getElementById('connect-btn');
-
-      btn.disabled = true;
-      btn.textContent = 'Connecting...';
-
-      try {
-        await connect();
-        updateWalletUI();
-      } catch (err) {
-        console.error('Wallet connect error:', err);
-        btn.disabled = false;
-        btn.textContent = 'Connect Wallet';
-      }
-    }
-
-    // Handle disconnect
-    function handleDisconnect() {
-      const { disconnect } = StacksConnect;
-      disconnect();
-      updateWalletUI();
-    }
-
-    // Quick select for call form
-    callQuickSelect.addEventListener('change', function() {
-      if (this.value) {
-        callUrl.value = window.location.origin + this.value;
-        this.value = '';
-      }
-    });
-
-    // Handle call endpoint
-    callBtn.addEventListener('click', async function() {
-      let url = callUrl.value.trim();
-      if (!url) {
-        callUrl.focus();
-        return;
-      }
-
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-        callUrl.value = url;
-      }
-
-      callBtn.disabled = true;
-      callBtn.textContent = 'Checking...';
-      callResponse.classList.remove('visible');
-
-      try {
-        // Determine method based on body
-        const bodyText = callBody.value.trim();
-        const hasBody = bodyText.length > 0;
-        const method = hasBody ? 'POST' : 'GET';
-
-        // First request - will return 402 with payment requirements
-        const options = {
-          method,
-          headers: { 'Content-Type': 'application/json' }
-        };
-        if (hasBody) {
-          options.body = bodyText;
-        }
-
-        const res = await fetch(url, options);
-        const status = res.status;
-
-        if (status === 402) {
-          // Got payment requirements - parse them
-          const paymentReq = await res.json();
-          const amount = paymentReq.maxAmountRequired;
-          const amountNum = amount ? (parseInt(amount) / 1000000).toFixed(6) : '?';
-          const payTo = paymentReq.payTo;
-          const tokenType = paymentReq.tokenType || 'STX';
-
-          callStatusBadge.className = 'status-badge payment-required';
-          callStatusBadge.textContent = '402 Payment Required';
-          callResponseUrl.textContent = url;
-
-          // Show payment info
-          callResponseBody.innerHTML = \`
-<div style="margin-bottom:16px;">
-  <strong>Cost:</strong> <span style="color:#f7931a;font-weight:600;">\${amountNum} \${tokenType}</span>
-</div>
-<div style="margin-bottom:16px;">
-  <strong>Recipient:</strong> <code style="background:#27272a;padding:2px 6px;border-radius:4px;font-size:12px;">\${payTo}</code>
-</div>
-<div style="margin-bottom:16px;">
-  <strong>Network:</strong> \${paymentReq.network}
-</div>
-<div style="padding:16px;background:#18181b;border-radius:8px;margin-top:16px;">
-  <p style="color:#a1a1aa;font-size:13px;margin-bottom:8px;">
-    To call this endpoint, use the <a href="https://www.npmjs.com/package/x402-stacks" target="_blank" style="color:#f7931a;">x402-stacks</a> client library
-    which handles payment signing and verification.
-  </p>
-  <p style="color:#71717a;font-size:12px;">
-    Browser wallet signing (without broadcast) is not yet supported by @stacks/connect.
-  </p>
-</div>
-\`;
-
-        } else {
-          // Got response (free endpoint or already paid)
-          callStatusBadge.className = status >= 200 && status < 300 ? 'status-badge free' : 'status-badge error';
-          callStatusBadge.textContent = status;
-          callResponseUrl.textContent = url;
-
-          try {
-            const data = await res.json();
-            callResponseBody.textContent = JSON.stringify(data, null, 2);
-          } catch (e) {
-            const text = await res.text();
-            callResponseBody.textContent = text || '(empty response)';
-          }
-        }
-
-        callResponse.classList.add('visible');
-      } catch (err) {
-        callStatusBadge.className = 'status-badge error';
-        callStatusBadge.textContent = 'Error';
-        callResponseUrl.textContent = url;
-        callResponseBody.textContent = err.message;
-        callResponse.classList.add('visible');
-      } finally {
-        callBtn.disabled = false;
-        callBtn.textContent = 'Call Endpoint';
-      }
-    });
-
-    // Initialize wallet UI after page loads
-    function initWallet() {
-      if (typeof StacksConnect !== 'undefined') {
-        updateWalletUI();
-      } else {
-        // Retry after a short delay if StacksConnect isn't ready
-        setTimeout(initWallet, 100);
-      }
-    }
-
-    // Start initialization when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initWallet);
-    } else {
-      initWallet();
     }
   </script>
 </body>

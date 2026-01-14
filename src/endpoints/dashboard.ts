@@ -5,9 +5,9 @@ import { getDashboardMetrics, type EndpointMetrics } from "../middleware/metrics
 import { listAllEntries, type RegistryEntryMinimal } from "../utils/registry";
 import { getNavCSS, getNavHTML } from "../components/nav";
 
-// Extract category from path (e.g., /api/stacks/... → Stacks)
+// Extract category from path (e.g., /registry/probe → Registry)
 function getCategoryFromPath(path: string): string {
-  const match = path.match(/^\/api\/([^/]+)/);
+  const match = path.match(/^\/([^/]+)/);
   if (!match) return "Other";
   const cat = match[1];
   // Capitalize first letter
@@ -693,21 +693,25 @@ function generateDashboardHTML(data: {
     <div id="x402-registry" class="chart-container" style="margin-top: 32px; text-align: center; padding: 40px;">
       <h2 class="section-title">X402 Endpoint Registry</h2>
       <p style="color: #71717a; margin-bottom: 16px;">No endpoints registered yet.</p>
-      <p style="color: #a1a1aa; font-size: 13px;">Register your x402 endpoint via <code>/api/registry/register</code></p>
+      <p style="color: #a1a1aa; font-size: 13px;">Register your X402 endpoint via <code>POST /registry/register</code></p>
     </div>
     `}
 
     <div id="agent-registry" class="chart-container" style="margin-top: 32px; text-align: center; padding: 40px;">
       <h2 class="section-title">Agent Registry (ERC-8004)</h2>
-      <p style="color: #71717a; margin-bottom: 16px;">AI agent identity and reputation registry.</p>
-      <p style="color: #a1a1aa; font-size: 13px;">Register agents via <code>/api/agent/register</code> | View agents via <code>/api/agent/list</code></p>
+      <p style="color: #71717a; margin-bottom: 16px;">Query AI agent identity, reputation, and validation on Stacks.</p>
+      <p style="color: #a1a1aa; font-size: 13px;">
+        <code>GET /agent/registry</code> (free) |
+        <code>POST /agent/info</code> |
+        <code>POST /agent/lookup</code>
+      </p>
     </div>
 
     <div class="footer">
       <p>
         <a href="/about">About X402</a> |
         <a href="/guide">Endpoint Guide</a> |
-        <a href="/" target="_blank">API Docs</a> |
+        <a href="/docs">API Docs</a> |
         Built on <a href="https://stacks.co" target="_blank">Stacks</a>
       </p>
     </div>

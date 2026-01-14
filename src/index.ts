@@ -98,7 +98,7 @@ app.get("/", (c) => {
       tokenTypeHeader: "X-PAYMENT-TOKEN-TYPE",
     },
     related: {
-      workhorse: "https://x402.aibtc.com",
+      utilities: "https://x402.aibtc.com",
       documentation: "https://stx402.com/docs",
     },
   });
@@ -136,9 +136,7 @@ For general utilities, storage, and inference: https://x402.aibtc.com
       { name: "Info", description: "Service information and documentation" },
       { name: "Registry", description: "X402 endpoint directory" },
       { name: "Links", description: "URL shortener with analytics" },
-      { name: "Agent - Identity", description: "ERC-8004 agent identity registry" },
-      { name: "Agent - Reputation", description: "ERC-8004 agent reputation system" },
-      { name: "Agent - Validation", description: "ERC-8004 agent validation tracking" },
+      { name: "Agent Registry", description: "ERC-8004 agent identity, reputation, and validation on Stacks" },
     ],
     servers: [
       { url: "https://stx402.com", description: "Production (mainnet)" },
