@@ -511,8 +511,8 @@ function generateDashboardHTML(data: {
     /* Hide less important columns on mobile */
     @media (max-width: 768px) {
       th:nth-child(6), td:nth-child(6),
-      th:nth-child(8), td:nth-child(8),
-      th:nth-child(9), td:nth-child(9) { display: none; }
+      th:nth-child(7), td:nth-child(7),
+      th:nth-child(8), td:nth-child(8) { display: none; }
     }
   </style>
 </head>
@@ -559,10 +559,6 @@ function generateDashboardHTML(data: {
         <h3>USDCx Earned</h3>
         <div class="value usdcx">${totals.usdcx.toFixed(2)}</div>
       </div>
-      <div class="card">
-        <h3>Avg Success Rate</h3>
-        <div class="value success">${totals.avgSuccessRate}%</div>
-      </div>
     </div>
 
     <div id="daily" class="chart-container" style="margin-bottom: 32px;">
@@ -590,7 +586,6 @@ function generateDashboardHTML(data: {
               <th data-sort="path">Endpoint <span class="sort-icon">↕</span></th>
               <th data-sort="category">Category <span class="sort-icon">↕</span></th>
               <th data-sort="calls" class="sorted">Calls <span class="sort-icon">↓</span></th>
-              <th data-sort="success">Success <span class="sort-icon">↕</span></th>
               <th data-sort="latency">Latency <span class="sort-icon">↕</span></th>
               <th data-sort="stx">STX <span class="sort-icon">↕</span></th>
               <th data-sort="sbtc">sBTC <span class="sort-icon">↕</span></th>
@@ -601,14 +596,6 @@ function generateDashboardHTML(data: {
           <tbody>
             ${sortedMetrics.map((m) => {
               const category = getCategoryFromPath(m.path);
-              const successClass =
-                m.successRate === "N/A"
-                  ? ""
-                  : parseFloat(m.successRate) >= 95
-                  ? "success-high"
-                  : parseFloat(m.successRate) >= 80
-                  ? "success-med"
-                  : "success-low";
               const createdTs = m.created === "Never" ? 0 : new Date(m.created).getTime();
               const createdDisplay =
                 m.created === "Never"
@@ -619,13 +606,11 @@ function generateDashboardHTML(data: {
                 m.lastCall === "Never"
                   ? "-"
                   : new Date(m.lastCall).toLocaleString();
-              const successNum = m.successRate === "N/A" ? -1 : parseFloat(m.successRate);
               return `
-                <tr data-path="${m.path}" data-category="${category}" data-calls="${m.totalCalls}" data-success="${successNum}" data-latency="${m.avgLatencyMs}" data-stx="${m.earnings.STX}" data-sbtc="${m.earnings.sBTC}" data-created="${createdTs}" data-lastcall="${lastCallTs}">
+                <tr data-path="${m.path}" data-category="${category}" data-calls="${m.totalCalls}" data-latency="${m.avgLatencyMs}" data-stx="${m.earnings.STX}" data-sbtc="${m.earnings.sBTC}" data-created="${createdTs}" data-lastcall="${lastCallTs}">
                   <td><code>${m.path}</code></td>
                   <td class="cat-${category.toLowerCase()}">${category}</td>
                   <td>${m.totalCalls.toLocaleString()}</td>
-                  <td class="${successClass}">${m.successRate}%</td>
                   <td>${m.avgLatencyMs}ms</td>
                   <td>${m.earnings.STX}</td>
                   <td>${m.earnings.sBTC}</td>
@@ -789,7 +774,7 @@ function generateDashboardHTML(data: {
       // Setup endpoint metrics table sorting
       setupTableSorting(
         'table:not(#registry-table)',
-        ['calls', 'success', 'latency', 'stx', 'sbtc', 'lastcall'],
+        ['calls', 'latency', 'stx', 'sbtc', 'lastcall'],
         { key: 'calls', dir: 'desc' }
       );
 
