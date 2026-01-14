@@ -7,7 +7,6 @@
 import { fromHono } from "chanfana";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { getScalarHTML } from "./endpoints/scalarDocs";
 import { getFaviconSVG } from "./endpoints/favicon";
 
 // Health/Info endpoints
@@ -105,16 +104,13 @@ app.get("/", (c) => {
   });
 });
 
-// Serve themed Scalar API docs at /docs (matches aibtc convention)
-app.get("/docs", (c) => c.html(getScalarHTML("/openapi.json")));
-
 // Serve favicon
 app.get("/favicon.svg", () => getFaviconSVG());
 app.get("/favicon.ico", () => getFaviconSVG()); // Browsers also request .ico
 
-// Setup OpenAPI registry
+// Setup OpenAPI registry with Swagger UI
 const openapi = fromHono(app, {
-  docs_url: null,
+  docs_url: "/docs",
   openapi_url: "/openapi.json",
   schema: {
     info: {
