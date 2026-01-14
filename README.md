@@ -1,8 +1,16 @@
-# STX402
+# STX402 Directory
 
-API marketplace with **92 paid endpoints** via [X402 micropayments](https://x402.org). Pay-per-use with STX, sBTC, or USDCx.
+The meta layer for the X402 ecosystem - endpoint discovery and ERC-8004 agent identity on Stacks.
 
-**[API Docs](https://stx402.com)** · **[Guide](https://stx402.com/guide)** · **[About](https://stx402.com/about)** · **[Dashboard](https://stx402.com/dashboard)**
+**[API Docs](https://stx402.com/docs)** · **[Guide](https://stx402.com/guide)** · **[About](https://stx402.com/about)** · **[Dashboard](https://stx402.com/dashboard)**
+
+## What is STX402?
+
+- **Registry**: Discover and register X402-compatible endpoints
+- **Agent**: ERC-8004 agent identity, reputation, and validation
+- **Links**: URL shortener with click tracking
+
+For general utilities, storage, and inference: [x402.aibtc.com](https://x402.aibtc.com)
 
 ## Development
 

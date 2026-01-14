@@ -74,7 +74,7 @@ From `tests/endpoint-registry.ts:ENDPOINT_COUNTS` (31 total):
 
 Routes follow aibtc convention (no `/api/` prefix):
 - `GET /` - JSON service info
-- `GET /docs` - Scalar API documentation
+- `GET /docs` - Swagger UI API documentation
 - `GET /health` - Health check
 - `POST /registry/register` - Register an endpoint
 - `GET /agent/registry` - ERC-8004 contract info
