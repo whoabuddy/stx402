@@ -70,7 +70,7 @@ export class LinksList extends BaseEndpoint {
       const baseUrl = new URL(c.req.url).origin;
       const linksWithShortUrl = links.map((link) => ({
         ...link,
-        shortUrl: `${baseUrl}/api/links/expand/${link.slug}`,
+        shortUrl: `${baseUrl}/links/expand/${link.slug}`,
       }));
 
       return c.json({

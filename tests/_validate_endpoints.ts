@@ -23,7 +23,7 @@ import { ENDPOINT_COUNTS, ENDPOINT_REGISTRY } from "./endpoint-registry";
 // Free OpenAPI endpoints not in the test registry (no payment required)
 // Note: favicon routes use app.get() not openapi.get() so they're not counted here
 const FREE_ENDPOINTS = [
-  "/api/health",
+  "/health",
   "/dashboard",
   "/guide",
   "/toolbox",

@@ -202,7 +202,7 @@ async function listMyEndpoints(
 
   // Payment-based auth: just pay from the owner address, no signature needed
   const { status, data } = await makeX402Request(
-    "/api/registry/my-endpoints",
+    "/registry/my-endpoints",
     "POST",
     x402Client,
     { owner: ownerAddress }
@@ -270,7 +270,7 @@ async function deleteEndpoint(
   // Step 1: Request delete without signature to get challenge
   log("Requesting delete challenge...");
   const { status: challengeStatus, data: challengeData } = await makeX402Request(
-    "/api/registry/delete",
+    "/registry/delete",
     "POST",
     x402Client,
     { url, owner: ownerAddress }
@@ -328,7 +328,7 @@ async function deleteEndpoint(
   // Step 3: Submit delete with signature
   log("Submitting signed delete request...");
   const { status: deleteStatus, data: deleteData } = await makeX402Request(
-    "/api/registry/delete",
+    "/registry/delete",
     "POST",
     x402Client,
     {

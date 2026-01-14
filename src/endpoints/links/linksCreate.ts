@@ -154,7 +154,7 @@ export class LinksCreate extends BaseEndpoint {
 
       // Build short URL
       const baseUrl = new URL(c.req.url).origin;
-      const shortUrl = `${baseUrl}/api/links/expand/${result.slug}`;
+      const shortUrl = `${baseUrl}/links/expand/${result.slug}`;
 
       return c.json({
         ...result,

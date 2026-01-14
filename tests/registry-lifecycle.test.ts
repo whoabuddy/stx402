@@ -214,7 +214,7 @@ async function testProbe(ctx: TestContext): Promise<boolean> {
 
   try {
     const { status, data } = await makeX402Request(
-      "/api/registry/probe",
+      "/registry/probe",
       "POST",
       ctx.x402Client,
       { url: "https://stx402.com/api/ai/dad-joke" }
@@ -246,7 +246,7 @@ async function testRegister(ctx: TestContext): Promise<boolean> {
 
   try {
     const { status, data } = await makeX402Request(
-      "/api/registry/register",
+      "/registry/register",
       "POST",
       ctx.x402Client,
       {
@@ -284,7 +284,7 @@ async function testList(ctx: TestContext): Promise<boolean> {
 
   try {
     // List is a free endpoint - no payment required
-    const res = await fetch(`${X402_WORKER_URL}/api/registry/list`);
+    const res = await fetch(`${X402_WORKER_URL}/registry/list`);
     const data = await res.json();
 
     if (res.status !== 200) {
@@ -317,7 +317,7 @@ async function testDetails(ctx: TestContext): Promise<boolean> {
 
   try {
     const { status, data } = await makeX402Request(
-      "/api/registry/details",
+      "/registry/details",
       "POST",
       ctx.x402Client,
       { url: TEST_ENDPOINT_URL }
@@ -359,7 +359,7 @@ async function testUpdate(ctx: TestContext): Promise<boolean> {
     const newDescription = "Updated description for lifecycle test";
 
     const { status, data } = await makeX402Request(
-      "/api/registry/update",
+      "/registry/update",
       "POST",
       ctx.x402Client,
       {
@@ -401,7 +401,7 @@ async function testMyEndpoints(ctx: TestContext): Promise<boolean> {
     const signature = await signMessage(message, domain, ctx.privateKey);
 
     const { status, data } = await makeX402Request(
-      "/api/registry/my-endpoints",
+      "/registry/my-endpoints",
       "POST",
       ctx.x402Client,
       {
@@ -477,7 +477,7 @@ async function testTransfer(ctx: TestContext): Promise<boolean> {
     // Step 1: Request transfer without signature to get challenge
     log(`Transferring from ${ctx.ownerAddress} to ${ctx.account2Address}...`);
     const { status: challengeStatus, data: challengeData } = await makeX402Request(
-      "/api/registry/transfer",
+      "/registry/transfer",
       "POST",
       ctx.x402Client,
       {
@@ -525,7 +525,7 @@ async function testTransfer(ctx: TestContext): Promise<boolean> {
     log("Transfer body:", JSON.stringify(transferBody).substring(0, 200) + "...");
 
     const { status: transferStatus, data: transferData } = await makeX402Request(
-      "/api/registry/transfer",
+      "/registry/transfer",
       "POST",
       ctx.x402Client,
       transferBody
@@ -574,7 +574,7 @@ async function testDelete(ctx: TestContext): Promise<boolean> {
 
     // Step 1: Request delete without signature to get challenge
     const { status: challengeStatus, data: challengeData } = await makeX402Request(
-      "/api/registry/delete",
+      "/registry/delete",
       "POST",
       ctx.account2Client, // Use account2's client for payment
       {
@@ -611,7 +611,7 @@ async function testDelete(ctx: TestContext): Promise<boolean> {
 
     // Step 3: Submit delete with signature
     const { status: deleteStatus, data: deleteData } = await makeX402Request(
-      "/api/registry/delete",
+      "/registry/delete",
       "POST",
       ctx.account2Client,
       {
@@ -651,7 +651,7 @@ async function cleanup(ctx: TestContext): Promise<void> {
 
     // Actually, let's just try the delete flow again
     // First check if the endpoint exists
-    const res = await fetch(`${X402_WORKER_URL}/api/registry/list`);
+    const res = await fetch(`${X402_WORKER_URL}/registry/list`);
     const data = await res.json() as { entries: Array<{ url: string }> };
 
     const exists = data.entries?.some((e) => e.url === TEST_ENDPOINT_URL);

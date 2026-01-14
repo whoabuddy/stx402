@@ -121,7 +121,7 @@ interface PendingEntry {
 async function listPending(adminAddress: string): Promise<boolean> {
   console.log(`\n${COLORS.bright}Listing Pending Endpoints${COLORS.reset}\n`);
 
-  const { status, data } = await makeRequest("/api/admin/registry/pending", {
+  const { status, data } = await makeRequest("/admin/registry/pending", {
     adminAddress,
   });
 
@@ -174,7 +174,7 @@ async function verifyOrReject(
   console.log(`  URL: ${url}`);
   console.log(`  Action: ${action}\n`);
 
-  const { status, data } = await makeRequest("/api/admin/registry/verify", {
+  const { status, data } = await makeRequest("/admin/registry/verify", {
     url,
     action,
     adminAddress,

@@ -83,10 +83,10 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
   let successCount = 0;
   const totalTests = 8;
 
-  // Test 1: Free endpoint - /api/agent/registry
-  logger.info("1. Testing /api/agent/registry (free)...");
+  // Test 1: Free endpoint - /agent/registry
+  logger.info("1. Testing /agent/registry (free)...");
   try {
-    const res = await fetch(`${X402_WORKER_URL}/api/agent/registry`);
+    const res = await fetch(`${X402_WORKER_URL}/agent/registry`);
     const data = await res.json();
 
     if (res.status === 200 && data.networks?.testnet?.identity) {
@@ -102,10 +102,10 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   // Test 2: Agent info for agent ID 0 (first registered agent)
-  logger.info("2. Testing /api/agent/info...");
+  logger.info("2. Testing /agent/info...");
   const infoResult = await makeX402Request(
     x402Client,
-    "/api/agent/info",
+    "/agent/info",
     "POST",
     { agentId: 0 },
     tokenType,
@@ -125,10 +125,10 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   // Test 3: Agent owner lookup
-  logger.info("3. Testing /api/agent/owner...");
+  logger.info("3. Testing /agent/owner...");
   const ownerResult = await makeX402Request(
     x402Client,
-    "/api/agent/owner?agentId=0",
+    "/agent/owner?agentId=0",
     "GET",
     null,
     tokenType,
@@ -148,10 +148,10 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   // Test 4: Agent version
-  logger.info("4. Testing /api/agent/version...");
+  logger.info("4. Testing /agent/version...");
   const versionResult = await makeX402Request(
     x402Client,
-    "/api/agent/version",
+    "/agent/version",
     "GET",
     null,
     tokenType,
@@ -168,10 +168,10 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   // Test 5: Reputation summary for agent 0
-  logger.info("5. Testing /api/agent/reputation/summary...");
+  logger.info("5. Testing /agent/reputation/summary...");
   const repSummaryResult = await makeX402Request(
     x402Client,
-    "/api/agent/reputation/summary",
+    "/agent/reputation/summary",
     "POST",
     { agentId: 0 },
     tokenType,
@@ -191,10 +191,10 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   // Test 6: Reputation clients for agent 0
-  logger.info("6. Testing /api/agent/reputation/clients...");
+  logger.info("6. Testing /agent/reputation/clients...");
   const repClientsResult = await makeX402Request(
     x402Client,
-    "/api/agent/reputation/clients",
+    "/agent/reputation/clients",
     "POST",
     { agentId: 0 },
     tokenType,
@@ -214,10 +214,10 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   // Test 7: Validation summary for agent 0
-  logger.info("7. Testing /api/agent/validation/summary...");
+  logger.info("7. Testing /agent/validation/summary...");
   const valSummaryResult = await makeX402Request(
     x402Client,
-    "/api/agent/validation/summary",
+    "/agent/validation/summary",
     "POST",
     { agentId: 0 },
     tokenType,
@@ -237,11 +237,11 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   // Test 8: Agent lookup by owner
-  logger.info("8. Testing /api/agent/lookup...");
+  logger.info("8. Testing /agent/lookup...");
   const testDeployer = "ST3YT0XW92E6T2FE59B2G5N2WNNFSBZ6MZKQS5D18";
   const lookupResult = await makeX402Request(
     x402Client,
-    "/api/agent/lookup",
+    "/agent/lookup",
     "POST",
     { owner: testDeployer, maxScan: 10 },
     tokenType,

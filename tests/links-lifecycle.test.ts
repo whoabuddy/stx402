@@ -184,7 +184,7 @@ async function testLinksCreate(ctx: TestContext): Promise<boolean> {
 
   try {
     const { status, data } = await makeX402Request(
-      "/api/links/create",
+      "/links/create",
       "POST",
       ctx.x402Client,
       { url: "https://example.com/test-page", title: "Test Link" }
@@ -225,7 +225,7 @@ async function testLinksList(ctx: TestContext): Promise<boolean> {
 
   try {
     const { status, data } = await makeX402Request(
-      "/api/links/list",
+      "/links/list",
       "GET",
       ctx.x402Client
     );
@@ -297,7 +297,7 @@ async function testLinksStats(ctx: TestContext): Promise<boolean> {
 
   try {
     const { status, data } = await makeX402Request(
-      "/api/links/stats",
+      "/links/stats",
       "POST",
       ctx.x402Client,
       { slug: ctx.createdSlug }
@@ -331,7 +331,7 @@ async function testLinksCreateCustomSlug(ctx: TestContext): Promise<boolean> {
 
   try {
     const { status, data } = await makeX402Request(
-      "/api/links/create",
+      "/links/create",
       "POST",
       ctx.x402Client,
       { url: "https://github.com/stx402", slug: TEST_SLUG_CUSTOM, title: "Custom Slug Test" }
@@ -362,7 +362,7 @@ async function testLinksDelete(ctx: TestContext): Promise<boolean> {
   try {
     // Delete both links we created
     const { status: status1, data: data1 } = await makeX402Request(
-      "/api/links/delete",
+      "/links/delete",
       "POST",
       ctx.x402Client,
       { slug: ctx.createdSlug }
@@ -374,7 +374,7 @@ async function testLinksDelete(ctx: TestContext): Promise<boolean> {
     }
 
     const { status: status2, data: data2 } = await makeX402Request(
-      "/api/links/delete",
+      "/links/delete",
       "POST",
       ctx.x402Client,
       { slug: TEST_SLUG_CUSTOM }
@@ -398,7 +398,7 @@ async function testLinksListAfterDelete(ctx: TestContext): Promise<boolean> {
 
   try {
     const { status, data } = await makeX402Request(
-      "/api/links/list",
+      "/links/list",
       "GET",
       ctx.x402Client
     );
@@ -485,7 +485,9 @@ export async function runLinksLifecycle(verbose = false): Promise<LifecycleTestR
     return { passed: 0, total: totalTests, success: false };
   }
   passed++;
-  await sleep(300);
+  // Wait longer after create for KV eventual consistency
+  // CF KV writes can take up to a few seconds to propagate
+  await sleep(2000);
 
   // Run remaining tests
   const remainingTests = [
