@@ -253,47 +253,42 @@ function generateAboutHTML(): string {
       secured by Bitcoin.
     </p>
 
-    <h2>Why Register Your Endpoint?</h2>
+    <h2>The X402 Directory</h2>
     <p>
-      STX402 isn't just an API. It's a <span class="highlight">marketplace of useful endpoints</span>
-      where the best ones surface based on usage and earnings.
+      STX402 is the <span class="highlight">directory layer</span> for the X402 ecosystem.
+      It helps you discover endpoints and interact with agent identities on Stacks.
     </p>
 
     <div class="benefits-grid">
       <div class="benefit">
-        <div class="benefit-icon">&#128269;</div>
-        <h4>Discoverability</h4>
-        <p>Your endpoint appears in the registry. Users can find it before committing to payment.</p>
+        <div class="benefit-icon">&#128218;</div>
+        <h4>Endpoint Registry</h4>
+        <p>Register and discover X402-compatible endpoints across the ecosystem.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">&#129302;</div>
+        <h4>Agent Identity</h4>
+        <p>ERC-8004 agent registry interface - query agent metadata, URIs, and versions.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">&#11088;</div>
+        <h4>Agent Reputation</h4>
+        <p>Track agent reputation scores and feedback on Stacks.</p>
       </div>
       <div class="benefit">
         <div class="benefit-icon">&#9989;</div>
-        <h4>Trust Signals</h4>
-        <p>Verified status, usage metrics, and success rates build credibility.</p>
-      </div>
-      <div class="benefit">
-        <div class="benefit-icon">&#128200;</div>
-        <h4>Marketplace Dynamics</h4>
-        <p>Most-used endpoints surface to the top. Quality wins.</p>
-      </div>
-      <div class="benefit">
-        <div class="benefit-icon">&#128176;</div>
-        <h4>Multi-Token Support</h4>
-        <p>Accept STX, sBTC, or USDCx. Let users pay how they want.</p>
+        <h4>Agent Validation</h4>
+        <p>Check validation status and requests for registered agents.</p>
       </div>
       <div class="benefit">
         <div class="benefit-icon">&#128279;</div>
-        <h4>Composability</h4>
-        <p>Your output feeds someone else's input. Build on each other.</p>
+        <h4>URL Shortener</h4>
+        <p>Create short links with click tracking - useful for agents and services.</p>
       </div>
       <div class="benefit">
         <div class="benefit-icon">&#128274;</div>
         <h4>Ownership</h4>
         <p>Transfer endpoint ownership via SIP-018 signatures. Your endpoint, your rules.</p>
-      </div>
-      <div class="benefit">
-        <div class="benefit-icon">&#128100;</div>
-        <h4>Payment = Identity</h4>
-        <p>Your payment address provides automatic tenant isolation. Storage endpoints are private to you — no accounts needed.</p>
       </div>
     </div>
 
@@ -301,21 +296,29 @@ function generateAboutHTML(): string {
     <p>To register your X402-enabled endpoint:</p>
     <ul>
       <li>Implement the X402 protocol on your endpoint (return 402 with payment requirements)</li>
-      <li>Call <code>POST /api/registry/register</code> with your endpoint URL</li>
+      <li>Call <code>POST /registry/register</code> with your endpoint URL</li>
       <li>We'll probe your endpoint to verify it's real X402</li>
       <li>Your endpoint appears in the registry (pending verification)</li>
-      <li>Once verified, it shows as trusted in the marketplace</li>
+      <li>Once verified, it shows as trusted in the directory</li>
     </ul>
 
     <p>
-      <a href="/" class="cta">View API Docs</a>
+      <a href="/docs" class="cta">View API Docs</a>
       <a href="/dashboard" class="cta secondary">See the Dashboard</a>
-      <a href="/guide" class="cta secondary">Endpoint Guide</a>
+      <a href="/guide" class="cta secondary">Directory Guide</a>
+    </p>
+
+    <h2>Looking for Utilities?</h2>
+    <p>
+      General-purpose endpoints (hashing, storage, AI, Stacks utilities) are now on
+      <a href="https://x402.aibtc.com" target="_blank" style="color: #f7931a;">x402.aibtc.com</a>.
+      STX402 focuses on directory and identity services.
     </p>
 
     <h2>Learn More</h2>
     <ul>
       <li><a href="https://x402.org" target="_blank" style="color: #f7931a;">X402 Protocol Specification</a></li>
+      <li><a href="https://x402.aibtc.com" target="_blank" style="color: #f7931a;">X402 AIBTC API (utilities)</a></li>
       <li><a href="https://stacks.co" target="_blank" style="color: #f7931a;">Stacks Blockchain</a></li>
       <li><a href="https://github.com/coinbase/x402" target="_blank" style="color: #f7931a;">X402 Reference Implementation</a></li>
     </ul>
@@ -323,8 +326,8 @@ function generateAboutHTML(): string {
     <div class="footer">
       <p>
         <a href="/dashboard">Dashboard</a> |
-        <a href="/guide">Endpoint Guide</a> |
-        <a href="/">API Docs</a> |
+        <a href="/guide">Directory Guide</a> |
+        <a href="/docs">API Docs</a> |
         Built on <a href="https://stacks.co" target="_blank">Stacks</a>
       </p>
     </div>
