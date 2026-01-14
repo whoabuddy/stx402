@@ -261,7 +261,7 @@ async function testLinksExpand(ctx: TestContext): Promise<boolean> {
   try {
     // Expand is free - no payment required
     const { status, data, headers } = await makeFreeRequest(
-      `/api/links/expand/${ctx.createdSlug}`,
+      `/links/expand/${ctx.createdSlug}`,
       "GET"
     );
 
@@ -486,8 +486,8 @@ export async function runLinksLifecycle(verbose = false): Promise<LifecycleTestR
   }
   passed++;
   // Wait longer after create for KV eventual consistency
-  // CF KV writes can take up to a few seconds to propagate
-  await sleep(2000);
+  // CF KV writes can take up to 60s to propagate globally
+  await sleep(5000);
 
   // Run remaining tests
   const remainingTests = [
