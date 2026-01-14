@@ -9,40 +9,41 @@ export function getNavCSS(): string {
     .stx402-nav {
       position: sticky;
       top: 0;
-      height: 48px;
+      height: 64px;
       background: #09090b;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 24px;
       z-index: 1000;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .stx402-nav-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       text-decoration: none;
       color: #fafafa;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 18px;
     }
     .stx402-nav-brand svg {
-      width: 28px;
-      height: 28px;
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
     }
     .stx402-nav-links {
       display: flex;
-      gap: 8px;
+      gap: 10px;
     }
     .stx402-nav-link {
       color: #a1a1aa;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 500;
-      padding: 6px 12px;
-      border-radius: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
       transition: all 0.15s ease;
     }
     .stx402-nav-link:hover {
@@ -57,25 +58,30 @@ export function getNavCSS(): string {
     /* Mobile responsive styles */
     @media (max-width: 640px) {
       .stx402-nav {
+        height: 56px;
         padding: 0 12px;
       }
       .stx402-nav-brand span {
         display: none;
       }
+      .stx402-nav-brand svg {
+        width: 40px;
+        height: 40px;
+      }
       .stx402-nav-links {
-        gap: 2px;
+        gap: 4px;
         flex-shrink: 0;
       }
       .stx402-nav-link {
-        font-size: 12px;
-        padding: 6px 8px;
+        font-size: 13px;
+        padding: 6px 10px;
         white-space: nowrap;
       }
     }
     @media (max-width: 400px) {
       .stx402-nav-link {
-        font-size: 11px;
-        padding: 5px 6px;
+        font-size: 12px;
+        padding: 5px 8px;
       }
     }
   `;
