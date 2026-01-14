@@ -12,8 +12,9 @@
  *   bun run tests/_run_all_tests.ts --mode=full        # Full mode with lifecycle tests
  *   bun run tests/_run_all_tests.ts --all-tokens       # All endpoints, all tokens
  *   bun run tests/_run_all_tests.ts --token=sBTC       # All endpoints, specific token
- *   bun run tests/_run_all_tests.ts --category=stacks  # Single stateless category
+ *   bun run tests/_run_all_tests.ts --category=agent   # Single stateless category
  *   bun run tests/_run_all_tests.ts --category=links   # Runs links lifecycle test
+ *   bun run tests/_run_all_tests.ts --category=info    # Runs info endpoint tests (free)
  *   bun run tests/_run_all_tests.ts --filter=sha256    # Filter by name
  *   bun run tests/_run_all_tests.ts --delay=1000       # 1s delay between tests
  *   bun run tests/_run_all_tests.ts --retries=3        # 3 retries for rate limits
@@ -49,12 +50,14 @@ import {
 import { runRegistryLifecycle } from "./registry-lifecycle.test";
 import { runLinksLifecycle } from "./links-lifecycle.test";
 import { runAgentLifecycle } from "./agent-registry.test";
+import { runInfoEndpointTests } from "./info-endpoints.test";
 
 // =============================================================================
 // Lifecycle Test Mapping
 // =============================================================================
 
 const LIFECYCLE_RUNNERS: Record<string, (verbose?: boolean) => Promise<{ passed: number; total: number; success: boolean }>> = {
+  info: runInfoEndpointTests,
   registry: runRegistryLifecycle,
   links: runLinksLifecycle,
   agent: runAgentLifecycle,
@@ -538,12 +541,15 @@ async function runTests(runConfig: RunConfig): Promise<RunStats> {
 
   if (runConfig.category) {
     // Specific category requested
-    if (isStatefulCategory(runConfig.category)) {
-      // Run lifecycle test for this stateful category
+    if (LIFECYCLE_RUNNERS[runConfig.category]) {
+      // Run lifecycle test for this category (info, registry, links, agent)
       lifecycleCategories = [runConfig.category];
-    } else {
+    } else if (ENDPOINT_CATEGORIES[runConfig.category]) {
       // Run individual tests for this stateless category
-      endpointsToTest = ENDPOINT_CATEGORIES[runConfig.category] || [];
+      endpointsToTest = ENDPOINT_CATEGORIES[runConfig.category];
+    } else {
+      console.log(`${COLORS.yellow}Unknown category: ${runConfig.category}${COLORS.reset}`);
+      console.log(`Available: ${Object.keys(LIFECYCLE_RUNNERS).join(", ")}, ${Object.keys(ENDPOINT_CATEGORIES).join(", ")}`);
     }
   } else if (runConfig.mode === "quick") {
     // Quick mode: stateless endpoints only
