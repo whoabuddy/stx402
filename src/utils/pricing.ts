@@ -53,130 +53,47 @@ export const TIER_AMOUNTS: Record<PricingTier, Record<TokenType, string>> = {
 };
 
 // Endpoint path to pricing tier mapping
-// ~90 paid endpoints + ~7 free = ~97 total
+// STX402 Directory: ~31 paid endpoints + ~5 free = ~36 total
 export const ENDPOINT_TIERS: Record<string, PricingTier> = {
-  // === STACKS ENDPOINTS (7) ===
-  // Clarity utilities
-  "/api/stacks/convert-address": "simple",
-  "/api/stacks/decode-clarity-hex": "simple",
-  "/api/stacks/to-consensus-buff": "simple",
-  "/api/stacks/from-consensus-buff": "simple",
-  "/api/stacks/decode-tx": "simple",
-  // Aggregated endpoints
-  "/api/stacks/profile": "ai", // Multiple API calls
-  "/api/stacks/contract-info": "simple", // Cacheable
+  // === REGISTRY ENDPOINTS (8 paid + 2 free) - X402 Directory ===
+  "/registry/probe": "ai",
+  "/registry/register": "ai",
+  // "/registry/list": free - not in tier list
+  "/registry/details": "ai",
+  "/registry/update": "ai",
+  "/registry/delete": "ai",
+  "/registry/my-endpoints": "ai",
+  "/registry/transfer": "ai",
+  // "/admin/registry/verify": free - admin auth required
+  // "/admin/registry/pending": free - admin auth required
 
-  // === AI ENDPOINTS (13) ===
-  "/api/ai/dad-joke": "ai",
-  "/api/ai/summarize": "ai",
-  "/api/ai/image-describe": "heavy_ai",
-  "/api/ai/tts": "heavy_ai",
-  "/api/ai/generate-image": "heavy_ai",
-  "/api/ai/explain-contract": "ai",
-  "/api/ai/translate": "ai",
-  "/api/ai/sentiment": "ai",
-  "/api/ai/keywords": "ai",
-  "/api/ai/language-detect": "ai",
-  "/api/ai/paraphrase": "ai",
-  "/api/ai/grammar-check": "ai",
-  "/api/ai/question-answer": "ai",
-
-  // === HASH ENDPOINTS (6) ===
-  "/api/hash/sha256": "simple",
-  "/api/hash/sha512": "simple",
-  "/api/hash/keccak256": "simple",
-  "/api/hash/hash160": "simple",
-  "/api/hash/ripemd160": "simple",
-  "/api/hash/hmac": "simple",
-
-  // === UTILITY ENDPOINTS (2) ===
-  "/api/util/qr-generate": "simple",
-  "/api/util/verify-signature": "simple",
-
-  // === REGISTRY ENDPOINTS (9 paid + 1 free) ===
-  "/api/registry/probe": "ai",
-  "/api/registry/register": "ai",
-  // "/api/registry/list": free - not in tier list
-  "/api/registry/details": "ai",
-  "/api/registry/update": "ai",
-  "/api/registry/delete": "ai",
-  "/api/registry/my-endpoints": "ai",
-  "/api/registry/transfer": "ai",
-  "/api/admin/registry/verify": "ai",
-  "/api/admin/registry/pending": "ai",
-
-  // === KV STORAGE ENDPOINTS (4) ===
-  "/api/kv/set": "storage_write",
-  "/api/kv/get": "storage_read",
-  "/api/kv/delete": "storage_write",
-  "/api/kv/list": "storage_read",
-
-  // === PASTE ENDPOINTS (3) ===
-  "/api/paste/create": "storage_write",
-  "/api/paste": "storage_read", // GET /api/paste/:code
-  "/api/paste/delete": "storage_write",
-
-  // === COUNTER ENDPOINTS (6) - Durable Objects ===
-  "/api/counter/increment": "storage_write",
-  "/api/counter/decrement": "storage_write",
-  "/api/counter/get": "storage_read",
-  "/api/counter/reset": "storage_write",
-  "/api/counter/list": "storage_read",
-  "/api/counter/delete": "storage_write",
-
-  // === SQL ENDPOINTS (3) - Durable Objects ===
-  "/api/sql/query": "storage_read",
-  "/api/sql/execute": "storage_write",
-  "/api/sql/schema": "storage_read",
-
-  // === LINKS ENDPOINTS (4 paid + 1 free) - Durable Objects URL Shortener ===
-  "/api/links/create": "storage_write",
-  // "/api/links/expand/:slug": free - redirects track clicks
-  "/api/links/stats": "storage_read",
-  "/api/links/delete": "storage_write",
-  "/api/links/list": "storage_read",
-
-  // === SYNC ENDPOINTS (5 paid) - Durable Objects Distributed Locks ===
-  "/api/sync/lock": "storage_write",
-  "/api/sync/unlock": "storage_write",
-  "/api/sync/check": "storage_read",
-  "/api/sync/extend": "storage_write",
-  "/api/sync/list": "storage_read",
-
-  // === QUEUE ENDPOINTS (5 paid) - Durable Objects Job Queue ===
-  "/api/queue/push": "storage_write",
-  "/api/queue/pop": "storage_write",
-  "/api/queue/complete": "storage_write",
-  "/api/queue/fail": "storage_write",
-  "/api/queue/status": "storage_read",
-
-  // === MEMORY ENDPOINTS (5 paid) - Durable Objects Agent Memory ===
-  "/api/memory/store": "storage_ai",
-  "/api/memory/recall": "storage_read",
-  "/api/memory/search": "storage_ai",
-  "/api/memory/list": "storage_read",
-  "/api/memory/forget": "storage_write",
+  // === LINKS ENDPOINTS (4 paid + 1 free) - URL Shortener ===
+  "/links/create": "storage_write",
+  // "/links/expand/:slug": free - redirects track clicks
+  "/links/stats": "storage_read",
+  "/links/delete": "storage_write",
+  "/links/list": "storage_read",
 
   // === AGENT REGISTRY ENDPOINTS (15 paid + 1 free) - ERC-8004 ===
   // Identity Registry
-  "/api/agent/info": "simple",
-  "/api/agent/owner": "simple",
-  "/api/agent/uri": "simple",
-  "/api/agent/metadata": "simple",
-  "/api/agent/version": "simple",
-  "/api/agent/lookup": "simple",
+  "/agent/info": "simple",
+  "/agent/owner": "simple",
+  "/agent/uri": "simple",
+  "/agent/metadata": "simple",
+  "/agent/version": "simple",
+  "/agent/lookup": "simple",
   // Reputation Registry
-  "/api/agent/reputation/summary": "simple",
-  "/api/agent/reputation/feedback": "simple",
-  "/api/agent/reputation/list": "simple",
-  "/api/agent/reputation/clients": "simple",
-  "/api/agent/reputation/auth-hash": "simple",
+  "/agent/reputation/summary": "simple",
+  "/agent/reputation/feedback": "simple",
+  "/agent/reputation/list": "simple",
+  "/agent/reputation/clients": "simple",
+  "/agent/reputation/auth-hash": "simple",
   // Validation Registry
-  "/api/agent/validation/status": "simple",
-  "/api/agent/validation/summary": "simple",
-  "/api/agent/validation/list": "simple",
-  "/api/agent/validation/requests": "simple",
-  // Note: /api/agent/registry is free - not in tier list
+  "/agent/validation/status": "simple",
+  "/agent/validation/summary": "simple",
+  "/agent/validation/list": "simple",
+  "/agent/validation/requests": "simple",
+  // Note: /agent/registry is free - not in tier list
 };
 
 // Get pricing tier for an endpoint path (strips path params like :address)

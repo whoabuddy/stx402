@@ -4,7 +4,11 @@ import { DurableObject } from "cloudflare:workers";
  * UserDurableObject - Per-user SQLite-backed Durable Object
  *
  * Each payer address gets their own DO instance with isolated SQLite storage.
- * Provides counters, links, locks, custom SQL queries, and other stateful operations.
+ * Currently used for Links (URL shortener) functionality.
+ *
+ * Note: Contains legacy methods (counters, locks, queues, memory, SQL) that are
+ * no longer exposed via endpoints but retained for backwards compatibility with
+ * existing user data. These may be removed in a future version.
  *
  * Design principles (per Cloudflare best practices):
  * - Use SQLite for structured data (recommended over KV)

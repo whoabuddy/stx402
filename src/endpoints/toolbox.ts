@@ -567,29 +567,28 @@ function generateToolboxHTML(): string {
       <p>Test any URL to see if it requires X402 payment</p>
 
       <div class="input-group">
-        <input type="url" id="url-input" placeholder="https://stx402.com/api/..." autocomplete="off">
+        <input type="url" id="url-input" placeholder="https://stx402.com/registry/..." autocomplete="off">
         <select id="quick-select">
           <option value="">Quick select</option>
-          <optgroup label="Hash (0.001 STX)">
-            <option value="/api/hash/sha256">sha256</option>
-            <option value="/api/hash/keccak256">keccak256</option>
-            <option value="/api/hash/hash160">hash160</option>
+          <optgroup label="Registry (0.003 STX)">
+            <option value="/registry/probe">probe</option>
+            <option value="/registry/register">register</option>
+            <option value="/registry/my-endpoints">my-endpoints</option>
           </optgroup>
-          <optgroup label="Stacks (0.001-0.003 STX)">
-            <option value="/api/stacks/profile/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9">profile</option>
-            <option value="/api/stacks/contract-info/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait">contract-info</option>
+          <optgroup label="Links (0.0005-0.001 STX)">
+            <option value="/links/create">create</option>
+            <option value="/links/list">list</option>
+            <option value="/links/stats">stats</option>
           </optgroup>
-          <optgroup label="AI (0.003 STX)">
-            <option value="/api/ai/summarize">summarize</option>
-            <option value="/api/ai/sentiment">sentiment</option>
-          </optgroup>
-          <optgroup label="Storage (0.0005-0.001 STX)">
-            <option value="/api/kv/get">kv/get</option>
-            <option value="/api/kv/set">kv/set</option>
+          <optgroup label="Agent (0.001 STX)">
+            <option value="/agent/info">info</option>
+            <option value="/agent/lookup">lookup</option>
+            <option value="/agent/reputation/summary">reputation/summary</option>
           </optgroup>
           <optgroup label="Free">
-            <option value="/api/data/json-validate">json-validate</option>
-            <option value="/api/data/json-minify">json-minify</option>
+            <option value="/registry/list">registry/list</option>
+            <option value="/agent/registry">agent/registry</option>
+            <option value="/links/expand/test">links/expand</option>
           </optgroup>
         </select>
         <button id="check-btn">Check</button>
@@ -618,18 +617,20 @@ function generateToolboxHTML(): string {
         <div class="form-row">
           <label>Endpoint URL</label>
           <div class="input-group" style="margin-bottom:0;">
-            <input type="url" id="call-url" placeholder="https://stx402.com/api/..." autocomplete="off">
+            <input type="url" id="call-url" placeholder="https://stx402.com/registry/..." autocomplete="off">
             <select id="call-quick-select">
               <option value="">Quick select</option>
-              <optgroup label="Hash (0.001 STX)">
-                <option value="/api/hash/sha256">sha256 (POST)</option>
-                <option value="/api/hash/keccak256">keccak256 (POST)</option>
+              <optgroup label="Registry (0.003 STX)">
+                <option value="/registry/probe">probe (POST)</option>
+                <option value="/registry/my-endpoints">my-endpoints (POST)</option>
               </optgroup>
-              <optgroup label="Stacks (0.001-0.003 STX)">
-                <option value="/api/stacks/profile/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9">profile (GET)</option>
+              <optgroup label="Links (0.001 STX)">
+                <option value="/links/create">create (POST)</option>
+                <option value="/links/list">list (GET)</option>
               </optgroup>
               <optgroup label="Free">
-                <option value="/api/data/json-validate">json-validate (POST)</option>
+                <option value="/registry/list">registry/list (GET)</option>
+                <option value="/agent/registry">agent/registry (GET)</option>
               </optgroup>
             </select>
           </div>

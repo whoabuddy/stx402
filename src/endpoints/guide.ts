@@ -37,142 +37,19 @@ interface Category {
 
 const categories: Category[] = [
   {
-    name: "Stacks",
-    color: "#f7931a",
-    icon: "&#9939;",
-    description: "Stacks blockchain queries and Clarity smart contract utilities",
-    useFor: "Aggregated profile data (BNS, balances, NFTs), contract source/ABI, Clarity value encoding/decoding, consensus buffer operations",
-    examples: [
-      { path: "/api/stacks/profile/:address", name: "profile" },
-      { path: "/api/stacks/contract-info/:contract_id", name: "contract-info" },
-      { path: "/api/stacks/decode-tx", name: "decode-tx" },
-    ],
-    tier: "simple / ai",
-    tierPrice: "0.001-0.003 STX",
-  },
-  {
-    name: "AI",
-    color: "#3b82f6",
-    icon: "&#129302;",
-    description: "AI-powered text analysis, generation, and media processing",
-    useFor: "Summarizing text, sentiment analysis, translation, text-to-speech, image generation, smart contract explanations",
-    examples: [
-      { path: "/api/ai/summarize", name: "summarize" },
-      { path: "/api/ai/sentiment", name: "sentiment" },
-      { path: "/api/ai/generate-image", name: "generate-image" },
-    ],
-    tier: "ai / heavy_ai",
-    tierPrice: "0.003-0.01 STX",
-  },
-  {
-    name: "Hash",
-    color: "#06b6d4",
-    icon: "&#128272;",
-    description: "Cryptographic hashing functions (Clarity-compatible)",
-    useFor: "SHA-256, SHA-512, Keccak-256 (Ethereum), Hash160 (Bitcoin/Stacks), RIPEMD-160, HMAC signatures",
-    examples: [
-      { path: "/api/hash/sha256", name: "sha256" },
-      { path: "/api/hash/keccak256", name: "keccak256" },
-      { path: "/api/hash/hash160", name: "hash160" },
-    ],
-    tier: "simple",
-    tierPrice: "0.001 STX",
-  },
-  {
-    name: "Data",
-    color: "#3b82f6",
-    icon: "&#128202;",
-    description: "JSON validation and minification utilities",
-    useFor: "Validating JSON syntax, minifying JSON for storage/transmission",
-    examples: [
-      { path: "/api/data/json-validate", name: "json-validate (free)" },
-      { path: "/api/data/json-minify", name: "json-minify (free)" },
-    ],
-    tier: "free",
-    tierPrice: "Free",
-  },
-  {
-    name: "Utility",
-    color: "#22d3ee",
-    icon: "&#128295;",
-    description: "General-purpose utilities",
-    useFor: "QR code generation, signature verification (SIP-018, standard)",
-    examples: [
-      { path: "/api/util/qr-generate", name: "qr-generate" },
-      { path: "/api/util/verify-signature", name: "verify-signature" },
-    ],
-    tier: "simple",
-    tierPrice: "0.001 STX",
-  },
-  {
     name: "Registry",
     color: "#f59e0b",
     icon: "&#128218;",
-    description: "X402 endpoint discovery and registration",
-    useFor: "Registering your X402 endpoints, probing payment requirements, listing available endpoints, managing ownership",
+    description: "X402 endpoint discovery and registration - the core directory",
+    useFor: "Registering your X402 endpoints, probing payment requirements, listing available endpoints, managing ownership, transferring endpoints",
     examples: [
-      { path: "/api/registry/list", name: "list (free)" },
-      { path: "/api/registry/register", name: "register" },
-      { path: "/api/registry/probe", name: "probe" },
+      { path: "/registry/list", name: "list (free)" },
+      { path: "/registry/register", name: "register" },
+      { path: "/registry/probe", name: "probe" },
+      { path: "/registry/my-endpoints", name: "my-endpoints" },
     ],
     tier: "ai / free",
     tierPrice: "0.003 STX or free",
-  },
-  {
-    name: "KV Storage",
-    color: "#8b5cf6",
-    icon: "&#128451;",
-    description: "Persistent key-value storage namespaced to your wallet",
-    useFor: "Storing and retrieving data by key, listing keys with prefixes, deleting entries",
-    examples: [
-      { path: "/api/kv/set", name: "set" },
-      { path: "/api/kv/get", name: "get" },
-      { path: "/api/kv/list", name: "list" },
-    ],
-    tier: "storage_read/write",
-    tierPrice: "0.0005-0.005 STX",
-  },
-  {
-    name: "Paste",
-    color: "#ec4899",
-    icon: "&#128203;",
-    description: "Text paste bin with short codes",
-    useFor: "Creating shareable text snippets with auto-generated short codes, retrieving pastes, deleting your pastes",
-    examples: [
-      { path: "/api/paste/create", name: "create" },
-      { path: "/api/paste/:code", name: "get" },
-      { path: "/api/paste/delete", name: "delete" },
-    ],
-    tier: "storage_read/write",
-    tierPrice: "0.0005-0.001 STX",
-  },
-  {
-    name: "Counter",
-    color: "#14b8a6",
-    icon: "&#127922;",
-    description: "Atomic counters with increment/decrement operations",
-    useFor: "Tracking counts, incrementing/decrementing values atomically, resetting counters, listing all your counters",
-    examples: [
-      { path: "/api/counter/increment", name: "increment" },
-      { path: "/api/counter/get", name: "get" },
-      { path: "/api/counter/list", name: "list" },
-    ],
-    tier: "storage_read/write",
-    tierPrice: "0.0005-0.001 STX",
-  },
-  {
-    name: "SQL",
-    color: "#0891b2",
-    icon: "&#128451;",
-    description: "Direct SQLite database access in your personal namespace",
-    useFor: "Running SQL queries, executing DDL/DML statements, viewing your schema",
-    examples: [
-      { path: "/api/sql/query", name: "query" },
-      { path: "/api/sql/execute", name: "execute" },
-      { path: "/api/sql/schema", name: "schema" },
-    ],
-    tier: "storage_read/write",
-    tierPrice: "0.0005-0.001 STX",
   },
   {
     name: "Links",
@@ -181,68 +58,58 @@ const categories: Category[] = [
     description: "URL shortener with click tracking",
     useFor: "Creating short links, expanding slugs to original URLs, viewing click statistics, managing your links",
     examples: [
-      { path: "/api/links/create", name: "create" },
-      { path: "/api/links/expand/:slug", name: "expand (free)" },
-      { path: "/api/links/stats", name: "stats" },
+      { path: "/links/create", name: "create" },
+      { path: "/links/expand/:slug", name: "expand (free)" },
+      { path: "/links/stats", name: "stats" },
+      { path: "/links/list", name: "list" },
     ],
     tier: "storage_read/write",
     tierPrice: "0.0005-0.001 STX",
   },
   {
-    name: "Sync",
-    color: "#facc15",
-    icon: "&#128274;",
-    description: "Distributed locks with auto-expiration",
-    useFor: "Acquiring locks for coordination, releasing locks, checking lock status, extending lock TTL",
-    examples: [
-      { path: "/api/sync/lock", name: "lock" },
-      { path: "/api/sync/unlock", name: "unlock" },
-      { path: "/api/sync/check", name: "check" },
-    ],
-    tier: "storage_read/write",
-    tierPrice: "0.0005-0.001 STX",
-  },
-  {
-    name: "Queue",
-    color: "#f97316",
-    icon: "&#128203;",
-    description: "Job queue with priority and retry support",
-    useFor: "Pushing jobs to a queue, popping jobs for processing, marking jobs complete or failed, checking queue status",
-    examples: [
-      { path: "/api/queue/push", name: "push" },
-      { path: "/api/queue/pop", name: "pop" },
-      { path: "/api/queue/status", name: "status" },
-    ],
-    tier: "storage_read/write",
-    tierPrice: "0.0005-0.001 STX",
-  },
-  {
-    name: "Memory",
-    color: "#a78bfa",
-    icon: "&#129504;",
-    description: "Agent memory with semantic search (AI embeddings)",
-    useFor: "Storing memories with embeddings, recalling by ID, semantic search across memories, forgetting entries",
-    examples: [
-      { path: "/api/memory/store", name: "store" },
-      { path: "/api/memory/search", name: "search" },
-      { path: "/api/memory/recall", name: "recall" },
-    ],
-    tier: "storage_ai",
-    tierPrice: "0.003 STX",
-  },
-  {
-    name: "Agent",
+    name: "Agent Identity",
     color: "#34d399",
     icon: "&#129302;",
-    description: "ERC-8004 agent registry for AI agent identity and reputation",
-    useFor: "Registering AI agents, querying agent metadata, viewing reputation scores, checking validation status",
+    description: "ERC-8004 agent identity registry on Stacks",
+    useFor: "Querying agent metadata, looking up agents by owner, checking agent URIs and versions",
     examples: [
-      { path: "/api/agent/info", name: "info" },
-      { path: "/api/agent/reputation/summary", name: "reputation" },
-      { path: "/api/agent/registry", name: "registry (free)" },
+      { path: "/agent/registry", name: "registry (free)" },
+      { path: "/agent/info", name: "info" },
+      { path: "/agent/lookup", name: "lookup" },
+      { path: "/agent/metadata", name: "metadata" },
     ],
     tier: "simple / free",
     tierPrice: "0.001 STX or free",
+  },
+  {
+    name: "Agent Reputation",
+    color: "#8b5cf6",
+    icon: "&#11088;",
+    description: "ERC-8004 agent reputation tracking",
+    useFor: "Viewing reputation summaries, listing feedback, checking client interactions, generating auth hashes for feedback submission",
+    examples: [
+      { path: "/agent/reputation/summary", name: "summary" },
+      { path: "/agent/reputation/list", name: "list" },
+      { path: "/agent/reputation/clients", name: "clients" },
+      { path: "/agent/reputation/auth-hash", name: "auth-hash" },
+    ],
+    tier: "simple",
+    tierPrice: "0.001 STX",
+  },
+  {
+    name: "Agent Validation",
+    color: "#06b6d4",
+    icon: "&#9989;",
+    description: "ERC-8004 agent validation tracking",
+    useFor: "Checking validation request status, viewing validation summaries, listing validations for an agent",
+    examples: [
+      { path: "/agent/validation/status", name: "status" },
+      { path: "/agent/validation/summary", name: "summary" },
+      { path: "/agent/validation/list", name: "list" },
+      { path: "/agent/validation/requests", name: "requests" },
+    ],
+    tier: "simple",
+    tierPrice: "0.001 STX",
   },
 ];
 
@@ -433,23 +300,23 @@ function generateGuideHTML(): string {
 <body>
   ${getNavHTML("guide")}
   <div class="container">
-    <h1><span class="accent">STX402</span> Guide</h1>
-    <p class="subtitle">~97 endpoints across 14 categories - find what you need</p>
+    <h1><span class="accent">STX402</span> Directory Guide</h1>
+    <p class="subtitle">The X402 Directory - endpoint discovery and agent identity</p>
 
     <div class="intro">
       <p>
-        Each category groups related functionality. All endpoints return JSON and accept
-        <strong>STX</strong>, <strong>sBTC</strong>, or <strong>USDCx</strong> for payment.
-        Click any endpoint to view its full documentation in the API docs.
+        <strong>STX402 Directory</strong> is the meta layer for the X402 ecosystem.
+        Discover and register X402 endpoints, and interact with ERC-8004 agent registries on Stacks.
+        All endpoints return JSON and accept <strong>STX</strong>, <strong>sBTC</strong>, or <strong>USDCx</strong> for payment.
       </p>
     </div>
 
-    <div class="intro" style="border-color: #3b82f6;">
+    <div class="intro" style="border-color: #f59e0b;">
       <p>
-        <strong style="color: #3b82f6;">&#128274; Per-Payer Namespacing:</strong> Storage endpoints
-        (KV, SQL, Counter, Links, Sync, Queue, Memory, Paste) are automatically isolated by your
-        payment address. Your data is private — no configuration needed. Two users calling the
-        same endpoint get their own separate storage.
+        <strong style="color: #f59e0b;">&#128279; Looking for utilities?</strong> General-purpose
+        endpoints (hashing, storage, AI, Stacks utilities) have moved to
+        <a href="https://x402.aibtc.com" target="_blank" style="color: #f7931a;">x402.aibtc.com</a>.
+        STX402 now focuses on directory and identity services.
       </p>
     </div>
 
