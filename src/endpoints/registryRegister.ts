@@ -106,9 +106,13 @@ export class RegistryRegister extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
+    const log = c.var.logger;
+
+    log.info("Registry registration request", { tokenType });
 
     // Check if METRICS (KV) is configured - we use same KV for registry
     if (!c.env.METRICS) {
+      log.error("Registry storage not configured");
       return this.errorResponse(c, "Registry storage not configured", 500);
     }
 
@@ -181,6 +185,7 @@ export class RegistryRegister extends BaseEndpoint {
     // Check if URL is already registered
     const existing = await getRegistryEntryByUrl(c.env.METRICS, body.url);
     if (existing) {
+      log.warn("Endpoint already registered", { url: body.url, existingId: existing.id });
       return c.json(
         {
           error: "Endpoint already registered",
@@ -232,6 +237,13 @@ export class RegistryRegister extends BaseEndpoint {
 
     // Save to KV
     await saveRegistryEntry(c.env.METRICS, entry);
+
+    log.info("Registry entry created", {
+      id: entry.id,
+      url: entry.url,
+      owner: entry.owner,
+      registeredBy: entry.registeredBy,
+    });
 
     return c.json({
       success: true,

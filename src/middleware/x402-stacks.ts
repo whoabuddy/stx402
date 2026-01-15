@@ -323,6 +323,15 @@ export const x402PaymentMiddleware = () => {
       JSON.stringify(settleResult, replaceBigintWithString)
     );
 
+    // Log successful payment
+    paymentLog.info("Payment verified", {
+      txId: settleResult.txId,
+      sender: settleResult.sender,
+      recipient: settleResult.recipient,
+      amount: config.minAmount.toString(),
+      resource: c.req.path,
+    });
+
     // Store settle result in context for endpoint access
     c.set("settleResult", settleResult);
     c.set("signedTx", signedTx);

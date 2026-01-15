@@ -107,8 +107,12 @@ export class AgentLookup extends BaseEndpoint {
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
     const network = (c.req.query("network") || "testnet") as ERC8004Network;
+    const log = c.var.logger;
+
+    log.info("Agent lookup request", { network, tokenType });
 
     if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
+      log.warn("Mainnet not supported for agent lookup");
       return this.errorResponse(
         c,
         "ERC-8004 contracts not yet deployed on mainnet",
@@ -194,6 +198,14 @@ export class AgentLookup extends BaseEndpoint {
         }
       }
 
+      log.info("Agent lookup completed", {
+        owner,
+        count: agents.length,
+        scanned,
+        startId,
+        hasMore: scanned >= effectiveMaxScan,
+      });
+
       return c.json({
         owner,
         agents,
@@ -205,6 +217,7 @@ export class AgentLookup extends BaseEndpoint {
         tokenType,
       });
     } catch (error) {
+      log.error("Agent lookup failed", { error: String(error) });
       return this.errorResponse(
         c,
         `Failed to lookup agents: ${String(error)}`,

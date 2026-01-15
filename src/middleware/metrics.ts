@@ -5,8 +5,9 @@ import {
   type TokenType,
   validateTokenType,
 } from "../utils/pricing";
-import { log } from "../utils/logger";
+import type { Logger } from "../utils/logger";
 import { ENDPOINT_CREATED_DATES } from "../utils/endpoint-created-dates";
+import type { AppVariables } from "../types";
 
 // =============================================================================
 // Types - Consolidated metrics storage
@@ -254,7 +255,8 @@ interface MetricsUpdateData {
 /** Update metrics - read-modify-write pattern */
 async function updateMetrics(
   kv: KVNamespace,
-  update: MetricsUpdateData
+  update: MetricsUpdateData,
+  logger?: Logger
 ): Promise<void> {
   const { path, latency, isSuccess, tokenType, amount } = update;
   const today = new Date().toISOString().split("T")[0];
@@ -304,7 +306,11 @@ async function updateMetrics(
     await saveMetrics(kv, data);
   } catch (error) {
     // Log but don't fail the request
-    log.error("Failed to update metrics", { error: String(error), path });
+    if (logger) {
+      logger.error("Failed to update metrics", { error: String(error), path });
+    } else {
+      console.error("Failed to update metrics", { error: String(error), path });
+    }
   }
 }
 
@@ -315,7 +321,7 @@ async function updateMetrics(
 /** Metrics middleware - tracks calls after payment is verified */
 export const metricsMiddleware = () => {
   return async (
-    c: Context<{ Bindings: Env }>,
+    c: Context<{ Bindings: Env; Variables: AppVariables }>,
     next: () => Promise<Response | void>
   ) => {
     const start = Date.now();
@@ -355,13 +361,17 @@ export const metricsMiddleware = () => {
     // Fire-and-forget metrics update
     if (c.env.METRICS) {
       c.executionCtx.waitUntil(
-        updateMetrics(c.env.METRICS, {
-          path,
-          latency,
-          isSuccess,
-          tokenType,
-          amount,
-        })
+        updateMetrics(
+          c.env.METRICS,
+          {
+            path,
+            latency,
+            isSuccess,
+            tokenType,
+            amount,
+          },
+          c.var.logger
+        )
       );
     }
   };
