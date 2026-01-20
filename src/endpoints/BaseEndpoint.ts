@@ -15,6 +15,7 @@ import {
   type SignatureRequest,
 } from "../utils/signatures";
 import { payerMatchesAddress } from "../utils/payment";
+import type { UserDurableObject } from "../durable-objects/UserDurableObject";
 
 /** Result of dual authentication (signature or payment) */
 export type AuthResult =
