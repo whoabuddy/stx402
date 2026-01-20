@@ -4,70 +4,36 @@ import {
   callRegistryFunction,
   clarityToJson,
   extractTypedValue,
-  type ERC8004Network,
   ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import {
+  AGENT_COMMON_PARAMS,
+  COMMON_ERROR_RESPONSES,
+  obj,
+  str,
+  jsonResponse,
+} from "../../utils/schema-helpers";
 
 export class AgentVersion extends BaseEndpoint {
   schema = {
     tags: ["Agent Registry"],
     summary: "(paid) Get identity registry version",
-    parameters: [
-      {
-        name: "network",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["mainnet", "testnet"] as const,
-          default: "testnet",
-        },
-      },
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: AGENT_COMMON_PARAMS,
     responses: {
-      "200": {
-        description: "Registry version",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object" as const,
-              properties: {
-                version: { type: "string" as const },
-                registry: { type: "string" as const },
-                network: { type: "string" as const },
-                tokenType: { type: "string" as const },
-              },
-            },
-          },
-        },
-      },
-      "400": { description: "Failed to fetch version" },
-      "402": { description: "Payment required" },
-      "501": { description: "Network not supported" },
+      "200": jsonResponse(
+        "Registry version",
+        obj({ version: str, registry: str, contractId: str, network: str, tokenType: str })
+      ),
+      ...COMMON_ERROR_RESPONSES,
     },
   };
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = (c.req.query("network") || "testnet") as ERC8004Network;
+    const network = this.getNetwork(c);
 
-    if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
-      return this.errorResponse(
-        c,
-        "ERC-8004 contracts not yet deployed on mainnet",
-        501
-      );
-    }
+    const mainnetError = this.checkMainnetDeployment(c, network);
+    if (mainnetError) return mainnetError;
 
     try {
       // get-version returns (string-utf8 5) directly, not wrapped in (ok ...)

@@ -7,9 +7,16 @@ import {
   isSome,
   isNone,
   principal,
-  type ERC8004Network,
-  ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import {
+  AGENT_COMMON_PARAMS,
+  COMMON_ERROR_RESPONSES,
+  obj,
+  str,
+  num,
+  arr,
+  jsonResponse,
+} from "../../utils/schema-helpers";
 
 export class ValidationRequests extends BaseEndpoint {
   schema = {
@@ -19,87 +26,39 @@ export class ValidationRequests extends BaseEndpoint {
       required: true,
       content: {
         "application/json": {
-          schema: {
-            type: "object" as const,
-            required: ["validator"],
-            properties: {
-              validator: {
-                type: "string" as const,
-                description: "Validator principal address",
-              },
-            },
-          },
+          schema: obj(
+            { validator: { ...str, description: "Validator principal address" } },
+            ["validator"]
+          ),
         },
       },
     },
-    parameters: [
-      {
-        name: "network",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["mainnet", "testnet"] as const,
-          default: "testnet",
-        },
-      },
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: AGENT_COMMON_PARAMS,
     responses: {
-      "200": {
-        description: "List of validation request hashes",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object" as const,
-              properties: {
-                validator: { type: "string" as const },
-                requests: {
-                  type: "array" as const,
-                  items: { type: "string" as const },
-                  description: "Request hashes (hex)",
-                },
-                count: { type: "number" as const },
-                network: { type: "string" as const },
-                tokenType: { type: "string" as const },
-              },
-            },
-          },
-        },
-      },
-      "400": { description: "Invalid input" },
-      "402": { description: "Payment required" },
-      "501": { description: "Network not supported" },
+      "200": jsonResponse(
+        "List of validation request hashes",
+        obj({
+          validator: str,
+          requests: { ...arr(str), description: "Request hashes (hex)" },
+          count: num,
+          network: str,
+          tokenType: str,
+        })
+      ),
+      ...COMMON_ERROR_RESPONSES,
     },
   };
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = (c.req.query("network") || "testnet") as ERC8004Network;
+    const network = this.getNetwork(c);
 
-    if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
-      return this.errorResponse(
-        c,
-        "ERC-8004 contracts not yet deployed on mainnet",
-        501
-      );
-    }
+    const mainnetError = this.checkMainnetDeployment(c, network);
+    if (mainnetError) return mainnetError;
 
-    let body: { validator?: string };
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    const parsed = await this.parseJsonBody<{ validator?: string }>(c);
+    if (parsed.error) return parsed.error;
+    const body = parsed.body;
 
     const { validator } = body;
     if (!validator) {

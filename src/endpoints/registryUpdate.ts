@@ -1,20 +1,10 @@
 import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
 import {
-  getRegistryEntry,
   getRegistryEntryByUrl,
   saveRegistryEntry,
-  generateUrlHash,
 } from "../utils/registry";
 import { probeX402Endpoint } from "../utils/probe";
-import { Address } from "@stacks/transactions";
-import {
-  verifyStructuredSignature,
-  getDomain,
-  createActionMessage,
-  isTimestampValid,
-} from "../utils/signatures";
-import { payerMatchesAddress, type ExtendedSettleResult } from "../utils/payment";
 
 export class RegistryUpdate extends BaseEndpoint {
   schema = {
@@ -116,13 +106,12 @@ export class RegistryUpdate extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = c.env.X402_NETWORK as "mainnet" | "testnet";
 
     if (!c.env.METRICS) {
       return this.errorResponse(c, "Registry storage not configured", 500);
     }
 
-    let body: {
+    const parsed = await this.parseJsonBody<{
       url?: string;
       owner?: string;
       name?: string;
@@ -132,35 +121,18 @@ export class RegistryUpdate extends BaseEndpoint {
       reprobeEndpoint?: boolean;
       signature?: string;
       timestamp?: number;
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (parsed.error) return parsed.error;
+    const body = parsed.body;
 
     if (!body.url) {
       return this.errorResponse(c, "url is required", 400);
     }
 
-    // Use provided owner or default to payer address
-    let ownerAddress: string;
-    if (body.owner) {
-      try {
-        const addressObj = Address.parse(body.owner);
-        ownerAddress = Address.stringify(addressObj);
-      } catch {
-        return this.errorResponse(c, "Invalid owner address format", 400);
-      }
-    } else {
-      // Default to payer address when owner not specified
-      const payerAddress = this.getPayerAddress(c);
-      if (!payerAddress) {
-        return this.errorResponse(c, "Could not determine owner from payment. Please specify owner address.", 400);
-      }
-      ownerAddress = payerAddress;
-    }
+    // Resolve owner address
+    const ownerResult = this.resolveOwnerAddress(c, body.owner);
+    if (ownerResult.error) return ownerResult.error;
+    const ownerAddress = ownerResult.address;
 
     // Look up the entry
     const entry = await getRegistryEntryByUrl(c.env.METRICS, body.url);
@@ -181,78 +153,16 @@ export class RegistryUpdate extends BaseEndpoint {
       );
     }
 
-    // Dual authentication: signature OR payment from same address
-    let authMethod: "signature" | "payment" | null = null;
-
-    // Try signature auth first
-    if (body.signature) {
-      if (!body.timestamp) {
-        return this.errorResponse(c, "timestamp is required when providing signature", 400);
-      }
-
-      if (!isTimestampValid(body.timestamp)) {
-        return c.json(
-          { error: "Timestamp expired or invalid. Must be within 5 minutes.", tokenType },
-          403
-        );
-      }
-
-      // Build the message that should have been signed
-      const domain = getDomain(network);
-      const message = createActionMessage("list-my-endpoints", {
-        owner: ownerAddress,
-        timestamp: body.timestamp,
-      });
-
-      const verifyResult = verifyStructuredSignature(
-        message,
-        domain,
-        body.signature,
-        ownerAddress,
-        network
-      );
-
-      if (!verifyResult.valid) {
-        return c.json(
-          {
-            error: "Invalid signature",
-            details: verifyResult.error,
-            recoveredAddress: verifyResult.recoveredAddress,
-            expectedAddress: ownerAddress,
-            tokenType,
-          },
-          403
-        );
-      }
-
-      authMethod = "signature";
-    }
-
-    // Try payment auth if no signature
-    if (!authMethod) {
-      // Get settle result and signed tx from context (set by middleware)
-      const settleResult = c.get("settleResult") as ExtendedSettleResult | undefined;
-      const signedTx = c.get("signedTx") as string | undefined;
-
-      // Check if payer matches owner using hash160 comparison
-      // This handles mainnet/testnet address format differences
-      if (payerMatchesAddress(settleResult || null, signedTx || null, ownerAddress)) {
-        authMethod = "payment";
-      }
-    }
-
-    // If no auth method succeeded, return error
-    if (!authMethod) {
-      return c.json(
-        {
-          error: "Authentication required - provide a signature OR pay from the owner address",
-          owner: ownerAddress,
-          hint: "Include a SIP-018 signature with timestamp, or ensure the X-PAYMENT is from the owner address",
-          tokenType,
-        },
-        403
-      );
-    }
+    // Authenticate via signature or payment
+    const authResult = this.authenticateOwner(
+      c,
+      ownerAddress,
+      body.signature,
+      body.timestamp,
+      "list-my-endpoints",
+      { owner: ownerAddress }
+    );
+    if (!authResult.authenticated) return authResult.error;
 
     // Update fields if provided
     if (body.name !== undefined) {
@@ -310,7 +220,7 @@ export class RegistryUpdate extends BaseEndpoint {
         tags: entry.tags,
         updatedAt: entry.updatedAt,
       },
-      verifiedBy: authMethod,
+      verifiedBy: authResult.method,
       tokenType,
     });
   }

@@ -197,32 +197,11 @@ export function createStandaloneLogger(
 }
 
 // =============================================================================
-// Legacy Exports (for gradual migration)
+// Utility Logger (for code without Hono context)
 // =============================================================================
 
 /**
- * @deprecated Use getLogger(c) instead. This is a console-only fallback.
+ * Console logger for utility functions that don't have access to Hono context.
+ * Prefer getLogger(c) in request handlers when context is available.
  */
 export const log = createConsoleLogger();
-
-/**
- * @deprecated Use createLogger() with env.LOGS instead
- */
-export function createRequestLogger(
-  requestId: string,
-  path: string,
-  payer?: string
-): Logger {
-  return createConsoleLogger({
-    rayId: requestId,
-    path,
-    ...(payer && { payer }),
-  });
-}
-
-/**
- * @deprecated Request IDs now come from CF-Ray header
- */
-export function generateRequestId(): string {
-  return Math.random().toString(36).substring(2, 10);
-}

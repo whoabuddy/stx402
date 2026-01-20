@@ -98,8 +98,7 @@ export class LinksStats extends BaseEndpoint {
     }
 
     // Get user's Durable Object
-    const id = c.env.USER_DO.idFromName(payerAddress);
-    const stub = c.env.USER_DO.get(id) as DurableObjectStub<UserDurableObject>;
+    const stub = this.getUserDO(c, payerAddress);
 
     try {
       const stats = await stub.linkStats(slug);

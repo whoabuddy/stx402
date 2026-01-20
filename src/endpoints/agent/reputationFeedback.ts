@@ -8,9 +8,16 @@ import {
   isNone,
   uint,
   principal,
-  type ERC8004Network,
-  ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import {
+  AGENT_COMMON_PARAMS,
+  AGENT_ERROR_RESPONSES,
+  obj,
+  str,
+  num,
+  bool,
+  jsonResponse,
+} from "../../utils/schema-helpers";
 
 export class ReputationFeedback extends BaseEndpoint {
   schema = {
@@ -20,101 +27,51 @@ export class ReputationFeedback extends BaseEndpoint {
       required: true,
       content: {
         "application/json": {
-          schema: {
-            type: "object" as const,
-            required: ["agentId", "client", "index"],
-            properties: {
-              agentId: {
-                type: "number" as const,
-                description: "Agent ID",
-              },
-              client: {
-                type: "string" as const,
-                description: "Client principal who gave feedback",
-              },
-              index: {
-                type: "number" as const,
-                description: "Feedback index (0-based)",
-              },
+          schema: obj(
+            {
+              agentId: { ...num, description: "Agent ID" },
+              client: { ...str, description: "Client principal who gave feedback" },
+              index: { ...num, description: "Feedback index (0-based)" },
             },
-          },
+            ["agentId", "client", "index"]
+          ),
         },
       },
     },
-    parameters: [
-      {
-        name: "network",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["mainnet", "testnet"] as const,
-          default: "testnet",
-        },
-      },
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: AGENT_COMMON_PARAMS,
     responses: {
-      "200": {
-        description: "Feedback entry",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object" as const,
-              properties: {
-                agentId: { type: "number" as const },
-                client: { type: "string" as const },
-                index: { type: "number" as const },
-                score: { type: "number" as const },
-                tag1: { type: "string" as const },
-                tag2: { type: "string" as const },
-                isRevoked: { type: "boolean" as const },
-                network: { type: "string" as const },
-                tokenType: { type: "string" as const },
-              },
-            },
-          },
-        },
-      },
-      "400": { description: "Invalid input" },
-      "402": { description: "Payment required" },
+      "200": jsonResponse(
+        "Feedback entry",
+        obj({
+          agentId: num,
+          client: str,
+          index: num,
+          score: num,
+          tag1: str,
+          tag2: str,
+          isRevoked: bool,
+          network: str,
+          tokenType: str,
+        })
+      ),
+      ...AGENT_ERROR_RESPONSES,
       "404": { description: "Feedback not found" },
-      "501": { description: "Network not supported" },
     },
   };
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = (c.req.query("network") || "testnet") as ERC8004Network;
+    const network = this.getNetwork(c);
 
-    if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
-      return this.errorResponse(
-        c,
-        "ERC-8004 contracts not yet deployed on mainnet",
-        501
-      );
-    }
+    const mainnetError = this.checkMainnetDeployment(c, network);
+    if (mainnetError) return mainnetError;
 
-    let body: { agentId?: number; client?: string; index?: number };
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    const parsed = await this.parseJsonBody<{ agentId?: number; client?: string; index?: number }>(c);
+    if (parsed.error) return parsed.error;
 
-    const { agentId, client, index } = body;
-    if (agentId === undefined || agentId < 0) {
-      return this.errorResponse(c, "agentId is required and must be >= 0", 400);
-    }
+    const { agentId, client, index } = parsed.body;
+    const agentIdError = this.validateAgentId(c, agentId);
+    if (agentIdError) return agentIdError;
     if (!client) {
       return this.errorResponse(c, "client principal is required", 400);
     }
