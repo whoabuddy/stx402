@@ -1,7 +1,7 @@
 #!/bin/bash
 # Cron script to run full test suite - only logs failures
 # Usage: ./scripts/run-tests-cron.sh
-# Cron:  0 * * * * /home/whoabuddy/dev/whoabuddy/stx402/scripts/run-tests-cron.sh
+# Cron:  0 6,14,22 * * * /home/whoabuddy/dev/whoabuddy/stx402/scripts/run-tests-cron.sh
 
 # Set up PATH for cron environment (bun, node, npm, etc.)
 export PATH="$HOME/.bun/bin:$HOME/.nvm/versions/node/$(ls -1 $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
