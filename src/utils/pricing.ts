@@ -150,9 +150,6 @@ function convertToSmallestUnit(amountStr: string, tokenType: TokenType): bigint 
   }
 }
 
-// Legacy: Keep DEFAULT_AMOUNTS for backwards compatibility
-export const DEFAULT_AMOUNTS: Record<TokenType, string> = TIER_AMOUNTS.simple;
-
 export function validateTokenType(tokenTypeStr: string): TokenType {
   const upper = tokenTypeStr.toUpperCase();
   const validMap: Record<string, TokenType> = {
@@ -167,19 +164,4 @@ export function validateTokenType(tokenTypeStr: string): TokenType {
   throw new Error(
     `Invalid tokenType: ${tokenTypeStr}. Supported: ${validTokens.join(", ")}`
   );
-}
-
-export function getPaymentAmount(tokenType: TokenType): bigint {
-  const amountStr = DEFAULT_AMOUNTS[tokenType];
-  const amountNum = parseFloat(amountStr);
-  switch (tokenType) {
-    case "STX":
-      return STXtoMicroSTX(amountStr);
-    case "sBTC":
-      return BTCtoSats(amountNum);
-    case "USDCx":
-      return USDCxToMicroUSDCx(amountStr);
-    default:
-      throw new Error(`Unknown tokenType: ${tokenType}`);
-  }
 }
