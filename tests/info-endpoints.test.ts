@@ -45,7 +45,7 @@ const INFO_ENDPOINTS: InfoEndpointTest[] = [
       if (res.status !== 200) return false;
       try {
         const data = JSON.parse(body);
-        return data.status === "ok" && typeof data.service === "string";
+        return data.status === "ok" && typeof data.details === "object";
       } catch {
         return false;
       }
