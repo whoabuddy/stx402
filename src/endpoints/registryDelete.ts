@@ -4,16 +4,6 @@ import {
   getRegistryEntryByUrl,
   deleteRegistryEntry,
 } from "../utils/registry";
-import { Address } from "@stacks/transactions";
-import {
-  createSignatureRequest,
-  verifyStructuredSignature,
-  getDomain,
-  createActionMessage,
-  getChallenge,
-  consumeChallenge,
-  isTimestampValid,
-} from "../utils/signatures";
 
 export class RegistryDelete extends BaseEndpoint {
   schema = {
@@ -111,46 +101,28 @@ export class RegistryDelete extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = c.env.X402_NETWORK as "mainnet" | "testnet";
 
     if (!c.env.METRICS) {
       return this.errorResponse(c, "Registry storage not configured", 500);
     }
 
-    let body: {
+    const parsed = await this.parseJsonBody<{
       url?: string;
       owner?: string;
       signature?: string;
       challengeId?: string;
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (parsed.error) return parsed.error;
+    const body = parsed.body;
 
     if (!body.url) {
       return this.errorResponse(c, "url is required", 400);
     }
 
-    // Use provided owner or default to payer address
-    let ownerAddress: string;
-    if (body.owner) {
-      try {
-        const addressObj = Address.parse(body.owner);
-        ownerAddress = Address.stringify(addressObj);
-      } catch {
-        return this.errorResponse(c, "Invalid owner address format", 400);
-      }
-    } else {
-      // Default to payer address when owner not specified
-      const payerAddress = this.getPayerAddress(c);
-      if (!payerAddress) {
-        return this.errorResponse(c, "Could not determine owner from payment. Please specify owner address.", 400);
-      }
-      ownerAddress = payerAddress;
-    }
+    // Resolve owner address
+    const ownerResult = this.resolveOwnerAddress(c, body.owner);
+    if (ownerResult.error) return ownerResult.error;
+    const ownerAddress = ownerResult.address;
 
     // Look up the entry
     const entry = await getRegistryEntryByUrl(c.env.METRICS, body.url);
@@ -171,88 +143,16 @@ export class RegistryDelete extends BaseEndpoint {
       );
     }
 
-    // If no signature provided, issue a challenge
-    if (!body.signature) {
-      const signatureRequest = createSignatureRequest(
-        "delete-endpoint",
-        { url: body.url, owner: ownerAddress },
-        network,
-        true // with challenge
-      );
-
-      return c.json({
-        requiresSignature: true,
-        message: "Delete operation requires a signed challenge. Sign the message and resubmit.",
-        challenge: signatureRequest,
-        tokenType,
-      });
-    }
-
-    // Signature provided - verify it
-    if (!body.challengeId) {
-      return this.errorResponse(c, "challengeId is required when providing signature", 400);
-    }
-
-    // Get and validate the challenge
-    const challenge = getChallenge(body.challengeId);
-    if (!challenge) {
-      return c.json(
-        {
-          error: "Challenge expired or invalid. Request a new challenge.",
-          tokenType,
-        },
-        403
-      );
-    }
-
-    // Verify challenge belongs to this owner
-    if (challenge.owner !== ownerAddress) {
-      return c.json(
-        {
-          error: "Challenge was issued for a different owner",
-          tokenType,
-        },
-        403
-      );
-    }
-
-    // Reconstruct the message that should have been signed
-    // Must match the message from createSignatureRequest("delete-endpoint", ...)
-    const domain = getDomain(network);
-    const timestamp = challenge.expiresAt - 5 * 60 * 1000; // Original timestamp
-    const message = createActionMessage("delete-endpoint", {
-      url: body.url,
-      owner: ownerAddress,
-      timestamp,
-    });
-
-    // Verify the signature
-    const verifyResult = verifyStructuredSignature(
-      message,
-      domain,
-      body.signature,
+    // Authenticate with challenge-based signature
+    const authResult = this.authenticateWithChallenge(
+      c,
       ownerAddress,
-      network
+      "delete-endpoint",
+      { url: body.url, owner: ownerAddress },
+      body.signature,
+      body.challengeId
     );
-
-    if (!verifyResult.valid) {
-      // Consume the challenge to prevent replay
-      consumeChallenge(body.challengeId);
-
-      return c.json(
-        {
-          error: "Invalid signature",
-          details: verifyResult.error,
-          recoveredAddress: verifyResult.recoveredAddress,
-          expectedAddress: ownerAddress,
-          tokenType,
-        },
-        403
-      );
-    }
-
-    // Consume the challenge (one-time use)
-    consumeChallenge(body.challengeId);
+    if (!authResult.authenticated) return authResult.error;
 
     // Signature verified - proceed with deletion
     const deletedInfo = {

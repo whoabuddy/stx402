@@ -131,8 +131,7 @@ export class LinksCreate extends BaseEndpoint {
     }
 
     // Get user's Durable Object
-    const id = c.env.USER_DO.idFromName(payerAddress);
-    const stub = c.env.USER_DO.get(id) as DurableObjectStub<UserDurableObject>;
+    const stub = this.getUserDO(c, payerAddress);
 
     try {
       // If custom slug, check if it's globally unique first

@@ -4,18 +4,9 @@ import {
   getRegistryEntryByUrl,
   saveRegistryEntry,
   deleteRegistryEntry,
-  generateUrlHash,
   type RegistryEntry,
 } from "../utils/registry";
 import { Address } from "@stacks/transactions";
-import {
-  createSignatureRequest,
-  verifyStructuredSignature,
-  getDomain,
-  createActionMessage,
-  getChallenge,
-  consumeChallenge,
-} from "../utils/signatures";
 
 export class RegistryTransfer extends BaseEndpoint {
   schema = {
@@ -92,25 +83,20 @@ export class RegistryTransfer extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = c.env.X402_NETWORK as "mainnet" | "testnet";
 
     if (!c.env.METRICS) {
       return this.errorResponse(c, "Registry storage not configured", 500);
     }
 
-    let body: {
+    const parsed = await this.parseJsonBody<{
       url?: string;
       owner?: string;
       newOwner?: string;
       signature?: string;
       challengeId?: string;
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (parsed.error) return parsed.error;
+    const body = parsed.body;
 
     if (!body.url) {
       return this.errorResponse(c, "url is required", 400);
@@ -119,23 +105,10 @@ export class RegistryTransfer extends BaseEndpoint {
       return this.errorResponse(c, "newOwner is required", 400);
     }
 
-    // Use provided owner or default to payer address
-    let ownerAddress: string;
-    if (body.owner) {
-      try {
-        const addressObj = Address.parse(body.owner);
-        ownerAddress = Address.stringify(addressObj);
-      } catch {
-        return this.errorResponse(c, "Invalid owner address format", 400);
-      }
-    } else {
-      // Default to payer address when owner not specified
-      const payerAddress = this.getPayerAddress(c);
-      if (!payerAddress) {
-        return this.errorResponse(c, "Could not determine owner from payment. Please specify owner address.", 400);
-      }
-      ownerAddress = payerAddress;
-    }
+    // Resolve owner address
+    const ownerResult = this.resolveOwnerAddress(c, body.owner);
+    if (ownerResult.error) return ownerResult.error;
+    const ownerAddress = ownerResult.address;
 
     // Validate new owner address
     let newOwnerAddress: string;
@@ -170,84 +143,16 @@ export class RegistryTransfer extends BaseEndpoint {
       );
     }
 
-    // If no signature provided, issue a challenge
-    if (!body.signature) {
-      const signatureRequest = createSignatureRequest(
-        "transfer-ownership",
-        { url: body.url, owner: ownerAddress, newOwner: newOwnerAddress },
-        network,
-        true // with challenge
-      );
-
-      return c.json({
-        requiresSignature: true,
-        message: "Transfer operation requires a signed challenge. Sign the message and resubmit.",
-        challenge: signatureRequest,
-        transferDetails: {
-          url: body.url,
-          from: ownerAddress,
-          to: newOwnerAddress,
-        },
-        tokenType,
-      });
-    }
-
-    // Signature provided - verify it
-    if (!body.challengeId) {
-      return this.errorResponse(c, "challengeId is required when providing signature", 400);
-    }
-
-    const challenge = getChallenge(body.challengeId);
-    if (!challenge) {
-      return c.json(
-        { error: "Challenge expired or invalid. Request a new challenge.", tokenType },
-        403
-      );
-    }
-
-    if (challenge.owner !== ownerAddress) {
-      return c.json(
-        { error: "Challenge was issued for a different owner", tokenType },
-        403
-      );
-    }
-
-    // Reconstruct the message (must match what was in the challenge)
-    // The challenge was created with action "transfer-ownership" and includes url, owner, newOwner
-    // We stored the challenge with expiresAt, and timestamp was Date.now() when created
-    const domain = getDomain(network);
-    const timestamp = challenge.expiresAt - 5 * 60 * 1000; // Original timestamp
-    const message = createActionMessage("transfer-ownership", {
-      url: body.url,
-      owner: ownerAddress,
-      newOwner: newOwnerAddress,
-      timestamp,
-    });
-
-    // Verify the signature
-    const verifyResult = verifyStructuredSignature(
-      message,
-      domain,
-      body.signature,
+    // Authenticate with challenge-based signature
+    const authResult = this.authenticateWithChallenge(
+      c,
       ownerAddress,
-      network
+      "transfer-ownership",
+      { url: body.url, owner: ownerAddress, newOwner: newOwnerAddress },
+      body.signature,
+      body.challengeId
     );
-
-    if (!verifyResult.valid) {
-      consumeChallenge(body.challengeId);
-      return c.json(
-        {
-          error: "Invalid signature",
-          details: verifyResult.error,
-          recoveredAddress: verifyResult.recoveredAddress,
-          expectedAddress: ownerAddress,
-          tokenType,
-        },
-        403
-      );
-    }
-
-    consumeChallenge(body.challengeId);
+    if (!authResult.authenticated) return authResult.error;
 
     // Transfer ownership
     // We need to delete the old entry and create a new one under the new owner

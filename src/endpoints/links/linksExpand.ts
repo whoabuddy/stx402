@@ -66,8 +66,7 @@ export class LinksExpand extends BaseEndpoint {
     }
 
     // Get the owner's Durable Object
-    const id = c.env.USER_DO.idFromName(ownerAddress);
-    const stub = c.env.USER_DO.get(id) as DurableObjectStub<UserDurableObject>;
+    const stub = this.getUserDO(c, ownerAddress);
 
     try {
       const link = await stub.linkGet(slug);
