@@ -3,21 +3,10 @@ import {
   Address,
 } from "@stacks/transactions";
 import { log } from "./logger";
+import type { ExtendedSettleResult } from "../types";
 
-// Extended settle result that includes sender address
-export interface ExtendedSettleResult {
-  isValid: boolean;
-  txId?: string;
-  status?: string;
-  blockHeight?: number;
-  error?: string;
-  reason?: string;
-  senderAddress?: string;
-  sender_address?: string; // Facilitator might use snake_case
-  recipientAddress?: string;
-  recipient_address?: string;
-  amount?: string | number;
-}
+// Re-export for backwards compatibility
+export type { ExtendedSettleResult } from "../types";
 
 // Extract sender hash160 from a signed transaction hex
 // Returns the hash160 directly, avoiding network version issues

@@ -7,9 +7,17 @@ import {
   extractTypedValue,
   isSome,
   uint,
-  type ERC8004Network,
-  ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import {
+  AGENT_COMMON_PARAMS,
+  COMMON_ERROR_RESPONSES,
+  obj,
+  str,
+  num,
+  bool,
+  arr,
+  jsonResponse,
+} from "../../utils/schema-helpers";
 
 /**
  * Lookup agents by scanning through sequential IDs
@@ -24,108 +32,52 @@ export class AgentLookup extends BaseEndpoint {
       required: true,
       content: {
         "application/json": {
-          schema: {
-            type: "object" as const,
-            required: ["owner"],
-            properties: {
-              owner: {
-                type: "string" as const,
-                description: "Owner principal to search for",
-              },
-              startId: {
-                type: "number" as const,
-                description: "Agent ID to start scanning from (default: 0)",
-                default: 0,
-              },
-              maxScan: {
-                type: "number" as const,
-                description: "Maximum agents to scan (default: 100, max: 500)",
-                default: 100,
-              },
+          schema: obj(
+            {
+              owner: { ...str, description: "Owner principal to search for" },
+              startId: { ...num, description: "Agent ID to start scanning from (default: 0)", default: 0 },
+              maxScan: { ...num, description: "Maximum agents to scan (default: 100, max: 500)", default: 100 },
             },
-          },
+            ["owner"]
+          ),
         },
       },
     },
-    parameters: [
-      {
-        name: "network",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["mainnet", "testnet"] as const,
-          default: "testnet",
-        },
-      },
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: AGENT_COMMON_PARAMS,
     responses: {
-      "200": {
-        description: "List of agents owned by the address",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object" as const,
-              properties: {
-                owner: { type: "string" as const },
-                agents: {
-                  type: "array" as const,
-                  items: {
-                    type: "object" as const,
-                    properties: {
-                      agentId: { type: "number" as const },
-                      uri: { type: "string" as const },
-                    },
-                  },
-                },
-                count: { type: "number" as const },
-                scanned: { type: "number" as const },
-                hasMore: { type: "boolean" as const },
-                network: { type: "string" as const },
-                tokenType: { type: "string" as const },
-              },
-            },
-          },
-        },
-      },
-      "400": { description: "Invalid input" },
-      "402": { description: "Payment required" },
-      "501": { description: "Network not supported" },
+      "200": jsonResponse(
+        "List of agents owned by the address",
+        obj({
+          owner: str,
+          agents: arr(obj({ agentId: num, uri: str })),
+          count: num,
+          scanned: num,
+          startId: num,
+          hasMore: bool,
+          network: str,
+          tokenType: str,
+        })
+      ),
+      ...COMMON_ERROR_RESPONSES,
     },
   };
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = (c.req.query("network") || "testnet") as ERC8004Network;
+    const network = this.getNetwork(c);
     const log = c.var.logger;
 
     log.info("Agent lookup request", { network, tokenType });
 
-    if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
+    const mainnetError = this.checkMainnetDeployment(c, network);
+    if (mainnetError) {
       log.warn("Mainnet not supported for agent lookup");
-      return this.errorResponse(
-        c,
-        "ERC-8004 contracts not yet deployed on mainnet",
-        501
-      );
+      return mainnetError;
     }
 
-    let body: { owner?: string; startId?: number; maxScan?: number };
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    const parsed = await this.parseJsonBody<{ owner?: string; startId?: number; maxScan?: number }>(c);
+    if (parsed.error) return parsed.error;
+    const body = parsed.body;
 
     const { owner, startId = 0, maxScan = 100 } = body;
 

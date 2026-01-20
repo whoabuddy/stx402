@@ -7,105 +7,53 @@ import {
   isSome,
   isNone,
   uint,
-  type ERC8004Network,
-  ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import {
+  AGENT_COMMON_PARAMS,
+  AGENT_ID_BODY_SCHEMA,
+  AGENT_ERROR_RESPONSES,
+  obj,
+  str,
+  num,
+  arr,
+  jsonResponse,
+} from "../../utils/schema-helpers";
 
 export class ValidationList extends BaseEndpoint {
   schema = {
     tags: ["Agent Registry"],
     summary: "(paid) List all validation request hashes for agent",
-    requestBody: {
-      required: true,
-      content: {
-        "application/json": {
-          schema: {
-            type: "object" as const,
-            required: ["agentId"],
-            properties: {
-              agentId: {
-                type: "number" as const,
-                description: "Agent ID",
-              },
-            },
-          },
-        },
-      },
-    },
-    parameters: [
-      {
-        name: "network",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["mainnet", "testnet"] as const,
-          default: "testnet",
-        },
-      },
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    requestBody: AGENT_ID_BODY_SCHEMA,
+    parameters: AGENT_COMMON_PARAMS,
     responses: {
-      "200": {
-        description: "List of validation request hashes",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object" as const,
-              properties: {
-                agentId: { type: "number" as const },
-                validations: {
-                  type: "array" as const,
-                  items: { type: "string" as const },
-                  description: "Request hashes (hex)",
-                },
-                count: { type: "number" as const },
-                network: { type: "string" as const },
-                tokenType: { type: "string" as const },
-              },
-            },
-          },
-        },
-      },
-      "400": { description: "Invalid input" },
-      "402": { description: "Payment required" },
+      "200": jsonResponse(
+        "List of validation request hashes",
+        obj({
+          agentId: num,
+          validations: { ...arr(str), description: "Request hashes (hex)" },
+          count: num,
+          network: str,
+          tokenType: str,
+        })
+      ),
+      ...AGENT_ERROR_RESPONSES,
       "404": { description: "Agent not found" },
-      "501": { description: "Network not supported" },
     },
   };
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = (c.req.query("network") || "testnet") as ERC8004Network;
+    const network = this.getNetwork(c);
 
-    if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
-      return this.errorResponse(
-        c,
-        "ERC-8004 contracts not yet deployed on mainnet",
-        501
-      );
-    }
+    const mainnetError = this.checkMainnetDeployment(c, network);
+    if (mainnetError) return mainnetError;
 
-    let body: { agentId?: number };
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    const parsed = await this.parseJsonBody<{ agentId?: number }>(c);
+    if (parsed.error) return parsed.error;
 
-    const { agentId } = body;
-    if (agentId === undefined || agentId < 0) {
-      return this.errorResponse(c, "agentId is required and must be >= 0", 400);
-    }
+    const { agentId } = parsed.body;
+    const agentIdError = this.validateAgentId(c, agentId);
+    if (agentIdError) return agentIdError;
 
     try {
       // get-agent-validations returns (optional (list buffer))

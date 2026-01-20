@@ -11,9 +11,17 @@ import {
   none,
   some,
   boolCV,
-  type ERC8004Network,
-  ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import {
+  AGENT_COMMON_PARAMS,
+  AGENT_ERROR_RESPONSES,
+  obj,
+  str,
+  num,
+  bool,
+  arr,
+  jsonResponse,
+} from "../../utils/schema-helpers";
 
 export class ReputationList extends BaseEndpoint {
   schema = {
@@ -23,121 +31,51 @@ export class ReputationList extends BaseEndpoint {
       required: true,
       content: {
         "application/json": {
-          schema: {
-            type: "object" as const,
-            required: ["agentId"],
-            properties: {
-              agentId: {
-                type: "number" as const,
-                description: "Agent ID",
-              },
-              filterByClients: {
-                type: "array" as const,
-                items: { type: "string" as const },
-                description: "Optional: filter by specific client principals",
-              },
-              filterByTag1: {
-                type: "string" as const,
-                description: "Optional: filter by tag1 (hex, 32 bytes)",
-              },
-              filterByTag2: {
-                type: "string" as const,
-                description: "Optional: filter by tag2 (hex, 32 bytes)",
-              },
-              includeRevoked: {
-                type: "boolean" as const,
-                description: "Include revoked feedback (default: false)",
-                default: false,
-              },
+          schema: obj(
+            {
+              agentId: { ...num, description: "Agent ID" },
+              filterByClients: { ...arr(str), description: "Optional: filter by specific client principals" },
+              filterByTag1: { ...str, description: "Optional: filter by tag1 (hex, 32 bytes)" },
+              filterByTag2: { ...str, description: "Optional: filter by tag2 (hex, 32 bytes)" },
+              includeRevoked: { ...bool, description: "Include revoked feedback (default: false)", default: false },
             },
-          },
+            ["agentId"]
+          ),
         },
       },
     },
-    parameters: [
-      {
-        name: "network",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["mainnet", "testnet"] as const,
-          default: "testnet",
-        },
-      },
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: AGENT_COMMON_PARAMS,
     responses: {
-      "200": {
-        description: "List of feedback entries",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object" as const,
-              properties: {
-                agentId: { type: "number" as const },
-                feedback: {
-                  type: "array" as const,
-                  items: {
-                    type: "object" as const,
-                    properties: {
-                      client: { type: "string" as const },
-                      index: { type: "number" as const },
-                      score: { type: "number" as const },
-                      tag1: { type: "string" as const },
-                      tag2: { type: "string" as const },
-                      isRevoked: { type: "boolean" as const },
-                    },
-                  },
-                },
-                count: { type: "number" as const },
-                network: { type: "string" as const },
-                tokenType: { type: "string" as const },
-              },
-            },
-          },
-        },
-      },
-      "400": { description: "Invalid input" },
-      "402": { description: "Payment required" },
+      "200": jsonResponse(
+        "List of feedback entries",
+        obj({
+          agentId: num,
+          feedback: arr(obj({ client: str, index: num, score: num, tag1: str, tag2: str, isRevoked: bool })),
+          count: num,
+          network: str,
+          tokenType: str,
+        })
+      ),
+      ...AGENT_ERROR_RESPONSES,
       "404": { description: "Agent not found" },
-      "501": { description: "Network not supported" },
     },
   };
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = (c.req.query("network") || "testnet") as ERC8004Network;
+    const network = this.getNetwork(c);
 
-    if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
-      return this.errorResponse(
-        c,
-        "ERC-8004 contracts not yet deployed on mainnet",
-        501
-      );
-    }
+    const mainnetError = this.checkMainnetDeployment(c, network);
+    if (mainnetError) return mainnetError;
 
-    let body: {
+    const parsed = await this.parseJsonBody<{
       agentId?: number;
       filterByClients?: string[];
       filterByTag1?: string;
       filterByTag2?: string;
       includeRevoked?: boolean;
-    };
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (parsed.error) return parsed.error;
 
     const {
       agentId,
@@ -145,11 +83,10 @@ export class ReputationList extends BaseEndpoint {
       filterByTag1,
       filterByTag2,
       includeRevoked = false,
-    } = body;
+    } = parsed.body;
 
-    if (agentId === undefined || agentId < 0) {
-      return this.errorResponse(c, "agentId is required and must be >= 0", 400);
-    }
+    const agentIdError = this.validateAgentId(c, agentId);
+    if (agentIdError) return agentIdError;
 
     try {
       // read-all-feedback(agent-id, opt-clients, opt-tag1, opt-tag2, include-revoked)

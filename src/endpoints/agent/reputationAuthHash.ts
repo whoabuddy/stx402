@@ -5,9 +5,15 @@ import {
   computeDomainHash,
   computeFeedbackAuthHash,
   REPUTATION_DOMAIN,
-  type ERC8004Network,
-  ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import {
+  AGENT_COMMON_PARAMS,
+  COMMON_ERROR_RESPONSES,
+  obj,
+  str,
+  num,
+  jsonResponse,
+} from "../../utils/schema-helpers";
 
 export class ReputationAuthHash extends BaseEndpoint {
   schema = {
@@ -17,127 +23,56 @@ export class ReputationAuthHash extends BaseEndpoint {
       required: true,
       content: {
         "application/json": {
-          schema: {
-            type: "object" as const,
-            required: ["agentId", "signer", "indexLimit", "expiryBlockHeight"],
-            properties: {
-              agentId: {
-                type: "number" as const,
-                description: "Agent ID to authorize feedback for",
-              },
-              signer: {
-                type: "string" as const,
-                description: "Principal who will be authorized (agent owner/operator)",
-              },
-              indexLimit: {
-                type: "number" as const,
-                description: "Maximum feedback index allowed",
-              },
-              expiryBlockHeight: {
-                type: "number" as const,
-                description: "Block height when authorization expires",
-              },
+          schema: obj(
+            {
+              agentId: { ...num, description: "Agent ID to authorize feedback for" },
+              signer: { ...str, description: "Principal who will be authorized (agent owner/operator)" },
+              indexLimit: { ...num, description: "Maximum feedback index allowed" },
+              expiryBlockHeight: { ...num, description: "Block height when authorization expires" },
             },
-          },
+            ["agentId", "signer", "indexLimit", "expiryBlockHeight"]
+          ),
         },
       },
     },
-    parameters: [
-      {
-        name: "network",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["mainnet", "testnet"] as const,
-          default: "testnet",
-        },
-      },
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string" as const,
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: AGENT_COMMON_PARAMS,
     responses: {
-      "200": {
-        description: "SIP-018 message hash and structured data",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object" as const,
-              properties: {
-                messageHash: {
-                  type: "string" as const,
-                  description: "Hex-encoded hash to sign with your private key",
-                },
-                domainHash: { type: "string" as const },
-                structuredDataHash: { type: "string" as const },
-                domain: {
-                  type: "object" as const,
-                  properties: {
-                    name: { type: "string" as const },
-                    version: { type: "string" as const },
-                    chainId: { type: "number" as const },
-                  },
-                },
-                structuredData: {
-                  type: "object" as const,
-                  properties: {
-                    agentId: { type: "number" as const },
-                    signer: { type: "string" as const },
-                    indexLimit: { type: "number" as const },
-                    expiryBlockHeight: { type: "number" as const },
-                  },
-                },
-                instructions: { type: "string" as const },
-                network: { type: "string" as const },
-                tokenType: { type: "string" as const },
-              },
-            },
-          },
-        },
-      },
-      "400": { description: "Invalid input" },
-      "402": { description: "Payment required" },
-      "501": { description: "Network not supported" },
+      "200": jsonResponse(
+        "SIP-018 message hash and structured data",
+        obj({
+          messageHash: { ...str, description: "Hex-encoded hash to sign with your private key" },
+          domainHash: str,
+          structuredDataHash: str,
+          domain: obj({ name: str, version: str, chainId: num }),
+          structuredData: obj({ agentId: num, signer: str, indexLimit: num, expiryBlockHeight: num }),
+          instructions: str,
+          network: str,
+          tokenType: str,
+        })
+      ),
+      ...COMMON_ERROR_RESPONSES,
     },
   };
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = (c.req.query("network") || "testnet") as ERC8004Network;
+    const network = this.getNetwork(c);
 
-    if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
-      return this.errorResponse(
-        c,
-        "ERC-8004 contracts not yet deployed on mainnet",
-        501
-      );
-    }
+    const mainnetError = this.checkMainnetDeployment(c, network);
+    if (mainnetError) return mainnetError;
 
-    let body: {
+    const parsed = await this.parseJsonBody<{
       agentId?: number;
       signer?: string;
       indexLimit?: number;
       expiryBlockHeight?: number;
-    };
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (parsed.error) return parsed.error;
 
-    const { agentId, signer, indexLimit, expiryBlockHeight } = body;
+    const { agentId, signer, indexLimit, expiryBlockHeight } = parsed.body;
 
-    if (agentId === undefined || agentId < 0) {
-      return this.errorResponse(c, "agentId is required and must be >= 0", 400);
-    }
+    const agentIdError = this.validateAgentId(c, agentId);
+    if (agentIdError) return agentIdError;
     if (!signer) {
       return this.errorResponse(c, "signer principal is required", 400);
     }

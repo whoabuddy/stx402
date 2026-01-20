@@ -1,17 +1,69 @@
 import { OpenAPIRoute } from "chanfana";
 import { Address, deserializeTransaction } from "@stacks/transactions";
 import { validateTokenType } from "../utils/pricing";
-import type { AppContext } from "../types";
+import type { AppContext, ExtendedSettleResult } from "../types";
 import { ContentfulStatusCode } from "hono/utils/http-status";
-import type { SettlePaymentResult } from "../middleware/x402-stacks";
-
-// Extended settle result that may have sender in different formats
-interface ExtendedSettleResult extends SettlePaymentResult {
-  senderAddress?: string;
-  sender_address?: string;
-}
+import { ERC8004_CONTRACTS, type ERC8004Network } from "../utils/erc8004";
 
 export class BaseEndpoint extends OpenAPIRoute {
+  /**
+   * Get the network from query parameter with consistent default
+   */
+  protected getNetwork(c: AppContext): ERC8004Network {
+    return (c.req.query("network") || "testnet") as ERC8004Network;
+  }
+
+  /**
+   * Check if mainnet contracts are deployed. Returns an error response if not.
+   * Returns null if the check passes (mainnet is deployed or using testnet).
+   */
+  protected checkMainnetDeployment(
+    c: AppContext,
+    network: ERC8004Network
+  ): Response | null {
+    if (network === "mainnet" && !ERC8004_CONTRACTS.mainnet) {
+      return this.errorResponse(
+        c,
+        "ERC-8004 contracts not yet deployed on mainnet",
+        501
+      );
+    }
+    return null;
+  }
+
+  /**
+   * Parse JSON request body with standardized error handling.
+   * Returns the parsed body or an error response.
+   */
+  protected async parseJsonBody<T>(
+    c: AppContext
+  ): Promise<{ body: T; error?: never } | { body?: never; error: Response }> {
+    try {
+      const body = (await c.req.json()) as T;
+      return { body };
+    } catch {
+      return { error: this.errorResponse(c, "Invalid JSON body", 400) };
+    }
+  }
+
+  /**
+   * Validate an agent ID value. Returns an error response if invalid.
+   */
+  protected validateAgentId(
+    c: AppContext,
+    agentId: number | undefined,
+    source: "query" | "body" = "body"
+  ): Response | null {
+    if (agentId === undefined || agentId < 0) {
+      const message =
+        source === "query"
+          ? "agentId query parameter is required and must be >= 0"
+          : "agentId is required and must be >= 0";
+      return this.errorResponse(c, message, 400);
+    }
+    return null;
+  }
+
   protected getTokenType(c: AppContext): string {
     const rawTokenType = c.req.query("tokenType") || "STX";
     return validateTokenType(rawTokenType);
