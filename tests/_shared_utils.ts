@@ -135,8 +135,8 @@ export interface X402RequestResult {
  *
  * For nonce conflicts:
  * - Wait longer (tx needs to confirm or drop from mempool)
- * - Re-fetch 402 response to get fresh nonce
- * - Re-sign payment with fresh nonce
+ * - Let the retry loop fetch a new 402 response with a fresh nonce on the next attempt
+ * - Automatically re-sign the payment with the fresh nonce as part of each retry
  */
 export async function makeX402RequestWithRetry(
   endpoint: string,
@@ -203,7 +203,8 @@ export async function makeX402RequestWithRetry(
 
     // Step 2: Sign payment with fresh nonce
     const paymentReq: PaymentRequired = await initialRes.json();
-    log(`Payment required: ${paymentReq.maxAmountRequired} ${paymentReq.tokenType}, nonce: ${paymentReq.nonce.slice(0, 8)}...`);
+    const noncePreview = paymentReq.nonce?.slice(0, 8) ?? "<no-nonce>";
+    log(`Payment required: ${paymentReq.maxAmountRequired} ${paymentReq.tokenType}, nonce: ${noncePreview}...`);
 
     const signResult = await x402Client.signPayment(paymentReq);
     log("Payment signed");
@@ -247,7 +248,7 @@ export async function makeX402RequestWithRetry(
 
     const fullErrorText = `${errorCode || ""} ${errorMessage || ""} ${errText}`;
 
-    // Check for nonce conflict specifically
+    // Check for nonce conflict specifically (needs special handling with longer delay)
     if (isNonceConflict(fullErrorText)) {
       wasNonceConflict = true;
       if (attempt < maxRetries) {
@@ -256,10 +257,8 @@ export async function makeX402RequestWithRetry(
         await sleep(nonceConflictDelayMs);
         continue;
       }
-    }
-
-    // Check for other retryable errors
-    if (isRetryableError(paidRes.status, errorCode, errorMessage || errText) && attempt < maxRetries) {
+    // Check for other retryable errors (use else to avoid double-counting nonce conflicts)
+    } else if (isRetryableError(paidRes.status, errorCode, errorMessage || errText) && attempt < maxRetries) {
       retryCount++;
       const retryAfterSecs = paidRes.headers.get("Retry-After")
         ? parseInt(paidRes.headers.get("Retry-After")!, 10)

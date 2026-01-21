@@ -202,7 +202,9 @@ function parseArgs(): RunConfig {
 // X402 Payment Flow
 // =============================================================================
 
-// Nonce conflict delay - wait for stuck tx to clear from mempool
+// Nonce conflict delay used by the test runner to wait for a "stuck" tx
+// to clear from the mempool before retrying. Matches the default in
+// RetryConfig.nonceConflictDelayMs for consistency across test files.
 const NONCE_CONFLICT_DELAY_MS = 30000;
 
 interface X402PaymentRequired {
@@ -355,9 +357,13 @@ async function testEndpointWithToken(
 
         if (freshRes.status === 402) {
           paymentReq = await freshRes.json();
-          logger.debug(`Got fresh nonce: ${paymentReq.nonce.slice(0, 8)}...`);
+          const noncePreview = paymentReq.nonce?.slice(0, 8) ?? "unknown";
+          logger.debug(`Got fresh nonce: ${noncePreview}...`);
+          continue;
         }
-        continue;
+        // Fresh fetch didn't return 402 - can't retry with stale nonce
+        logger.debug(`Fresh payment requirements fetch failed with status ${freshRes.status}, not retrying with stale nonce`);
+        break;
       }
 
       // Check for other retryable errors
