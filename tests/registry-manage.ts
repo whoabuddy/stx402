@@ -14,11 +14,11 @@
  *   VERBOSE=1       - Enable verbose logging
  */
 
-import type { TokenType, NetworkType } from "x402-stacks";
-import { X402PaymentClient } from "x402-stacks";
+import { X402PaymentClient, X402_HEADERS } from "x402-stacks";
+import type { TokenType, NetworkType, PaymentRequiredV2 } from "x402-stacks";
 import { deriveChildAccount } from "../src/utils/wallet";
 import { hexToCV, signStructuredData } from "@stacks/transactions";
-import { COLORS, X402_CLIENT_PK } from "./_shared_utils";
+import { COLORS, X402_CLIENT_PK, buildPaymentPayloadV2 } from "./_shared_utils";
 
 // Override defaults for registry management (mainnet + production)
 const X402_NETWORK = (process.env.X402_NETWORK || "mainnet") as NetworkType;
@@ -74,18 +74,8 @@ ${COLORS.cyan}Examples:${COLORS.reset}
 }
 
 // =============================================================================
-// X402 Payment Flow
+// X402 V2 Payment Flow
 // =============================================================================
-
-interface PaymentRequired {
-  maxAmountRequired: string;
-  resource: string;
-  payTo: string;
-  network: "mainnet" | "testnet";
-  nonce: string;
-  expiresAt: string;
-  tokenType: TokenType;
-}
 
 async function makeX402Request(
   endpoint: string,
@@ -118,22 +108,42 @@ async function makeX402Request(
     return { status: initialRes.status, data, headers: initialRes.headers };
   }
 
-  // Get payment requirements
+  // Parse V2 payment requirements
   const paymentText = await initialRes.text();
-  const paymentReq: PaymentRequired = JSON.parse(paymentText);
-  log(`Payment required: ${paymentReq.maxAmountRequired} ${paymentReq.tokenType}`);
+  const paymentReq: PaymentRequiredV2 = JSON.parse(paymentText);
+
+  if (paymentReq.x402Version !== 2 || !paymentReq.accepts?.length) {
+    return { status: 400, data: { error: "Invalid V2 payment requirements" }, headers: initialRes.headers };
+  }
+
+  const requirements = paymentReq.accepts[0];
+  log(`Payment required: ${requirements.amount} ${requirements.asset}`);
+
+  // Build V1-compatible request for the client
+  const v1Request = {
+    maxAmountRequired: requirements.amount,
+    resource: paymentReq.resource.url,
+    payTo: requirements.payTo,
+    network: X402_NETWORK as "mainnet" | "testnet",
+    nonce: (requirements.extra?.nonce as string) || crypto.randomUUID(),
+    expiresAt: new Date(Date.now() + requirements.maxTimeoutSeconds * 1000).toISOString(),
+    tokenType: (requirements.extra?.tokenType as TokenType) || TOKEN_TYPE,
+    ...(requirements.extra?.tokenContract && { tokenContract: requirements.extra.tokenContract }),
+  };
 
   // Sign payment
-  const signResult = await x402Client.signPayment(paymentReq);
+  const signResult = await x402Client.signPayment(v1Request);
   log("Payment signed");
 
-  // Retry with payment
+  // Build V2 payload and retry
+  const paymentPayload = buildPaymentPayloadV2(signResult.signedTransaction, requirements);
+  const encodedPayload = btoa(JSON.stringify(paymentPayload));
+
   const paidRes = await fetch(`${fullUrl}${tokenParam}`, {
     method,
     headers: {
       ...(body ? { "Content-Type": "application/json" } : {}),
-      "X-PAYMENT": signResult.signedTransaction,
-      "X-PAYMENT-TOKEN-TYPE": TOKEN_TYPE,
+      [X402_HEADERS.PAYMENT_SIGNATURE]: encodedPayload,
     },
     body: body ? JSON.stringify(body) : undefined,
   });

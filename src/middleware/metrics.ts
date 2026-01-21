@@ -337,13 +337,13 @@ export const metricsMiddleware = () => {
     const status = c.res?.status || 500;
     const isSuccess = status >= 200 && status < 300;
 
-    // Only track metrics for paid requests (those with X-PAYMENT header)
+    // Only track metrics for paid requests (those with V2 payment-signature header)
     // This avoids counting 402 responses
-    const paymentHeader = c.req.header("X-PAYMENT");
+    const paymentHeader = c.req.header("payment-signature");
     if (!paymentHeader) return;
 
-    // Get token type from header or query
-    const headerTokenType = c.req.header("X-PAYMENT-TOKEN-TYPE") ?? "";
+    // Get token type from query (V2 embeds it in payload, query param is backup)
+    const headerTokenType = "";
     const queryTokenType = c.req.query("tokenType") ?? "STX";
     const tokenTypeStr = headerTokenType || queryTokenType;
 

@@ -1,5 +1,18 @@
-import type { NetworkType, TokenType } from "x402-stacks";
-import { X402PaymentClient } from "x402-stacks";
+import {
+  X402PaymentClient,
+  X402_HEADERS,
+  encodePaymentPayload,
+  networkToCAIP2,
+} from "x402-stacks";
+import type {
+  NetworkType,
+  TokenType,
+  PaymentRequiredV2,
+  PaymentRequirementsV2,
+  PaymentPayloadV2,
+  SettlementResponseV2,
+  NetworkV2,
+} from "x402-stacks";
 
 export const COLORS = {
   reset: '\x1b[0m',
@@ -24,7 +37,7 @@ export interface TestLogger {
   success: (msg: string) => void;
   error: (msg: string) => void;
   summary: (successCount: number, total: number) => void;
-  debug: (msg: string, data?: any) => void;
+  debug: (msg: string, data?: unknown) => void;
 }
 
 export function createTestLogger(testName: string, verbose = false): TestLogger {
@@ -32,7 +45,7 @@ export function createTestLogger(testName: string, verbose = false): TestLogger 
     info: (msg) => console.log(`${COLORS.cyan}[${testName}]${COLORS.reset} ${msg}`),
     success: (msg) => console.log(`${COLORS.bright}${COLORS.green}[${testName}] ✅ ${msg}${COLORS.reset}`),
     error: (msg) => console.log(`${COLORS.bright}${COLORS.red}[${testName}] ❌ ${msg}${COLORS.reset}`),
-    debug: (msg: string, data?: any) => {
+    debug: (msg: string, data?: unknown) => {
       if (verbose) {
         console.log(`${COLORS.gray}[${testName}] 🔍 ${msg}${data ? `: ${JSON.stringify(data, null, 2)}` : ''}${COLORS.reset}`);
       }
@@ -51,16 +64,6 @@ export function createTestLogger(testName: string, verbose = false): TestLogger 
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export interface PaymentRequired {
-  maxAmountRequired: string;
-  resource: string;
-  payTo: string;
-  network: "mainnet" | "testnet";
-  nonce: string;
-  expiresAt: string;
-  tokenType: TokenType;
-}
-
 export interface PaymentErrorResponse {
   error: string;
   code: string;
@@ -68,11 +71,8 @@ export interface PaymentErrorResponse {
   tokenType: TokenType;
   resource: string;
   details?: {
-    settleError?: string;
-    settleReason?: string;
-    settleStatus?: string;
+    errorReason?: string;
     exceptionMessage?: string;
-    validationError?: string;
   };
 }
 
@@ -131,7 +131,35 @@ export interface X402RequestResult {
 }
 
 /**
- * Make an X402 request with smart retry logic for nonce conflicts
+ * Build a V2 payment payload from a signed transaction and requirements
+ */
+export function buildPaymentPayloadV2(
+  signedTransaction: string,
+  requirements: PaymentRequirementsV2
+): PaymentPayloadV2 {
+  return {
+    x402Version: 2,
+    accepted: requirements,
+    payload: {
+      transaction: signedTransaction,
+    },
+  };
+}
+
+/**
+ * Decode a V2 payment response from header (base64 JSON)
+ */
+export function decodePaymentResponse(header: string | null): SettlementResponseV2 | null {
+  if (!header) return null;
+  try {
+    return JSON.parse(atob(header));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Make an X402 V2 request with smart retry logic for nonce conflicts
  *
  * For nonce conflicts:
  * - Wait longer (tx needs to confirm or drop from mempool)
@@ -201,22 +229,48 @@ export async function makeX402RequestWithRetry(
       return { status: initialRes.status, data, headers: initialRes.headers, retryCount, wasNonceConflict };
     }
 
-    // Step 2: Sign payment with fresh nonce
-    const paymentReq: PaymentRequired = await initialRes.json();
-    const noncePreview = paymentReq.nonce?.slice(0, 8) ?? "<no-nonce>";
-    log(`Payment required: ${paymentReq.maxAmountRequired} ${paymentReq.tokenType}, nonce: ${noncePreview}...`);
+    // Step 2: Parse V2 payment requirements
+    const paymentReq: PaymentRequiredV2 = await initialRes.json();
+    if (paymentReq.x402Version !== 2 || !paymentReq.accepts?.length) {
+      return {
+        status: 400,
+        data: { error: "Invalid V2 payment requirements" },
+        headers: initialRes.headers,
+        retryCount,
+        wasNonceConflict,
+      };
+    }
 
-    const signResult = await x402Client.signPayment(paymentReq);
+    const requirements = paymentReq.accepts[0];
+    const noncePreview = (requirements.extra?.nonce as string)?.slice(0, 8) ?? "<no-nonce>";
+    log(`Payment required: ${requirements.amount} ${requirements.asset}, nonce: ${noncePreview}...`);
+
+    // Step 3: Sign payment using V1 client (converts internally)
+    // Build a V1-compatible request for the client
+    const v1Request = {
+      maxAmountRequired: requirements.amount,
+      resource: paymentReq.resource.url,
+      payTo: requirements.payTo,
+      network: X402_NETWORK as "mainnet" | "testnet",
+      nonce: (requirements.extra?.nonce as string) || crypto.randomUUID(),
+      expiresAt: new Date(Date.now() + requirements.maxTimeoutSeconds * 1000).toISOString(),
+      tokenType: (requirements.extra?.tokenType as TokenType) || tokenType,
+      ...(requirements.extra?.tokenContract && { tokenContract: requirements.extra.tokenContract }),
+    };
+
+    const signResult = await x402Client.signPayment(v1Request);
     log("Payment signed");
 
-    // Step 3: Submit with payment header
+    // Step 4: Build V2 payload and submit
+    const paymentPayload = buildPaymentPayloadV2(signResult.signedTransaction, requirements);
+    const encodedPayload = btoa(JSON.stringify(paymentPayload));
+
     const paidRes = await fetch(urlWithToken, {
       method,
       headers: {
         ...(body ? { "Content-Type": "application/json" } : {}),
         ...extraHeaders,
-        "X-PAYMENT": signResult.signedTransaction,
-        "X-PAYMENT-TOKEN-TYPE": tokenType,
+        [X402_HEADERS.PAYMENT_SIGNATURE]: encodedPayload,
       },
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -242,7 +296,7 @@ export async function makeX402RequestWithRetry(
     try {
       const parsed = JSON.parse(errText);
       errorCode = parsed.code;
-      errorMessage = parsed.error || parsed.details?.validationError || parsed.details?.settleError;
+      errorMessage = parsed.error || parsed.details?.errorReason || parsed.details?.exceptionMessage;
       bodyRetryAfter = parsed.retryAfter;
     } catch { /* not JSON */ }
 

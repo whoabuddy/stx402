@@ -1,31 +1,15 @@
 import type { Context } from "hono";
 import type { Logger } from "./utils/logger";
+import type { SettlementResponseV2, PaymentPayloadV2 } from "x402-stacks";
 
 export interface AppVariables {
   logger: Logger;
+  // V2 payment context
+  settleResult?: SettlementResponseV2;
+  paymentPayload?: PaymentPayloadV2;
 }
 
 export type AppContext = Context<{ Bindings: Env; Variables: AppVariables }>;
 
-/**
- * Extended settle result that includes sender address in various formats.
- * Used for payment verification and user identification.
- * Consolidates the different address formats that facilitators may return.
- */
-export interface ExtendedSettleResult {
-  isValid: boolean;
-  txId?: string;
-  status?: string;
-  blockHeight?: number;
-  error?: string;
-  reason?: string;
-  validationError?: string;
-  // Various address field formats - facilitators may use different naming
-  sender?: string;
-  senderAddress?: string;
-  sender_address?: string;
-  recipient?: string;
-  recipientAddress?: string;
-  recipient_address?: string;
-  amount?: string | number;
-}
+// Re-export V2 types for use in endpoints
+export type { SettlementResponseV2, PaymentPayloadV2 } from "x402-stacks";
