@@ -33,6 +33,8 @@ import {
   X402_CLIENT_PK,
   X402_NETWORK,
   X402_WORKER_URL,
+  makeX402RequestWithRetry,
+  sleep,
 } from "./_shared_utils";
 
 // =============================================================================
@@ -112,21 +114,9 @@ function logError(message: string) {
   console.log(`  ${COLORS.red}✗${COLORS.reset} ${message}`);
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 // =============================================================================
-// X402 Payment Flow
+// X402 Payment Flow (with retry for nonce conflicts)
 // =============================================================================
-
-interface PaymentRequired {
-  maxAmountRequired: string;
-  resource: string;
-  payTo: string;
-  network: "mainnet" | "testnet";
-  nonce: string;
-  expiresAt: string;
-  tokenType: TokenType;
-}
 
 async function makeX402Request(
   endpoint: string,
@@ -135,62 +125,23 @@ async function makeX402Request(
   body?: unknown,
   extraHeaders?: Record<string, string>
 ): Promise<{ status: number; data: unknown; headers: Headers }> {
-  const fullUrl = `${X402_WORKER_URL}${endpoint}`;
-  const tokenParam = endpoint.includes("?") ? `&tokenType=${TOKEN_TYPE}` : `?tokenType=${TOKEN_TYPE}`;
-
-  // Step 1: Initial request to get 402
   log(`Requesting ${method} ${endpoint}...`);
 
-  const initialRes = await fetch(`${fullUrl}${tokenParam}`, {
-    method,
-    headers: {
-      ...(body ? { "Content-Type": "application/json" } : {}),
-      ...extraHeaders,
+  const result = await makeX402RequestWithRetry(endpoint, method, x402Client, TOKEN_TYPE, {
+    body,
+    extraHeaders,
+    retry: {
+      maxRetries: 3,
+      nonceConflictDelayMs: 30000, // 30s for nonce conflicts
+      verbose: VERBOSE,
     },
-    body: body ? JSON.stringify(body) : undefined,
   });
 
-  // If not 402, return as-is (e.g., free endpoints or errors)
-  if (initialRes.status !== 402) {
-    let data: unknown;
-    const text = await initialRes.text();
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
-    }
-    return { status: initialRes.status, data, headers: initialRes.headers };
+  if (result.wasNonceConflict && result.retryCount && result.retryCount > 0) {
+    log(`Recovered from nonce conflict after ${result.retryCount} retries`);
   }
 
-  // Step 2: Get payment requirements (clone response to avoid body consumed issues)
-  const paymentText = await initialRes.text();
-  const paymentReq: PaymentRequired = JSON.parse(paymentText);
-  log(`Payment required: ${paymentReq.maxAmountRequired} ${paymentReq.tokenType}`);
-
-  // Step 3: Sign payment
-  const signResult = await x402Client.signPayment(paymentReq);
-  log("Payment signed");
-
-  // Step 4: Retry with payment
-  const paidRes = await fetch(`${fullUrl}${tokenParam}`, {
-    method,
-    headers: {
-      ...(body ? { "Content-Type": "application/json" } : {}),
-      ...extraHeaders,
-      "X-PAYMENT": signResult.signedTransaction,
-      "X-PAYMENT-TOKEN-TYPE": TOKEN_TYPE,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  let data: unknown;
-  const responseText = await paidRes.text();
-  try {
-    data = JSON.parse(responseText);
-  } catch {
-    data = responseText;
-  }
-  return { status: paidRes.status, data, headers: paidRes.headers };
+  return { status: result.status, data: result.data, headers: result.headers };
 }
 
 // =============================================================================
