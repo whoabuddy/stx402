@@ -1,9 +1,4 @@
-import {
-  X402PaymentClient,
-  X402_HEADERS,
-  encodePaymentPayload,
-  networkToCAIP2,
-} from "x402-stacks";
+import { X402PaymentClient, X402_HEADERS } from "x402-stacks";
 import type {
   NetworkType,
   TokenType,
@@ -11,7 +6,6 @@ import type {
   PaymentRequirementsV2,
   PaymentPayloadV2,
   SettlementResponseV2,
-  NetworkV2,
 } from "x402-stacks";
 
 export const COLORS = {
