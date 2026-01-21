@@ -1,5 +1,59 @@
 import type { X402ProbeData } from "./registry";
 
+// Check if hostname is private/internal (SSRF protection)
+function isPrivateHostname(hostname: string): string | null {
+  const lower = hostname.toLowerCase();
+
+  // Block localhost variants
+  if (lower === "localhost" || lower.endsWith(".localhost")) {
+    return "Cannot probe localhost";
+  }
+
+  // Block common internal hostnames
+  if (lower.endsWith(".local") || lower.endsWith(".internal") || lower.endsWith(".corp")) {
+    return "Cannot probe internal hostnames";
+  }
+
+  // Check if it's an IP address
+  const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4Match) {
+    const octets = ipv4Match.slice(1).map(Number);
+    const [a, b] = octets;
+
+    // Loopback: 127.0.0.0/8
+    if (a === 127) return "Cannot probe loopback addresses";
+
+    // Private Class A: 10.0.0.0/8
+    if (a === 10) return "Cannot probe private IP ranges";
+
+    // Private Class B: 172.16.0.0/12 (172.16.x.x - 172.31.x.x)
+    if (a === 172 && b >= 16 && b <= 31) return "Cannot probe private IP ranges";
+
+    // Private Class C: 192.168.0.0/16
+    if (a === 192 && b === 168) return "Cannot probe private IP ranges";
+
+    // Link-local: 169.254.0.0/16
+    if (a === 169 && b === 254) return "Cannot probe link-local addresses";
+
+    // Current network: 0.0.0.0/8
+    if (a === 0) return "Cannot probe reserved addresses";
+  }
+
+  // Block IPv6 private ranges (URL.hostname strips brackets, so [::1] becomes ::1)
+  if (hostname.includes(":")) {
+    // Loopback
+    if (lower === "::1") return "Cannot probe loopback addresses";
+    // IPv4-mapped IPv6 (e.g., ::ffff:127.0.0.1)
+    if (lower.startsWith("::ffff:")) return "Cannot probe IPv4-mapped IPv6 addresses";
+    // Link-local (fe80::/10)
+    if (lower.startsWith("fe80:")) return "Cannot probe link-local addresses";
+    // Unique local (fc00::/7)
+    if (lower.startsWith("fc") || lower.startsWith("fd")) return "Cannot probe private IP ranges";
+  }
+
+  return null; // Hostname is allowed
+}
+
 export interface ProbeResult {
   success: boolean;
   isX402Endpoint: boolean;
@@ -91,6 +145,12 @@ export async function probeX402Endpoint(
     // Only allow http/https
     if (!["http:", "https:"].includes(parsedUrl.protocol)) {
       return { success: false, isX402Endpoint: false, error: "URL must use http or https" };
+    }
+
+    // Block private/internal hostnames and IPs (SSRF protection)
+    const privateIpError = isPrivateHostname(parsedUrl.hostname);
+    if (privateIpError) {
+      return { success: false, isX402Endpoint: false, error: privateIpError };
     }
 
     // First, try a request without payment to get 402 response
