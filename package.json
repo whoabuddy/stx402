@@ -18,7 +18,7 @@
     "chanfana": "^3.0.0",
     "hono": "^4.11.3",
     "qrcode": "^1.5.4",
-    "x402-stacks": "^1.1.1",
+    "x402-stacks": "^2.0.1",
     "zod": "^4.3.5"
   },
   "devDependencies": {

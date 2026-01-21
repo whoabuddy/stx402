@@ -1,25 +1,16 @@
-import { TokenType, X402PaymentClient } from "x402-stacks";
+import { X402PaymentClient, X402_HEADERS } from "x402-stacks";
+import type { TokenType, PaymentRequiredV2, PaymentRequirementsV2 } from "x402-stacks";
 import { deriveChildAccount } from "../src/utils/wallet";
-import { createTestLogger, X402_CLIENT_PK, X402_NETWORK, X402_WORKER_URL } from "./_shared_utils";
-
-interface X402PaymentRequired {
-  maxAmountRequired: string;
-  resource: string;
-  payTo: string;
-  network: "mainnet" | "testnet";
-  nonce: string;
-  expiresAt: string;
-  tokenType: TokenType;
-}
+import { createTestLogger, X402_CLIENT_PK, X402_NETWORK, X402_WORKER_URL, buildPaymentPayloadV2 } from "./_shared_utils";
 
 async function makeX402Request(
   x402Client: X402PaymentClient,
   endpoint: string,
   method: "GET" | "POST",
-  body: any,
+  body: unknown,
   tokenType: TokenType,
   logger: ReturnType<typeof createTestLogger>
-): Promise<{ status: number; data: any }> {
+): Promise<{ status: number; data: unknown }> {
   const url = `${X402_WORKER_URL}${endpoint}?tokenType=${tokenType}&network=testnet`;
 
   // First request - expect 402
@@ -38,19 +29,40 @@ async function makeX402Request(
     }
   }
 
-  const paymentReq: X402PaymentRequired = await initialRes.json();
-  logger.debug("402 Payment req", paymentReq);
+  // Parse V2 payment requirements
+  const paymentReq: PaymentRequiredV2 = await initialRes.json();
+  logger.debug("402 Payment req (V2)", paymentReq);
 
-  const signResult = await x402Client.signPayment(paymentReq);
+  if (paymentReq.x402Version !== 2 || !paymentReq.accepts?.length) {
+    return { status: 400, data: { error: "Invalid V2 payment requirements" } };
+  }
+
+  const requirements = paymentReq.accepts[0];
+
+  // Build V1-compatible request for the client
+  const v1Request = {
+    maxAmountRequired: requirements.amount,
+    resource: paymentReq.resource.url,
+    payTo: requirements.payTo,
+    network: X402_NETWORK as "mainnet" | "testnet",
+    nonce: (requirements.extra?.nonce as string) || crypto.randomUUID(),
+    expiresAt: new Date(Date.now() + requirements.maxTimeoutSeconds * 1000).toISOString(),
+    tokenType: (requirements.extra?.tokenType as TokenType) || tokenType,
+    ...(requirements.extra?.tokenContract && { tokenContract: requirements.extra.tokenContract }),
+  };
+
+  const signResult = await x402Client.signPayment(v1Request);
   logger.debug("Signed payment", signResult);
 
-  // Retry with payment
+  // Build V2 payload and retry
+  const paymentPayload = buildPaymentPayloadV2(signResult.signedTransaction, requirements);
+  const encodedPayload = btoa(JSON.stringify(paymentPayload));
+
   const retryRes = await fetch(url, {
     method,
     headers: {
       "Content-Type": "application/json",
-      "X-PAYMENT": signResult.signedTransaction,
-      "X-PAYMENT-TOKEN-TYPE": tokenType,
+      [X402_HEADERS.PAYMENT_SIGNATURE]: encodedPayload,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -112,8 +124,8 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger
   );
 
-  if (infoResult.status === 200 && infoResult.data.owner) {
-    logger.success(`Agent 0 owner: ${infoResult.data.owner}`);
+  if (infoResult.status === 200 && (infoResult.data as { owner?: string }).owner) {
+    logger.success(`Agent 0 owner: ${(infoResult.data as { owner: string }).owner}`);
     successCount++;
   } else if (infoResult.status === 404) {
     logger.success(`Agent 0 not found (expected if no agents registered)`);
@@ -135,8 +147,8 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger
   );
 
-  if (ownerResult.status === 200 && ownerResult.data.owner) {
-    logger.success(`Got owner for agent 0: ${ownerResult.data.owner}`);
+  if (ownerResult.status === 200 && (ownerResult.data as { owner?: string }).owner) {
+    logger.success(`Got owner for agent 0: ${(ownerResult.data as { owner: string }).owner}`);
     successCount++;
   } else if (ownerResult.status === 404) {
     logger.success(`Agent 0 not found (expected if no agents registered)`);
@@ -158,8 +170,8 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger
   );
 
-  if (versionResult.status === 200 && versionResult.data.version) {
-    logger.success(`Identity registry version: ${versionResult.data.version}`);
+  if (versionResult.status === 200 && (versionResult.data as { version?: string }).version) {
+    logger.success(`Identity registry version: ${(versionResult.data as { version: string }).version}`);
     successCount++;
   } else {
     logger.error(`Version lookup failed: ${JSON.stringify(versionResult.data)}`);
@@ -178,8 +190,9 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger
   );
 
-  if (repSummaryResult.status === 200 && typeof repSummaryResult.data.count === "number") {
-    logger.success(`Agent 0 reputation: ${repSummaryResult.data.count} feedbacks, avg ${repSummaryResult.data.averageScore}`);
+  const repData = repSummaryResult.data as { count?: number; averageScore?: number };
+  if (repSummaryResult.status === 200 && typeof repData.count === "number") {
+    logger.success(`Agent 0 reputation: ${repData.count} feedbacks, avg ${repData.averageScore}`);
     successCount++;
   } else if (repSummaryResult.status === 404) {
     logger.success(`Agent 0 not found for reputation (expected if no agents)`);
@@ -201,8 +214,9 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger
   );
 
-  if (repClientsResult.status === 200 && Array.isArray(repClientsResult.data.clients)) {
-    logger.success(`Agent 0 has ${repClientsResult.data.count} feedback clients`);
+  const clientsData = repClientsResult.data as { clients?: unknown[]; count?: number };
+  if (repClientsResult.status === 200 && Array.isArray(clientsData.clients)) {
+    logger.success(`Agent 0 has ${clientsData.count} feedback clients`);
     successCount++;
   } else if (repClientsResult.status === 404) {
     logger.success(`Agent 0 not found (expected if no agents)`);
@@ -224,8 +238,9 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger
   );
 
-  if (valSummaryResult.status === 200 && typeof valSummaryResult.data.count === "number") {
-    logger.success(`Agent 0 validations: ${valSummaryResult.data.count} total`);
+  const valData = valSummaryResult.data as { count?: number };
+  if (valSummaryResult.status === 200 && typeof valData.count === "number") {
+    logger.success(`Agent 0 validations: ${valData.count} total`);
     successCount++;
   } else if (valSummaryResult.status === 404) {
     logger.success(`Agent 0 not found for validation (expected if no agents)`);
@@ -248,8 +263,9 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger
   );
 
-  if (lookupResult.status === 200 && Array.isArray(lookupResult.data.agents)) {
-    logger.success(`Found ${lookupResult.data.count} agents for ${testDeployer.slice(0, 10)}...`);
+  const lookupData = lookupResult.data as { agents?: unknown[]; count?: number };
+  if (lookupResult.status === 200 && Array.isArray(lookupData.agents)) {
+    logger.success(`Found ${lookupData.count} agents for ${testDeployer.slice(0, 10)}...`);
     successCount++;
   } else {
     logger.error(`Agent lookup failed: ${JSON.stringify(lookupResult.data)}`);

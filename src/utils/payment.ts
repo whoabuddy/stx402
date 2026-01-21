@@ -3,10 +3,7 @@ import {
   Address,
 } from "@stacks/transactions";
 import { log } from "./logger";
-import type { ExtendedSettleResult } from "../types";
-
-// Re-export for backwards compatibility
-export type { ExtendedSettleResult } from "../types";
+import type { SettlementResponseV2 } from "../types";
 
 // Extract sender hash160 from a signed transaction hex
 // Returns the hash160 directly, avoiding network version issues
@@ -70,41 +67,15 @@ export function txSenderMatchesAddress(signedTxHex: string, address: string): bo
   return txHash160.toLowerCase() === addrHash160.toLowerCase();
 }
 
-// Parse the X-PAYMENT-RESPONSE header to get payment details
-export function parsePaymentResponse(headerValue: string | null): ExtendedSettleResult | null {
-  if (!headerValue) return null;
-
-  try {
-    const result = JSON.parse(headerValue) as ExtendedSettleResult;
-
-    // Normalize snake_case to camelCase for easier access
-    if (result.sender_address && !result.senderAddress) {
-      result.senderAddress = result.sender_address;
-    }
-    if (result.recipient_address && !result.recipientAddress) {
-      result.recipientAddress = result.recipient_address;
-    }
-
-    return result;
-  } catch {
-    return null;
-  }
-}
-
-// Check if the payer (from settle result or signed tx) matches an expected address
+// Check if the payer (from V2 settle result or signed tx) matches an expected address
 export function payerMatchesAddress(
-  settleResult: ExtendedSettleResult | null,
+  settleResult: SettlementResponseV2 | null,
   signedTxHex: string | null,
   expectedAddress: string
 ): boolean {
-  // First, try to match from settle result (preferred - from facilitator)
-  if (settleResult?.senderAddress) {
-    if (addressesMatchByHash160(settleResult.senderAddress, expectedAddress)) {
-      return true;
-    }
-  }
-  if (settleResult?.sender_address) {
-    if (addressesMatchByHash160(settleResult.sender_address, expectedAddress)) {
+  // V2: Use 'payer' field from settlement result (preferred - from facilitator)
+  if (settleResult?.payer) {
+    if (addressesMatchByHash160(settleResult.payer, expectedAddress)) {
       return true;
     }
   }

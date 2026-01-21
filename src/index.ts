@@ -73,7 +73,8 @@ app.use(
   cors({
     origin: "*",
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["X-PAYMENT", "X-PAYMENT-TOKEN-TYPE"],
+    // V2 headers (lowercase for HTTP/2 compatibility)
+    allowHeaders: ["payment-signature", "payment-required", "payment-response"],
   })
 );
 
@@ -93,9 +94,10 @@ app.get("/", (c) => {
       links: "/links/* - URL shortener with analytics",
     },
     payment: {
+      x402Version: 2,
       tokens: ["STX", "sBTC", "USDCx"],
-      header: "X-PAYMENT",
-      tokenTypeHeader: "X-PAYMENT-TOKEN-TYPE",
+      requestHeader: "payment-signature",
+      responseHeader: "payment-response",
     },
     related: {
       utilities: "https://x402.aibtc.com",
@@ -124,9 +126,9 @@ The X402 Directory - Meta layer for the X402 ecosystem.
 - **Agent**: ERC-8004 agent identity, reputation, and validation on Stacks
 - **Links**: URL shortener with click tracking
 
-## Payment
-All paid endpoints require an \`X-PAYMENT\` header with a signed Stacks transaction.
-Optionally specify token via \`X-PAYMENT-TOKEN-TYPE\` (STX, sBTC, USDCx).
+## Payment (X402 V2)
+All paid endpoints use the X402 V2 protocol. Request without payment to receive a 402 response with payment requirements. Submit payment via the \`payment-signature\` header (base64-encoded JSON). Successful responses include \`payment-response\` header.
+Supported tokens: STX, sBTC, USDCx.
 
 ## Related
 For general utilities, storage, and inference: https://x402.aibtc.com

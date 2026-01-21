@@ -1,11 +1,21 @@
 import type { Context } from "hono";
-import { X402PaymentVerifier } from "x402-stacks";
+import {
+  X402PaymentVerifier,
+  X402_HEADERS,
+  X402_ERROR_CODES,
+  STACKS_NETWORKS,
+} from "x402-stacks";
+import type {
+  PaymentRequiredV2,
+  PaymentRequirementsV2,
+  PaymentPayloadV2,
+  SettlementResponseV2,
+  NetworkV2,
+} from "x402-stacks";
 import type { TokenContract } from "x402-stacks";
-import { replaceBigintWithString } from "../utils/bigint";
 import {
   getPaymentAmountForPath,
   getEndpointTier,
-  TIER_AMOUNTS,
   type TokenType,
   type PricingTier,
   validateTokenType,
@@ -24,29 +34,11 @@ const TOKEN_CONTRACTS: Record<"mainnet" | "testnet", Record<"sBTC" | "USDCx", To
   },
 };
 
-export interface X402PaymentRequired {
-  maxAmountRequired: string;
-  resource: string;
-  payTo: string;
-  network: "mainnet" | "testnet";
-  nonce: string;
-  expiresAt: string;
-  tokenType: TokenType;
-  pricingTier: PricingTier;
-  tokenContract?: TokenContract;
-}
-
-export interface SettlePaymentResult {
-  isValid: boolean;
-  txId?: string;
-  status?: string;
-  blockHeight?: number;
-  error?: string;
-  reason?: string;
-  validationError?: string;  // From x402-stacks verifier
-  sender?: string;
-  recipient?: string;
-}
+// Map legacy network names to CAIP-2 format
+const CAIP2_NETWORK: Record<"mainnet" | "testnet", NetworkV2> = {
+  mainnet: STACKS_NETWORKS.MAINNET, // "stacks:1"
+  testnet: STACKS_NETWORKS.TESTNET, // "stacks:2147483648"
+};
 
 // Payment error codes for client debugging
 export type PaymentErrorCode =
@@ -66,34 +58,27 @@ export interface PaymentErrorResponse {
   tokenType: TokenType;
   resource: string;
   details?: {           // Raw error details for debugging
-    settleError?: string;
-    settleReason?: string;
-    settleStatus?: string;
+    errorReason?: string;
     exceptionMessage?: string;
-    validationError?: string;
   };
 }
 
-// Helper to classify errors from facilitator
-function classifyPaymentError(error: unknown, settleResult?: SettlePaymentResult): {
+// Helper to classify errors from facilitator (V2 error codes)
+function classifyPaymentError(errorReason?: string): {
   code: PaymentErrorCode;
   message: string;
   httpStatus: number;
   retryAfter?: number;
 } {
-  const errorStr = String(error).toLowerCase();
-  const resultError = settleResult?.error?.toLowerCase() || "";
-  const resultReason = settleResult?.reason?.toLowerCase() || "";
-  const validationError = settleResult?.validationError?.toLowerCase() || "";
-  const combined = `${errorStr} ${resultError} ${resultReason} ${validationError}`;
+  const errorStr = (errorReason || "").toLowerCase();
 
   // Network/connection errors - transient, retry soon
   if (
-    combined.includes("fetch") ||
-    combined.includes("network") ||
-    combined.includes("econnrefused") ||
-    combined.includes("timeout") ||
-    combined.includes("enotfound")
+    errorStr.includes("fetch") ||
+    errorStr.includes("network") ||
+    errorStr.includes("econnrefused") ||
+    errorStr.includes("timeout") ||
+    errorStr.includes("enotfound")
   ) {
     return {
       code: "NETWORK_ERROR",
@@ -105,9 +90,9 @@ function classifyPaymentError(error: unknown, settleResult?: SettlePaymentResult
 
   // Facilitator unavailable - retry later
   if (
-    combined.includes("503") ||
-    combined.includes("service unavailable") ||
-    combined.includes("facilitator") && combined.includes("unavailable")
+    errorStr.includes("503") ||
+    errorStr.includes("service unavailable") ||
+    errorStr.includes("facilitator") && errorStr.includes("unavailable")
   ) {
     return {
       code: "FACILITATOR_UNAVAILABLE",
@@ -117,11 +102,12 @@ function classifyPaymentError(error: unknown, settleResult?: SettlePaymentResult
     };
   }
 
-  // Insufficient funds - client needs to fund wallet
+  // V2 error codes from X402_ERROR_CODES
   if (
-    combined.includes("insufficient") ||
-    combined.includes("balance") ||
-    combined.includes("not enough")
+    errorStr.includes(X402_ERROR_CODES.INSUFFICIENT_FUNDS) ||
+    errorStr.includes("insufficient") ||
+    errorStr.includes("balance") ||
+    errorStr.includes("not enough")
   ) {
     return {
       code: "INSUFFICIENT_FUNDS",
@@ -130,11 +116,12 @@ function classifyPaymentError(error: unknown, settleResult?: SettlePaymentResult
     };
   }
 
-  // Payment expired - sign a new payment
+  // Payment expired
   if (
-    combined.includes("expired") ||
-    combined.includes("nonce") ||
-    combined.includes("stale")
+    errorStr.includes(X402_ERROR_CODES.INVALID_TRANSACTION_STATE) ||
+    errorStr.includes("expired") ||
+    errorStr.includes("nonce") ||
+    errorStr.includes("stale")
   ) {
     return {
       code: "PAYMENT_EXPIRED",
@@ -145,8 +132,9 @@ function classifyPaymentError(error: unknown, settleResult?: SettlePaymentResult
 
   // Amount too low
   if (
-    combined.includes("amount") &&
-    (combined.includes("low") || combined.includes("minimum") || combined.includes("less"))
+    errorStr.includes(X402_ERROR_CODES.AMOUNT_INSUFFICIENT) ||
+    (errorStr.includes("amount") &&
+      (errorStr.includes("low") || errorStr.includes("minimum") || errorStr.includes("less")))
   ) {
     return {
       code: "AMOUNT_TOO_LOW",
@@ -157,20 +145,45 @@ function classifyPaymentError(error: unknown, settleResult?: SettlePaymentResult
 
   // Invalid payment - client error
   if (
-    combined.includes("invalid") ||
-    combined.includes("signature") ||
-    combined.includes("recipient") ||
-    combined.includes("malformed")
+    errorStr.includes(X402_ERROR_CODES.INVALID_PAYLOAD) ||
+    errorStr.includes(X402_ERROR_CODES.RECIPIENT_MISMATCH) ||
+    errorStr.includes(X402_ERROR_CODES.SENDER_MISMATCH) ||
+    errorStr.includes(X402_ERROR_CODES.INVALID_SCHEME) ||
+    errorStr.includes(X402_ERROR_CODES.INVALID_X402_VERSION) ||
+    errorStr.includes("invalid") ||
+    errorStr.includes("signature") ||
+    errorStr.includes("recipient") ||
+    errorStr.includes("malformed")
   ) {
     return {
       code: "PAYMENT_INVALID",
-      message: "Invalid payment: " + (resultReason || resultError || "check signature and parameters"),
+      message: "Invalid payment: " + (errorReason || "check signature and parameters"),
       httpStatus: 400,
     };
   }
 
+  // Broadcast/transaction failures
+  if (
+    errorStr.includes(X402_ERROR_CODES.BROADCAST_FAILED) ||
+    errorStr.includes(X402_ERROR_CODES.TRANSACTION_FAILED) ||
+    errorStr.includes(X402_ERROR_CODES.TRANSACTION_NOT_FOUND)
+  ) {
+    return {
+      code: "FACILITATOR_ERROR",
+      message: "Transaction broadcast failed: " + (errorReason || "try again"),
+      httpStatus: 502,
+      retryAfter: 10,
+    };
+  }
+
   // Facilitator returned an error response
-  if (combined.includes("500") || combined.includes("502") || combined.includes("error")) {
+  if (
+    errorStr.includes("500") ||
+    errorStr.includes("502") ||
+    errorStr.includes(X402_ERROR_CODES.UNEXPECTED_SETTLE_ERROR) ||
+    errorStr.includes(X402_ERROR_CODES.UNEXPECTED_VERIFY_ERROR) ||
+    errorStr.includes("error")
+  ) {
     return {
       code: "FACILITATOR_ERROR",
       message: "Payment facilitator error",
@@ -193,9 +206,10 @@ export const x402PaymentMiddleware = () => {
     c: Context<{ Bindings: Env; Variables: AppVariables }>,
     next: () => Promise<Response | void>
   ) => {
+    // Determine token type from header or query
     const queryTokenType = c.req.query("tokenType") ?? "STX";
-    const headerTokenType = c.req.header("X-PAYMENT-TOKEN-TYPE") ?? "";
-    const tokenTypeStr = headerTokenType || queryTokenType;
+    // V2: token type is embedded in payload, but we still accept query param for 402 response
+    const tokenTypeStr = queryTokenType;
 
     let tokenType: TokenType;
     let minAmount: bigint;
@@ -207,65 +221,116 @@ export const x402PaymentMiddleware = () => {
       return c.json({ error: String(error) }, 400);
     }
 
+    const legacyNetwork = c.env.X402_NETWORK as "mainnet" | "testnet";
     const config = {
       minAmount,
       address: c.env.X402_SERVER_ADDRESS,
-      network: c.env.X402_NETWORK as "mainnet" | "testnet",
+      network: CAIP2_NETWORK[legacyNetwork],
+      legacyNetwork,
       facilitatorUrl: c.env.X402_FACILITATOR_URL,
     };
 
-    const verifier = new X402PaymentVerifier(
-      config.facilitatorUrl,
-      config.network
-    );
-    const signedTx = c.req.header("X-PAYMENT");
-
     const pricingTier = getEndpointTier(c.req.path);
 
-    if (!signedTx) {
-      // Get token contract for sBTC/USDCx (required for SIP-010 transfers)
-      let tokenContract: TokenContract | undefined;
+    // Read V2 payment header (base64 encoded JSON)
+    const signedPayloadHeader = c.req.header(X402_HEADERS.PAYMENT_SIGNATURE);
+
+    if (!signedPayloadHeader) {
+      // Build asset identifier
+      let asset = "STX";
       if (tokenType === "sBTC" || tokenType === "USDCx") {
-        tokenContract = TOKEN_CONTRACTS[config.network][tokenType];
+        const contract = TOKEN_CONTRACTS[config.legacyNetwork][tokenType];
+        asset = `${contract.address}.${contract.name}`;
       }
 
-      // Respond 402 with payment request
-      const paymentRequest: X402PaymentRequired = {
-        maxAmountRequired: config.minAmount.toString(),
-        resource: c.req.path,
-        payTo: config.address,
-        network: config.network,
-        nonce: crypto.randomUUID(),
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes
-        tokenType,
-        pricingTier,
-        ...(tokenContract && { tokenContract }),
+      // Build V2 payment required response
+      const paymentRequired: PaymentRequiredV2 = {
+        x402Version: 2,
+        resource: {
+          url: c.req.url,
+          description: `Access to ${c.req.path}`,
+        },
+        accepts: [{
+          scheme: "exact",
+          network: config.network,
+          amount: config.minAmount.toString(),
+          asset,
+          payTo: config.address,
+          maxTimeoutSeconds: 300, // 5 minutes
+          extra: {
+            nonce: crypto.randomUUID(),
+            pricingTier,
+            tokenType,
+            ...(tokenType !== "STX" && {
+              tokenContract: TOKEN_CONTRACTS[config.legacyNetwork][tokenType as "sBTC" | "USDCx"],
+            }),
+          },
+        }],
       };
 
-      return c.json(paymentRequest, 402);
+      // Set V2 header (base64 encoded) and return JSON body
+      c.header(X402_HEADERS.PAYMENT_REQUIRED, btoa(JSON.stringify(paymentRequired)));
+      return c.json(paymentRequired, 402);
     }
 
-    // Verify/settle payment
-    let settleResult: SettlePaymentResult;
+    // Decode and parse payment payload
+    let paymentPayload: PaymentPayloadV2;
+    try {
+      const decoded = atob(signedPayloadHeader);
+      paymentPayload = JSON.parse(decoded);
+
+      if (paymentPayload.x402Version !== 2) {
+        return c.json({ error: "Invalid x402 version, expected 2" }, 400);
+      }
+    } catch {
+      return c.json({ error: "Invalid payment payload encoding" }, 400);
+    }
+
+    // Build payment requirements for verification
+    const acceptedRequirements = paymentPayload.accepted;
+
+    // Validate payment requirements match our expectations
+    if (acceptedRequirements.network !== config.network) {
+      return c.json({
+        error: `Network mismatch: expected ${config.network}, got ${acceptedRequirements.network}`,
+      }, 400);
+    }
+
+    if (acceptedRequirements.payTo !== config.address) {
+      return c.json({
+        error: `Recipient mismatch: expected ${config.address}, got ${acceptedRequirements.payTo}`,
+      }, 400);
+    }
+
+    if (BigInt(acceptedRequirements.amount) < config.minAmount) {
+      return c.json({
+        error: `Amount too low: minimum ${config.minAmount}, got ${acceptedRequirements.amount}`,
+      }, 402);
+    }
+
+    // Use V2 verifier
+    const verifier = new X402PaymentVerifier(config.facilitatorUrl);
+
+    // Settle payment
+    let settleResult: SettlementResponseV2;
     const paymentLog = c.var.logger.child({ tokenType });
-    paymentLog.debug("settlePayment starting", {
+    paymentLog.debug("settlePayment starting (V2)", {
       facilitatorUrl: config.facilitatorUrl,
       expectedRecipient: config.address,
       minAmount: config.minAmount.toString(),
-      signedTxLength: signedTx.length,
+      network: config.network,
     });
+
     try {
-      settleResult = (await verifier.settlePayment(signedTx, {
-        expectedRecipient: config.address,
-        minAmount: config.minAmount,
-        tokenType,
-      })) as SettlePaymentResult;
-      paymentLog.debug("settlePayment result", settleResult);
+      settleResult = await verifier.settle(paymentPayload, {
+        paymentRequirements: acceptedRequirements,
+      });
+      paymentLog.debug("settlePayment result (V2)", settleResult);
     } catch (error) {
-      paymentLog.error("settlePayment exception", { error: String(error), type: typeof error });
+      paymentLog.error("settlePayment exception (V2)", { error: String(error), type: typeof error });
 
       // Classify the error and return appropriate response
-      const classified = classifyPaymentError(error);
+      const classified = classifyPaymentError(String(error));
 
       const errorResponse: PaymentErrorResponse = {
         error: classified.message,
@@ -286,14 +351,11 @@ export const x402PaymentMiddleware = () => {
       return c.json(errorResponse, classified.httpStatus as 400 | 402 | 500 | 502 | 503);
     }
 
-    if (!settleResult.isValid) {
-      paymentLog.error("Payment invalid/unconfirmed", settleResult);
+    if (!settleResult.success) {
+      paymentLog.error("Payment settlement failed (V2)", settleResult);
 
-      // Classify based on the settle result (check validationError first, then error)
-      const classified = classifyPaymentError(
-        settleResult.validationError || settleResult.error || settleResult.status || "invalid",
-        settleResult
-      );
+      // Classify based on the settle result
+      const classified = classifyPaymentError(settleResult.errorReason);
 
       const errorResponse: PaymentErrorResponse = {
         error: classified.message,
@@ -302,10 +364,7 @@ export const x402PaymentMiddleware = () => {
         tokenType,
         resource: c.req.path,
         details: {
-          settleError: settleResult.error,
-          settleReason: settleResult.reason,
-          settleStatus: settleResult.status,
-          validationError: settleResult.validationError,
+          errorReason: settleResult.errorReason,
         },
       };
 
@@ -317,24 +376,21 @@ export const x402PaymentMiddleware = () => {
       return c.json(errorResponse, classified.httpStatus as 400 | 402 | 500 | 502 | 503);
     }
 
-    // Add X-PAYMENT-RESPONSE header (for external clients)
-    c.header(
-      "X-PAYMENT-RESPONSE",
-      JSON.stringify(settleResult, replaceBigintWithString)
-    );
+    // Set V2 response header (base64 encoded)
+    c.header(X402_HEADERS.PAYMENT_RESPONSE, btoa(JSON.stringify(settleResult)));
 
     // Log successful payment
-    paymentLog.info("Payment verified", {
-      txId: settleResult.txId,
-      sender: settleResult.sender,
-      recipient: settleResult.recipient,
+    paymentLog.info("Payment verified (V2)", {
+      txId: settleResult.transaction,
+      payer: settleResult.payer,
       amount: config.minAmount.toString(),
       resource: c.req.path,
+      network: settleResult.network,
     });
 
-    // Store settle result in context for endpoint access
+    // Store settle result and payment payload in context for endpoint access
     c.set("settleResult", settleResult);
-    c.set("signedTx", signedTx);
+    c.set("paymentPayload", paymentPayload);
 
     return next();
   };

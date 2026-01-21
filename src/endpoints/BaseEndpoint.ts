@@ -1,7 +1,7 @@
 import { OpenAPIRoute } from "chanfana";
 import { Address, deserializeTransaction } from "@stacks/transactions";
 import { validateTokenType } from "../utils/pricing";
-import type { AppContext, ExtendedSettleResult } from "../types";
+import type { AppContext, SettlementResponseV2, PaymentPayloadV2 } from "../types";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { ERC8004_CONTRACTS, type ERC8004Network } from "../utils/erc8004";
 import {
@@ -98,28 +98,23 @@ export class BaseEndpoint extends OpenAPIRoute {
   }
 
   /**
-   * Get the payer's address from the payment settlement result or signed transaction
+   * Get the payer's address from the payment settlement result or payment payload
    * This is set by the x402 middleware after successful payment verification
    */
   protected getPayerAddress(c: AppContext): string | null {
-    const settleResult = c.get("settleResult") as ExtendedSettleResult | undefined;
-    const signedTx = c.get("signedTx") as string | undefined;
+    const settleResult = c.get("settleResult") as SettlementResponseV2 | undefined;
+    const paymentPayload = c.get("paymentPayload") as PaymentPayloadV2 | undefined;
     const network = c.env?.X402_NETWORK as "mainnet" | "testnet" || "mainnet";
 
-    // Try various fields from settle result first
-    if (settleResult?.sender) {
-      return settleResult.sender;
-    }
-    if (settleResult?.senderAddress) {
-      return settleResult.senderAddress;
-    }
-    if (settleResult?.sender_address) {
-      return settleResult.sender_address;
+    // V2: Use 'payer' field from settlement result
+    if (settleResult?.payer) {
+      return settleResult.payer;
     }
 
-    // Fallback: extract sender from signed transaction
-    if (signedTx) {
+    // Fallback: extract sender from payment payload's signed transaction
+    if (paymentPayload?.payload?.transaction) {
       try {
+        const signedTx = paymentPayload.payload.transaction;
         const hex = signedTx.startsWith("0x") ? signedTx.slice(2) : signedTx;
         const tx = deserializeTransaction(hex);
 
@@ -138,7 +133,7 @@ export class BaseEndpoint extends OpenAPIRoute {
           }
         }
       } catch (error) {
-        c.var.logger.warn("Failed to extract sender from signed tx", { error: String(error) });
+        c.var.logger.warn("Failed to extract sender from payment payload", { error: String(error) });
       }
     }
 
@@ -247,10 +242,11 @@ export class BaseEndpoint extends OpenAPIRoute {
     }
 
     // Try payment auth
-    const settleResult = c.get("settleResult") as ExtendedSettleResult | undefined;
-    const signedTx = c.get("signedTx") as string | undefined;
+    const settleResult = c.get("settleResult") as SettlementResponseV2 | undefined;
+    const paymentPayload = c.get("paymentPayload") as PaymentPayloadV2 | undefined;
+    const signedTx = paymentPayload?.payload?.transaction || null;
 
-    if (payerMatchesAddress(settleResult || null, signedTx || null, ownerAddress)) {
+    if (payerMatchesAddress(settleResult || null, signedTx, ownerAddress)) {
       return { authenticated: true, method: "payment" };
     }
 
