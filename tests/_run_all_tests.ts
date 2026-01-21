@@ -44,6 +44,9 @@ import {
   X402_NETWORK,
   X402_WORKER_URL,
   createTestLogger,
+  isNonceConflict,
+  isRetryableError,
+  sleep,
 } from "./_shared_utils";
 
 // Import lifecycle test runners
@@ -196,29 +199,11 @@ function parseArgs(): RunConfig {
 }
 
 // =============================================================================
-// Helpers
-// =============================================================================
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function isRetryableError(status: number, errorCode?: string, errorMessage?: string): boolean {
-  if ([429, 500, 502, 503, 504].includes(status)) return true;
-
-  const retryableCodes = ["NETWORK_ERROR", "FACILITATOR_UNAVAILABLE", "FACILITATOR_ERROR", "UNKNOWN_ERROR"];
-  if (errorCode && retryableCodes.includes(errorCode)) return true;
-
-  if (errorMessage) {
-    const lowerMsg = errorMessage.toLowerCase();
-    const retryablePatterns = ["429", "rate limit", "too many requests", "settle", "failed", "timeout", "temporarily", "try again"];
-    if (retryablePatterns.some(pattern => lowerMsg.includes(pattern))) return true;
-  }
-
-  return false;
-}
-
-// =============================================================================
 // X402 Payment Flow
 // =============================================================================
+
+// Nonce conflict delay - wait for stuck tx to clear from mempool
+const NONCE_CONFLICT_DELAY_MS = 30000;
 
 interface X402PaymentRequired {
   maxAmountRequired: string;
@@ -292,25 +277,31 @@ async function testEndpointWithToken(
       return { passed: false, error: `Expected 402, got ${initialRes.status}: ${text.slice(0, 100)}` };
     }
 
-    const paymentReq: X402PaymentRequired = await initialRes.json();
+    let paymentReq: X402PaymentRequired = await initialRes.json();
 
     if (paymentReq.tokenType !== tokenType) {
       return { passed: false, error: `Token mismatch: expected ${tokenType}, got ${paymentReq.tokenType}` };
     }
 
-    // Step 2: Sign payment
-    logger.debug("2. Signing payment...");
-    const signResult = await x402Client.signPayment(paymentReq);
-
-    // Step 3: Retry with X-PAYMENT header
+    // Step 2-3: Sign and submit payment with retry logic
+    // For nonce conflicts, we need to re-fetch 402 and re-sign (can't reuse stale payment)
     let retryRes: Response | null = null;
     let lastError = "";
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      if (attempt > 0) {
-        logger.debug(`3. Retry attempt ${attempt}/${maxRetries}...`);
+      // Sign payment (fresh on each attempt for nonce conflict recovery)
+      if (attempt === 0) {
+        logger.debug("2. Signing payment...");
       } else {
-        logger.debug("3. Retry with payment...");
+        logger.debug(`2. Re-signing payment (attempt ${attempt + 1}/${maxRetries + 1})...`);
+      }
+      const signResult = await x402Client.signPayment(paymentReq);
+
+      // Submit with payment header
+      if (attempt === 0) {
+        logger.debug("3. Submitting with payment...");
+      } else {
+        logger.debug(`3. Retry attempt ${attempt}/${maxRetries}...`);
       }
 
       retryRes = await fetch(fullUrl, {
@@ -335,19 +326,47 @@ async function testEndpointWithToken(
       let errorCode: string | undefined;
       let errorMessage: string | undefined;
       let bodyRetryAfter: number | undefined;
+      let validationError: string | undefined;
       try {
         const parsed = JSON.parse(errText);
         errorCode = parsed.code;
         errorMessage = parsed.error || parsed.details?.exceptionMessage || parsed.details?.settleError;
         bodyRetryAfter = parsed.retryAfter;
+        validationError = parsed.details?.validationError;
       } catch { /* not JSON */ }
 
+      const fullErrorText = `${errorCode || ""} ${errorMessage || ""} ${validationError || ""} ${errText}`;
+
+      // Check for nonce conflict - needs fresh 402 and re-sign
+      if (isNonceConflict(fullErrorText) && attempt < maxRetries) {
+        logger.debug(`Nonce conflict detected, waiting ${NONCE_CONFLICT_DELAY_MS}ms for mempool to clear...`);
+        await sleep(NONCE_CONFLICT_DELAY_MS);
+
+        // Re-fetch 402 to get fresh nonce
+        logger.debug("Re-fetching payment requirements with fresh nonce...");
+        const freshRes = await fetch(fullUrl, {
+          method: config.method,
+          headers: {
+            ...(config.body ? { "Content-Type": "application/json" } : {}),
+            ...config.headers,
+          },
+          body: config.body ? JSON.stringify(config.body) : undefined,
+        });
+
+        if (freshRes.status === 402) {
+          paymentReq = await freshRes.json();
+          logger.debug(`Got fresh nonce: ${paymentReq.nonce.slice(0, 8)}...`);
+        }
+        continue;
+      }
+
+      // Check for other retryable errors
       if (isRetryableError(retryRes.status, errorCode, errorMessage || errText) && attempt < maxRetries) {
         const retryAfterSecs = retryAfterHeader ? parseInt(retryAfterHeader, 10) : (bodyRetryAfter || 0);
         const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
         const delayMs = retryAfterSecs > 0 ? retryAfterSecs * 1000 : backoffMs;
 
-        logger.debug(`Rate limited (${retryRes.status}), waiting ${delayMs}ms before retry...`);
+        logger.debug(`Retryable error (${retryRes.status}), waiting ${delayMs}ms before retry...`);
         await sleep(delayMs);
         continue;
       }
