@@ -39,16 +39,18 @@ function isPrivateHostname(hostname: string): string | null {
     if (a === 0) return "Cannot probe reserved addresses";
   }
 
-  // Block IPv6 private ranges (URL.hostname strips brackets, so [::1] becomes ::1)
+  // Block IPv6 private ranges (URL.hostname keeps brackets for IPv6, e.g., [::1])
   if (hostname.includes(":")) {
+    // Strip brackets if present for easier matching
+    const ipv6 = lower.startsWith("[") && lower.endsWith("]") ? lower.slice(1, -1) : lower;
     // Loopback
-    if (lower === "::1") return "Cannot probe loopback addresses";
+    if (ipv6 === "::1") return "Cannot probe loopback addresses";
     // IPv4-mapped IPv6 (e.g., ::ffff:127.0.0.1)
-    if (lower.startsWith("::ffff:")) return "Cannot probe IPv4-mapped IPv6 addresses";
+    if (ipv6.startsWith("::ffff:")) return "Cannot probe IPv4-mapped IPv6 addresses";
     // Link-local (fe80::/10)
-    if (lower.startsWith("fe80:")) return "Cannot probe link-local addresses";
+    if (ipv6.startsWith("fe80:")) return "Cannot probe link-local addresses";
     // Unique local (fc00::/7)
-    if (lower.startsWith("fc") || lower.startsWith("fd")) return "Cannot probe private IP ranges";
+    if (ipv6.startsWith("fc") || ipv6.startsWith("fd")) return "Cannot probe private IP ranges";
   }
 
   return null; // Hostname is allowed
