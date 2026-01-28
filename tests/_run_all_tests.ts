@@ -19,6 +19,12 @@
  *   bun run tests/_run_all_tests.ts --delay=1000       # 1s delay between tests
  *   bun run tests/_run_all_tests.ts --retries=3        # 3 retries for rate limits
  *
+ * Randomization (for cron variance):
+ *   bun run tests/_run_all_tests.ts --sample=5         # Run 5 random stateless endpoints
+ *   bun run tests/_run_all_tests.ts --random-lifecycle=2  # Run 2 random lifecycle categories
+ *   bun run tests/_run_all_tests.ts --random-token     # Pick one random token (STX/sBTC/USDCx)
+ *   bun run tests/_run_all_tests.ts --mode=full --sample=5 --random-lifecycle=2 --random-token
+ *
  * Environment:
  *   X402_CLIENT_PK      - Testnet mnemonic for payments (required)
  *   X402_NETWORK        - Network (default: testnet)
@@ -42,11 +48,14 @@ import {
   X402_CLIENT_PK,
   X402_NETWORK,
   X402_WORKER_URL,
+  TEST_TOKENS,
   createTestLogger,
   isNonceConflict,
   isRetryableError,
   sleep,
   buildPaymentPayloadV2,
+  sampleArray,
+  pickRandom,
 } from "./_shared_utils";
 
 // Import lifecycle test runners
@@ -141,6 +150,10 @@ interface RunConfig {
   verbose: boolean;
   delayMs: number;
   maxRetries: number;
+  // Randomization options
+  sampleSize: number | null; // --sample=N: run N random stateless endpoints
+  randomLifecycleCount: number | null; // --random-lifecycle=N: run N random lifecycle categories
+  randomToken: boolean; // --random-token: pick one random token
 }
 
 function parseArgs(): RunConfig {
@@ -154,6 +167,10 @@ function parseArgs(): RunConfig {
     verbose: process.env.VERBOSE === "1",
     delayMs: parseInt(process.env.TEST_DELAY_MS || "500", 10),
     maxRetries: parseInt(process.env.TEST_MAX_RETRIES || "3", 10),
+    // Randomization defaults
+    sampleSize: null,
+    randomLifecycleCount: null,
+    randomToken: false,
   };
 
   let tokenSpecified = false;
@@ -166,6 +183,9 @@ function parseArgs(): RunConfig {
     } else if (arg === "--all-tokens") {
       config.tokens = ["STX", "sBTC", "USDCx"];
       tokenSpecified = true;
+    } else if (arg === "--random-token") {
+      // Pick one random token - applied after parsing
+      config.randomToken = true;
     } else if (arg.startsWith("--token=")) {
       const rawToken = arg.split("=")[1].toUpperCase();
       const token = (rawToken === "SBTC" ? "sBTC" : rawToken === "USDCX" ? "USDCx" : rawToken) as TokenType;
@@ -178,6 +198,10 @@ function parseArgs(): RunConfig {
           config.tokens.push(token);
         }
       }
+    } else if (arg.startsWith("--sample=")) {
+      config.sampleSize = parseInt(arg.split("=")[1], 10);
+    } else if (arg.startsWith("--random-lifecycle=")) {
+      config.randomLifecycleCount = parseInt(arg.split("=")[1], 10);
     } else if (arg.startsWith("--category=")) {
       config.category = arg.split("=")[1].toLowerCase();
     } else if (arg.startsWith("--filter=")) {
@@ -191,6 +215,11 @@ function parseArgs(): RunConfig {
     } else if (arg === "--verbose" || arg === "-v") {
       config.verbose = true;
     }
+  }
+
+  // Apply random token selection if requested
+  if (config.randomToken && !tokenSpecified) {
+    config.tokens = [pickRandom(TEST_TOKENS)];
   }
 
   return config;
@@ -602,6 +631,16 @@ async function runTests(runConfig: RunConfig): Promise<RunStats> {
     );
   }
 
+  // Apply random sampling if specified
+  if (runConfig.sampleSize !== null && endpointsToTest.length > 0) {
+    endpointsToTest = sampleArray(endpointsToTest, runConfig.sampleSize);
+  }
+
+  // Apply random lifecycle sampling if specified
+  if (runConfig.randomLifecycleCount !== null && lifecycleCategories.length > 0) {
+    lifecycleCategories = sampleArray(lifecycleCategories, runConfig.randomLifecycleCount);
+  }
+
   // Print header
   console.log(`\n${COLORS.bright}${"═".repeat(70)}${COLORS.reset}`);
   console.log(`${COLORS.bright}  X402 V2 ENDPOINT TEST RUNNER${COLORS.reset}`);
@@ -613,12 +652,17 @@ async function runTests(runConfig: RunConfig): Promise<RunStats> {
   if (runConfig.category) {
     console.log(`  Category:   ${runConfig.category}`);
   }
-  console.log(`  Tokens:     ${runConfig.tokens.join(", ")}`);
+  console.log(`  Tokens:     ${runConfig.tokens.join(", ")}${runConfig.randomToken ? " (random)" : ""}`);
   if (endpointsToTest.length > 0) {
-    console.log(`  Endpoints:  ${endpointsToTest.length} stateless`);
+    const sampleNote = runConfig.sampleSize !== null ? ` (sampled from ${STATELESS_ENDPOINTS.length})` : "";
+    console.log(`  Endpoints:  ${endpointsToTest.length} stateless${sampleNote}`);
+    if (runConfig.sampleSize !== null) {
+      console.log(`              [${endpointsToTest.map((e) => e.name).join(", ")}]`);
+    }
   }
   if (lifecycleCategories.length > 0) {
-    console.log(`  Lifecycle:  ${lifecycleCategories.join(", ")}`);
+    const lifecycleNote = runConfig.randomLifecycleCount !== null ? ` (sampled from ${STATEFUL_CATEGORIES.length})` : "";
+    console.log(`  Lifecycle:  ${lifecycleCategories.join(", ")}${lifecycleNote}`);
   }
   console.log(`  Delay:      ${runConfig.delayMs}ms between tests`);
   console.log(`  Retries:    ${runConfig.maxRetries} for rate-limited requests`);

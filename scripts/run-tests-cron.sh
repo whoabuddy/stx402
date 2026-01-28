@@ -1,7 +1,14 @@
 #!/bin/bash
-# Cron script to run full test suite - only logs failures
+# Cron script to run randomized test samples - ensures full coverage over time
 # Usage: ./scripts/run-tests-cron.sh
-# Cron:  0 6,14,22 * * * /home/whoabuddy/dev/whoabuddy/stx402/scripts/run-tests-cron.sh
+#
+# Recommended cron schedule (every 3 hours for mainnet):
+#   0 */3 * * * /home/whoabuddy/dev/whoabuddy/stx402/scripts/run-tests-cron.sh  # 8x/day
+#
+# Coverage calculation:
+#   - 16 stateless endpoints, 4 lifecycle categories (info, registry, links, agent)
+#   - Each run: 3 stateless + 2 lifecycle = good variance
+#   - 8x/day: 24 stateless + 16 lifecycle = ~1.5x coverage
 
 # Set up PATH for cron environment (bun, node, npm, etc.)
 export PATH="$HOME/.bun/bin:$HOME/.nvm/versions/node/$(ls -1 $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
@@ -42,8 +49,10 @@ echo "Network: ${X402_NETWORK}" >> "$TEMP_LOG"
 echo "Server: ${X402_WORKER_URL}" >> "$TEMP_LOG"
 echo "" >> "$TEMP_LOG"
 
-# Run the full test suite
-bun run tests/_run_all_tests.ts --mode=full >> "$TEMP_LOG" 2>&1
+# Run the randomized test suite
+# - Sample 3 stateless endpoints + 2 random lifecycle categories
+# - stx402 is mainnet only, uses STX (not random token to reduce costs)
+bun run tests/_run_all_tests.ts --mode=full --sample=3 --random-lifecycle=2 >> "$TEMP_LOG" 2>&1
 EXIT_CODE=$?
 
 echo "" >> "$TEMP_LOG"
