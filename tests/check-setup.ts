@@ -36,13 +36,13 @@ const MIN_BALANCES = {
 // Token contract identifiers (testnet)
 const TESTNET_TOKENS = {
   sBTC: "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token::sbtc-token",
-  USDCx: "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.usdcx-token::usdcx-token",
+  USDCx: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx::usdcx-token",
 };
 
 // Token contract identifiers (mainnet)
 const MAINNET_TOKENS = {
   sBTC: "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token",
-  USDCx: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx::USDCx",
+  USDCx: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx::usdcx-token",
 };
 
 interface BalanceResponse {
