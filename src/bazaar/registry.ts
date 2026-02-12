@@ -807,23 +807,28 @@ export const ENDPOINT_METADATA_REGISTRY = new Map<string, EndpointMetadata>(
  * When method is omitted, falls back to scanning for any matching path
  * (for backward compatibility).
  *
- * Supports parameterized paths: /agent/owner?agentId=1 matches /agent/owner
+ * Supports query strings and trailing slashes: /agent/owner?agentId=1 matches /agent/owner
  */
 export function getEndpointMetadata(
   path: string,
   method?: string
 ): EndpointMetadata | undefined {
+  // Normalize: strip query string and trailing slash
+  const normalized = path.split("?")[0].replace(/\/+$/, "") || "/";
+
   // Exact lookup when method is provided
   if (method) {
-    const exact = ENDPOINT_METADATA_REGISTRY.get(registryKey(method, path));
+    const exact = ENDPOINT_METADATA_REGISTRY.get(
+      registryKey(method, normalized)
+    );
     if (exact) return exact;
   }
 
-  // Scan for matching path (exact match only - no parameterized patterns in stx402)
+  // Scan for matching path
   for (const metadata of ENDPOINT_METADATA_REGISTRY.values()) {
     if (method && metadata.method !== method) continue;
 
-    if (metadata.path === path) return metadata;
+    if (metadata.path === normalized) return metadata;
   }
 
   return undefined;

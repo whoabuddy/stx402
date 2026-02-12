@@ -41,7 +41,7 @@ export interface X402Entry {
 
 export interface X402InputSchema {
   type: "http";
-  method: "GET" | "POST" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   bodyType?: "json" | "form" | "text" | "binary";
   bodySchema?: Record<string, unknown>; // Full JSON Schema
   queryParams?: Record<string, unknown>; // Query parameter schema
@@ -110,8 +110,7 @@ function getTimeoutForTier(tier: PricingTier): number {
  */
 function buildOutputSchema(
   path: string,
-  method: "GET" | "POST" | "DELETE",
-  tier: PricingTier
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 ): { input: X402InputSchema; output: X402OutputSchema } {
   // Lookup metadata in Bazaar registry
   const metadata = getEndpointMetadata(path, method);
@@ -170,7 +169,7 @@ export function generateX402SchemaStatic(config: GeneratorConfig): X402Schema {
     const timeout = getTimeoutForTier(tier);
 
     // Build rich input/output schemas from Bazaar metadata
-    const outputSchema = buildOutputSchema(path, method, tier);
+    const outputSchema = buildOutputSchema(path, method);
 
     // Create entry for each supported token
     for (const token of TOKENS) {
