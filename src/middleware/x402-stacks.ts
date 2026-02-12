@@ -21,6 +21,7 @@ import {
   validateTokenType,
 } from "../utils/pricing";
 import type { AppVariables } from "../types";
+import { getEndpointMetadata, buildBazaarExtension } from "../bazaar";
 
 // Correct mainnet token contracts (x402-stacks has outdated sBTC address)
 const TOKEN_CONTRACTS: Record<"mainnet" | "testnet", Record<"sBTC" | "USDCx", TokenContract>> = {
@@ -267,6 +268,14 @@ export const x402PaymentMiddleware = () => {
           },
         }],
       };
+
+      // Add Bazaar discovery extension if metadata exists for this endpoint
+      const endpointMetadata = getEndpointMetadata(c.req.path, c.req.method);
+      if (endpointMetadata) {
+        paymentRequired.extensions = {
+          bazaar: buildBazaarExtension(endpointMetadata).bazaar,
+        };
+      }
 
       // Set V2 header (base64 encoded) and return JSON body
       c.header(X402_HEADERS.PAYMENT_REQUIRED, btoa(JSON.stringify(paymentRequired)));

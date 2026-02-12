@@ -135,6 +135,40 @@ const INFO_ENDPOINTS: InfoEndpointTest[] = [
       }
     },
   },
+  {
+    name: "x402.json",
+    path: "/x402.json",
+    method: "GET",
+    expectedContentType: "application/json",
+    validate: (res, body) => {
+      if (res.status !== 200) return false;
+      try {
+        const data = JSON.parse(body);
+
+        // Check v2 format
+        if (data.x402Version !== 2) return false;
+        if (!Array.isArray(data.accepts) || data.accepts.length === 0) return false;
+
+        // Check first entry has rich output schema
+        const firstEntry = data.accepts[0];
+        if (!firstEntry.outputSchema?.input || !firstEntry.outputSchema?.output) return false;
+
+        // Verify input schema has method and type
+        const input = firstEntry.outputSchema.input;
+        if (input.type !== "http") return false;
+        if (!["GET", "POST", "DELETE"].includes(input.method)) return false;
+
+        // Verify output schema has type and example
+        const output = firstEntry.outputSchema.output;
+        if (output.type !== "json") return false;
+        if (typeof output.example !== "object" || output.example === null) return false;
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  },
 ];
 
 interface TestResult {
