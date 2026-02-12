@@ -10,12 +10,6 @@ nav_order: 5
 
 > Package patches applied via patch-package.
 
-## Contents
-
-| Item | Purpose |
-|------|---------|
-| [`x402-stacks+1.1.1.patch`](https://github.com/whoabuddy/stx402/blob/master/patches/x402-stacks%2B1.1.1.patch) | Fix token contract addresses |
-
 ## How Patches Work
 
 Patches are applied automatically on `npm install` via the `postinstall` script:
@@ -28,14 +22,11 @@ Patches are applied automatically on `npm install` via the `postinstall` script:
 }
 ```
 
-## Current Patch: x402-stacks
+## Current Patches
 
-Fixes outdated sBTC mainnet contract address in the x402-stacks library.
-
-```diff
-- sBTC: "SP2XD7417HGPRTREMKF748VNEQPDRR0RMANB7X1NK.sbtc-token"
-+ sBTC: "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token"
-```
+| Patch File | Status | Notes |
+|-----------|--------|-------|
+| `x402-stacks+1.1.1.patch` | Stale | Created for v1.1.1; current dep is `^2.0.1`. Only applies if v1.1.1 is installed. |
 
 ## Creating New Patches
 
@@ -48,4 +39,4 @@ npx patch-package package-name
 ```
 
 ---
-*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/patches) · Updated: 2025-01-07*
+*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/patches)*

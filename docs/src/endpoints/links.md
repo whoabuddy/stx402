@@ -39,7 +39,7 @@ nav_order: 2
 ```bash
 curl -X POST https://stx402.com/links/create \
   -H "Content-Type: application/json" \
-  -H "X-PAYMENT: <signed-payment>" \
+  -H "payment-signature: <base64-encoded-payment>" \
   -d '{"url": "https://example.com/long-path", "slug": "my-link", "title": "Example"}'
 ```
 
@@ -52,7 +52,7 @@ curl https://stx402.com/links/expand/my-link
 ```bash
 curl -X POST https://stx402.com/links/stats \
   -H "Content-Type: application/json" \
-  -H "X-PAYMENT: <signed-payment>" \
+  -H "payment-signature: <base64-encoded-payment>" \
   -d '{"slug": "my-link"}'
 ```
 

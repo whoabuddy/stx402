@@ -10,7 +10,7 @@ has_children: true
 
 # endpoints
 
-> 35 API endpoint implementations across 4 categories.
+> 36 API endpoint implementations across 4 categories.
 
 ## Contents
 
@@ -22,13 +22,13 @@ has_children: true
 
 ## Endpoint Pattern
 
-All endpoints extend chanfana's `OpenAPIRoute`:
+Most endpoints extend `BaseEndpoint` (which extends chanfana's `OpenAPIRoute`):
 
 ```typescript
-import { OpenAPIRoute } from "chanfana";
+import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
 
-export class MyEndpoint extends OpenAPIRoute {
+export class MyEndpoint extends BaseEndpoint {
   schema = {
     tags: ["Category"],
     summary: "(paid) Description",
@@ -54,6 +54,7 @@ export class MyEndpoint extends OpenAPIRoute {
 | `GET /dashboard` | `dashboard.ts` | Metrics dashboard |
 | `GET /guide` | `guide.ts` | Endpoint category guide |
 | `GET /toolbox` | `toolbox.ts` | 402 checker tool |
+| `GET /x402.json` | `x402WellKnown.ts` | X402 well-known / Bazaar metadata |
 | `GET /docs` | chanfana | Swagger UI |
 | `GET /openapi.json` | chanfana | OpenAPI spec |
 
@@ -111,7 +112,7 @@ ERC-8004 agent identity, reputation, and validation on Stacks.
 
 ## Relationships
 
-- **All endpoints extend**: `OpenAPIRoute` from chanfana
+- **Most endpoints extend**: `BaseEndpoint` (which extends chanfana's `OpenAPIRoute`)
 - **Registered in**: `src/index.ts` via chanfana OpenAPI router
 - **Pricing defined in**: `src/utils/pricing.ts` (`ENDPOINT_TIERS` map)
 

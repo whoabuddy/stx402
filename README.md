@@ -26,9 +26,7 @@ npm run cf-typegen   # Regenerate types from wrangler bindings
 E2E tests require testnet mnemonic for X402 payment signing:
 
 ```bash
-cp .env.example .env
-# Edit .env: X402_CLIENT_PK="your testnet mnemonic"
-
+# Set env var: X402_CLIENT_PK="your testnet mnemonic"
 npm run dev                              # Terminal 1
 bun run tests/_run_all_tests.ts          # Terminal 2
 ```

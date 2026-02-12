@@ -39,14 +39,13 @@ return c.html(`
 
 ## Pages Using Components
 
-- `/toolbox` - Interactive endpoint testing UI
-- `/about` - Project information page
 - `/guide` - Integration guide
+- `/toolbox` - Interactive endpoint testing UI
 - `/dashboard` - Usage metrics display
 
 ## Relationships
 
-- **Consumed by**: HTML-rendering endpoints (`about.ts`, `guide.ts`, `toolbox.ts`, `dashboard.ts`)
+- **Consumed by**: HTML-rendering endpoints (`guide.ts`, `toolbox.ts`, `dashboard.ts`)
 
 ---
-*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/src/components) · Updated: 2025-01-07*
+*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/src/components)*
