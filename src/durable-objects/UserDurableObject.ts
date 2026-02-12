@@ -215,21 +215,21 @@ export class UserDurableObject extends DurableObject<Env> {
     this.initializeSchema();
     const now = new Date().toISOString();
 
-    // Check if link exists
-    const existing = this.sql
-      .exec("SELECT clicks FROM links WHERE slug = ?", slug)
-      .toArray();
-
-    if (existing.length === 0) {
-      return { recorded: false, clicks: 0 };
-    }
-
-    // Increment click count
+    // Increment click count (no-op if slug doesn't exist due to WHERE clause)
     this.sql.exec(
       "UPDATE links SET clicks = clicks + 1, updated_at = ? WHERE slug = ?",
       now,
       slug
     );
+
+    // Check if the update affected a row by reading the new count
+    const result = this.sql
+      .exec("SELECT clicks FROM links WHERE slug = ?", slug)
+      .toArray();
+
+    if (result.length === 0) {
+      return { recorded: false, clicks: 0 };
+    }
 
     // Record click details
     this.sql.exec(
@@ -242,8 +242,7 @@ export class UserDurableObject extends DurableObject<Env> {
       metadata?.country ?? null
     );
 
-    const newClicks = (existing[0].clicks as number) + 1;
-    return { recorded: true, clicks: newClicks };
+    return { recorded: true, clicks: result[0].clicks as number };
   }
 
   /**
@@ -385,8 +384,7 @@ export class UserDurableObject extends DurableObject<Env> {
       return { deleted: false, slug };
     }
 
-    // Delete clicks first (cascade should handle this but be explicit)
-    this.sql.exec("DELETE FROM link_clicks WHERE slug = ?", slug);
+    // CASCADE handles link_clicks deletion automatically
     this.sql.exec("DELETE FROM links WHERE slug = ?", slug);
 
     return { deleted: true, slug };
