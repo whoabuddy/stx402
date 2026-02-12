@@ -1,8 +1,13 @@
 /**
  * X402 Schema Generator
  *
- * Transforms OpenAPI spec + pricing tiers into x402.json format
- * for StacksX402 scanner discovery.
+ * Generates x402.json format for StacksX402 scanner discovery.
+ * Static generation without network calls (Cloudflare Workers can't self-fetch).
+ *
+ * V2 format includes Bazaar-compatible metadata with:
+ * - Full input/output examples
+ * - JSON schemas per endpoint
+ * - Rich discovery metadata from the registry
  */
 
 import {
@@ -11,6 +16,8 @@ import {
   type PricingTier,
   type TokenType,
 } from "./pricing";
+import { getEndpointMetadata } from "../bazaar";
+import type { EndpointMetadata } from "../bazaar";
 
 // =============================================================================
 // Types
@@ -28,64 +35,36 @@ export interface X402Entry {
   mimeType: "application/json";
   outputSchema: {
     input: X402InputSchema;
-    output: Record<string, string>;
+    output: X402OutputSchema;
   };
 }
 
 export interface X402InputSchema {
   type: "http";
-  method: "GET" | "POST";
-  bodyType?: "json";
-  bodyFields?: Record<string, X402FieldSchema>;
+  method: "GET" | "POST" | "DELETE";
+  bodyType?: "json" | "form" | "text" | "binary";
+  bodySchema?: Record<string, unknown>; // Full JSON Schema
+  queryParams?: Record<string, unknown>; // Query parameter schema
 }
 
-export interface X402FieldSchema {
-  type: string;
-  required: boolean;
-  description?: string;
+export interface X402OutputSchema {
+  type: "json";
+  example: Record<string, unknown>; // Realistic output example
+  schema?: Record<string, unknown>; // Full JSON Schema (optional)
 }
 
 export interface X402Schema {
-  x402Version: number;
+  x402Version: 2; // V2 includes Bazaar metadata
   name: string;
   image: string;
   accepts: X402Entry[];
 }
 
-export interface OpenAPISpec {
-  paths: Record<string, Record<string, OpenAPIOperation>>;
-  info?: { title?: string; version?: string };
-}
-
-export interface OpenAPIOperation {
-  summary?: string;
-  description?: string;
-  tags?: string[];
-  requestBody?: {
-    content?: {
-      "application/json"?: {
-        schema?: OpenAPISchema;
-      };
-    };
-  };
-  responses?: {
-    "200"?: {
-      content?: {
-        "application/json"?: {
-          schema?: OpenAPISchema;
-        };
-      };
-    };
-  };
-}
-
-export interface OpenAPISchema {
-  type?: string;
-  properties?: Record<string, OpenAPISchema>;
-  required?: string[];
-  items?: OpenAPISchema;
-  description?: string;
-  additionalProperties?: OpenAPISchema | boolean;
+export interface GeneratorConfig {
+  network: "mainnet" | "testnet";
+  payTo: string;
+  name?: string;
+  image?: string;
 }
 
 // =============================================================================
