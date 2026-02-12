@@ -269,6 +269,14 @@ export const x402PaymentMiddleware = () => {
         }],
       };
 
+      // Add Bazaar discovery extension if metadata exists for this endpoint
+      const endpointMetadata = getEndpointMetadata(c.req.path, c.req.method);
+      if (endpointMetadata) {
+        paymentRequired.extensions = {
+          bazaar: buildBazaarExtension(endpointMetadata).bazaar,
+        };
+      }
+
       // Set V2 header (base64 encoded) and return JSON body
       c.header(X402_HEADERS.PAYMENT_REQUIRED, btoa(JSON.stringify(paymentRequired)));
       return c.json(paymentRequired, 402);
