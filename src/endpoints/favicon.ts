@@ -19,6 +19,3 @@ export function getFaviconSVG(): Response {
     },
   });
 }
-
-// Also export as data URI for embedding in HTML
-export const FAVICON_DATA_URI = `data:image/svg+xml,${encodeURIComponent(FAVICON_SVG)}`;

@@ -27,6 +27,8 @@ const FREE_ENDPOINTS = [
   "/dashboard",
   "/guide",
   "/toolbox",
+  "/x402.json",
+  "/agent/registry",
 ];
 
 // =============================================================================
