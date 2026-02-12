@@ -1,8 +1,8 @@
-import { OpenAPIRoute } from "chanfana";
 import type { AppContext } from "../types";
 import { listAllEntries, type RegistryStatus } from "../utils/registry";
+import { BaseEndpoint } from "./BaseEndpoint";
 
-export class RegistryList extends OpenAPIRoute {
+export class RegistryList extends BaseEndpoint {
   schema = {
     tags: ["Registry"],
     summary: "(free) List all registered x402 endpoints",

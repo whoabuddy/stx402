@@ -1,12 +1,12 @@
-import { OpenAPIRoute } from "chanfana";
 import type { AppContext } from "../../types";
 import { ERC8004_CONTRACTS } from "../../utils/erc8004";
+import { BaseEndpoint } from "../BaseEndpoint";
 
 /**
  * Free endpoint - no payment required
  * Returns ERC-8004 registry contract addresses and metadata
  */
-export class RegistryInfo extends OpenAPIRoute {
+export class RegistryInfo extends BaseEndpoint {
   schema = {
     tags: ["Agent Registry"],
     summary: "(free) Get ERC-8004 registry contract addresses and versions",

@@ -113,18 +113,6 @@ export function arr(
   return { type: "array" as const, items };
 }
 
-// Common response field combinations
-
-export const AGENT_BASE_RESPONSE_FIELDS = {
-  network: str,
-  tokenType: str,
-};
-
-export const AGENT_WITH_CONTRACT_FIELDS = {
-  ...AGENT_BASE_RESPONSE_FIELDS,
-  contractId: str,
-};
-
 // JSON response wrapper helper
 
 export function jsonResponse(

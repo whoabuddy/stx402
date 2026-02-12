@@ -1,8 +1,8 @@
-import { OpenAPIRoute } from "chanfana";
 import type { AppContext } from "../types";
 import { getNavCSS, getNavHTML } from "../components/nav";
+import { BaseEndpoint } from "./BaseEndpoint";
 
-export class GuidePage extends OpenAPIRoute {
+export class GuidePage extends BaseEndpoint {
   schema = {
     tags: ["System"],
     summary: "Endpoint category guide (free)",
