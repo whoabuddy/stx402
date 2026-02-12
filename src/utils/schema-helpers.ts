@@ -28,6 +28,9 @@ export const TOKEN_TYPE_PARAM = {
   },
 };
 
+/** Inner schema object for TOKEN_TYPE_PARAM (used in Bazaar registry) */
+export const TOKEN_TYPE_SCHEMA = TOKEN_TYPE_PARAM.schema;
+
 export const AGENT_ID_QUERY_PARAM = {
   name: "agentId",
   in: "query" as const,
@@ -109,18 +112,6 @@ export function arr(
 ): { type: "array"; items: unknown } {
   return { type: "array" as const, items };
 }
-
-// Common response field combinations
-
-export const AGENT_BASE_RESPONSE_FIELDS = {
-  network: str,
-  tokenType: str,
-};
-
-export const AGENT_WITH_CONTRACT_FIELDS = {
-  ...AGENT_BASE_RESPONSE_FIELDS,
-  contractId: str,
-};
 
 // JSON response wrapper helper
 

@@ -15,42 +15,41 @@ nav_order: 2
 
 | Item | Purpose |
 |------|---------|
-| [`x402-stacks.ts`](https://github.com/whoabuddy/stx402/blob/master/src/middleware/x402-stacks.ts) | X402 payment verification and settlement |
+| [`x402-stacks.ts`](https://github.com/whoabuddy/stx402/blob/master/src/middleware/x402-stacks.ts) | X402 V2 payment verification and settlement |
 | [`metrics.ts`](https://github.com/whoabuddy/stx402/blob/master/src/middleware/metrics.ts) | Usage tracking to KV (calls, earnings, latency) |
 
-## X402 Payment Flow
+## X402 V2 Payment Flow
 
 ```
-1. Request without X-PAYMENT header
-   → 402 Response with payment requirements
+1. Request without payment-signature header
+   → 402 Response with payment requirements (JSON)
 
 2. Client signs payment via X402PaymentClient
-   → Retry with X-PAYMENT header
+   → Retry with payment-signature header (base64 JSON)
 
 3. Server verifies via X402PaymentVerifier
    → Settles payment on-chain
-   → Adds X-PAYMENT-RESPONSE header
+   → Adds payment-response header
    → Continues to endpoint handler
 ```
 
-### Payment Headers
+### Payment Headers (V2)
 
 | Header | Direction | Purpose |
 |--------|-----------|---------|
-| `X-PAYMENT` | Request | Signed payment data (base64) |
-| `X-PAYMENT-TOKEN-TYPE` | Request | Token type (STX/sBTC/USDCx) |
-| `X-PAYMENT-RESPONSE` | Response | Settlement result (txId, status) |
+| `payment-signature` | Request | Signed payment data (base64 JSON) |
+| `payment-response` | Response | Settlement result (txId, status) |
 
-### Token Contracts
+### Middleware Usage
 
 ```typescript
-// Mainnet
-sBTC: "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token"
-USDCx: "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx"
-
-// Testnet
-sBTC: "ST1F7QA2MDF17S807EPA36TSS8AMEFY4KA9TVGWXT.sbtc-token"
-USDCx: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx"
+// In index.ts route registration
+openapi.post(
+  "/registry/probe",
+  paymentMiddleware,  // Verifies X402 payment
+  trackMetrics,       // Records usage
+  RegistryProbe as any
+);
 ```
 
 ## Metrics Tracking
@@ -64,26 +63,6 @@ interface MetricsData {
   daily: Record<string, DailyStats>;
   updatedAt: string;
 }
-
-interface EndpointStats {
-  calls: number;
-  success: number;
-  latencySum: number;
-  earnings: { STX: number; sBTC: number; USDCx: number };
-  lastCall: string;
-}
-```
-
-### Middleware Usage
-
-```typescript
-// In index.ts route registration
-openapi.post(
-  "/api/stacks/bns-name/:address",
-  paymentMiddleware,  // Verifies X402 payment
-  trackMetrics,       // Records usage
-  GetBnsName as any
-);
 ```
 
 ## Relationships
@@ -93,4 +72,4 @@ openapi.post(
 - **Writes to**: `METRICS` KV namespace
 
 ---
-*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/src/middleware) · Updated: 2025-01-07*
+*[View on GitHub](https://github.com/whoabuddy/stx402/tree/master/src/middleware)*

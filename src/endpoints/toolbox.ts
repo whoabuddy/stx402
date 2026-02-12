@@ -1,8 +1,8 @@
-import { OpenAPIRoute } from "chanfana";
 import type { AppContext } from "../types";
 import { getNavCSS, getNavHTML } from "../components/nav";
+import { BaseEndpoint } from "./BaseEndpoint";
 
-export class ToolboxPage extends OpenAPIRoute {
+export class ToolboxPage extends BaseEndpoint {
   schema = {
     tags: ["Info"],
     summary: "402 Checker - test any URL for X402 payment requirements (free)",

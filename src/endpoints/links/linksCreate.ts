@@ -84,18 +84,13 @@ export class LinksCreate extends BaseEndpoint {
       return this.errorResponse(c, "Could not determine payer address", 400);
     }
 
-    let body: {
+    const { body, error } = await this.parseJsonBody<{
       url: string;
       slug?: string;
       title?: string;
       ttl?: number;
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (error) return error;
 
     const { url, slug, title, ttl } = body;
 

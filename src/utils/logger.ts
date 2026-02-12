@@ -175,28 +175,6 @@ export function getLogger(c: Context): Logger {
 }
 
 // =============================================================================
-// Standalone Logger (for utilities without Hono context)
-// =============================================================================
-
-/**
- * Create a standalone logger for use outside of request handlers
- * Requires env and executionCtx to be passed explicitly
- *
- * Usage:
- *   const log = createStandaloneLogger(env, ctx, { component: "cron" })
- */
-export function createStandaloneLogger(
-  env: Env,
-  ctx: ExecutionContext,
-  baseContext?: LogContext
-): Logger {
-  if (env.LOGS) {
-    return createLogger(env.LOGS as unknown as LogsRPC, ctx, baseContext);
-  }
-  return createConsoleLogger(baseContext);
-}
-
-// =============================================================================
 // Utility Logger (for code without Hono context)
 // =============================================================================
 

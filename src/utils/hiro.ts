@@ -57,7 +57,7 @@ export function checkHiroRateLimit(response: Response): HiroRateLimitError | nul
 /**
  * Sleep for a given number of milliseconds
  */
-function sleep(ms: number): Promise<void> {
+export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

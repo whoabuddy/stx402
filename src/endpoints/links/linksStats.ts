@@ -83,13 +83,8 @@ export class LinksStats extends BaseEndpoint {
       return this.errorResponse(c, "Could not determine payer address", 400);
     }
 
-    let body: { slug: string };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    const { body, error } = await this.parseJsonBody<{ slug: string }>(c);
+    if (error) return error;
 
     const { slug } = body;
 

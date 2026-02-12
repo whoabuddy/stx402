@@ -103,61 +103,6 @@ async function saveMetrics(kv: KVNamespace, data: MetricsData): Promise<void> {
 // Public Read Functions
 // =============================================================================
 
-/** Get all metrics for a list of endpoint paths - now just 1 KV read! */
-export async function getAllMetrics(
-  kv: KVNamespace,
-  paths: string[]
-): Promise<EndpointMetrics[]> {
-  const data = await loadMetrics(kv);
-
-  return paths.map((path) => {
-    const stats = data.endpoints[path];
-
-    if (!stats) {
-      return {
-        path,
-        totalCalls: 0,
-        successfulCalls: 0,
-        avgLatencyMs: 0,
-        successRate: "N/A",
-        earnings: { STX: "0", sBTC: "0", USDCx: "0" },
-        created: "Never",
-        lastCall: "Never",
-      };
-    }
-
-    const totalCalls = stats.calls;
-    const successfulCalls = stats.success;
-
-    return {
-      path,
-      totalCalls,
-      successfulCalls,
-      avgLatencyMs: totalCalls > 0 ? Math.round(stats.latencySum / totalCalls) : 0,
-      successRate:
-        totalCalls > 0
-          ? ((successfulCalls / totalCalls) * 100).toFixed(1)
-          : "N/A",
-      earnings: {
-        STX: stats.earnings.STX.toFixed(6),
-        sBTC: stats.earnings.sBTC.toFixed(8),
-        USDCx: stats.earnings.USDCx.toFixed(6),
-      },
-      created: stats.created || "Never",
-      lastCall: stats.lastCall || "Never",
-    };
-  });
-}
-
-/** Get daily stats - now reads from same object, no extra KV calls */
-export async function getDailyStats(
-  kv: KVNamespace,
-  days: number = 7
-): Promise<{ date: string; calls: number }[]> {
-  const data = await loadMetrics(kv);
-  return extractDailyStats(data, days);
-}
-
 /** Extract daily stats from loaded data (no KV call) */
 function extractDailyStats(
   data: MetricsData,
@@ -343,9 +288,7 @@ export const metricsMiddleware = () => {
     if (!paymentHeader) return;
 
     // Get token type from query (V2 embeds it in payload, query param is backup)
-    const headerTokenType = "";
-    const queryTokenType = c.req.query("tokenType") ?? "STX";
-    const tokenTypeStr = headerTokenType || queryTokenType;
+    const tokenTypeStr = c.req.query("tokenType") ?? "STX";
 
     let tokenType: TokenType;
     try {

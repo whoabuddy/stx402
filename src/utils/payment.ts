@@ -5,12 +5,19 @@ import {
 import { log } from "./logger";
 import type { SettlementResponseV2 } from "../types";
 
+/**
+ * Strip 0x prefix from a hex string if present
+ */
+export function strip0x(hex: string): string {
+  return hex.startsWith("0x") ? hex.slice(2) : hex;
+}
+
 // Extract sender hash160 from a signed transaction hex
 // Returns the hash160 directly, avoiding network version issues
 export function extractSenderHash160FromSignedTx(signedTxHex: string): string | null {
   try {
     // Remove 0x prefix if present
-    const hex = signedTxHex.startsWith("0x") ? signedTxHex.slice(2) : signedTxHex;
+    const hex = strip0x(signedTxHex);
 
     // Deserialize the transaction
     const tx = deserializeTransaction(hex);

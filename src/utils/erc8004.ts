@@ -20,6 +20,8 @@ import {
 import { getFetchOptions, setFetchOptions } from "@stacks/common";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+import { sleep } from "./hiro";
+import { strip0x } from "./payment";
 
 // Fix stacks.js fetch for Workers
 type StacksRequestInit = RequestInit & { referrerPolicy?: string };
@@ -71,13 +73,6 @@ export function parseContractId(contractId: string): {
 } {
   const [address, name] = contractId.split(".");
   return { address, name };
-}
-
-/**
- * Sleep for a given number of milliseconds
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -193,7 +188,7 @@ export function principal(p: string): ClarityValue {
  * Build buffer Clarity value from hex string
  */
 export function buffer(hex: string): ClarityValue {
-  const cleanHex = hex.startsWith("0x") ? hex.slice(2) : hex;
+  const cleanHex = strip0x(hex);
   return bufferCV(hexToBytes(cleanHex));
 }
 
@@ -250,17 +245,6 @@ export function extractValue(result: unknown): unknown {
   return result;
 }
 
-/**
- * Check if result is ok (for response types)
- * cvToJSON returns type like "(ok uint)" or just "ok"
- */
-export function isOk(result: unknown): boolean {
-  if (result && typeof result === "object" && "type" in result) {
-    const type = (result as { type: string }).type;
-    return type === "ok" || type.startsWith("(ok ");
-  }
-  return false;
-}
 
 /**
  * Check if result is some (for optional types)
@@ -321,38 +305,6 @@ export function extractTypedValue(result: unknown): unknown {
   return result;
 }
 
-/**
- * Get error code from Clarity err response
- * Handles cvToJSON structure: { type: "err", value: { type: "uint", value: "1001" } }
- */
-export function getErrorCode(result: unknown): number | null {
-  if (
-    result &&
-    typeof result === "object" &&
-    "type" in result &&
-    "value" in result
-  ) {
-    const typed = result as { type: string; value: unknown };
-    if (typed.type === "err") {
-      // Handle uint wrapped in type object: { type: "uint", value: "1001" }
-      if (typeof typed.value === "object" && typed.value && "value" in typed.value) {
-        const innerValue = (typed.value as { value: unknown }).value;
-        // Value could be string (from JSON) or number/bigint
-        if (typeof innerValue === "string") {
-          return parseInt(innerValue, 10);
-        }
-        if (typeof innerValue === "number" || typeof innerValue === "bigint") {
-          return Number(innerValue);
-        }
-      }
-      // Handle direct number value (less common)
-      if (typeof typed.value === "number") {
-        return typed.value;
-      }
-    }
-  }
-  return null;
-}
 
 /**
  * Error code descriptions for all registries
@@ -386,12 +338,6 @@ export const ERROR_CODES: Record<number, string> = {
   3010: "Empty feedback URI",
 };
 
-/**
- * Get human-readable error message
- */
-export function getErrorMessage(code: number): string {
-  return ERROR_CODES[code] || `Unknown error (code: ${code})`;
-}
 
 /**
  * Compute SHA-256 hash

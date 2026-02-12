@@ -10,14 +10,9 @@ import {
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { log } from "./logger";
+import { addressesMatchByHash160 } from "./payment";
 
 // SIP-018 Domain for STX402 Registry
-export const STX402_DOMAIN = Cl.tuple({
-  name: Cl.stringAscii("stx402-registry"),
-  version: Cl.stringAscii("1.0.0"),
-  "chain-id": Cl.uint(1), // 1 for mainnet, will be overridden based on network
-});
-
 export function getDomain(network: "mainnet" | "testnet"): ClarityValue {
   return Cl.tuple({
     name: Cl.stringAscii("stx402-registry"),
@@ -31,7 +26,8 @@ export type SignedAction =
   | "delete-endpoint"
   | "list-my-endpoints"
   | "transfer-ownership"
-  | "challenge-response";
+  | "challenge-response"
+  | "authenticate";
 
 // Create a structured message for an action
 export function createActionMessage(
@@ -74,6 +70,13 @@ export function createActionMessage(
         action: Cl.stringAscii("challenge-response"),
         owner: Cl.stringAscii(data.owner),
         nonce: Cl.stringAscii(data.nonce || ""),
+        timestamp: Cl.uint(data.timestamp),
+      });
+
+    case "authenticate":
+      return Cl.tuple({
+        action: Cl.stringAscii("authenticate"),
+        owner: Cl.stringAscii(data.owner),
         timestamp: Cl.uint(data.timestamp),
       });
 
@@ -153,8 +156,8 @@ export function verifyStructuredSignature(
     const testnetAddress = publicKeyToAddress(recoveredPubKey, "testnet");
 
     // Compare addresses - check against both mainnet and testnet versions
-    const valid = addressesMatch(mainnetAddress, expectedAddress) ||
-                  addressesMatch(testnetAddress, expectedAddress);
+    const valid = addressesMatchByHash160(mainnetAddress, expectedAddress) ||
+                  addressesMatchByHash160(testnetAddress, expectedAddress);
 
     const recoveredAddress = network === "mainnet" ? mainnetAddress : testnetAddress;
 
@@ -191,21 +194,6 @@ function publicKeyToAddress(publicKey: string, network: "mainnet" | "testnet" = 
   }
 }
 
-// Check if two addresses match (handles mainnet/testnet variations)
-function addressesMatch(addr1: string, addr2: string): boolean {
-  // Normalize addresses - strip version prefix and compare the hash portion
-  // SP/ST addresses have same hash160 just different version bytes
-  try {
-    const parsed1 = Address.parse(addr1);
-    const parsed2 = Address.parse(addr2);
-
-    // Compare the hash portion (the actual identity)
-    return parsed1.hash160 === parsed2.hash160;
-  } catch {
-    return addr1.toLowerCase() === addr2.toLowerCase();
-  }
-}
-
 // Verify a simple message signature (for basic auth)
 export function verifySimpleSignature(
   message: string,
@@ -225,8 +213,8 @@ export function verifySimpleSignature(
     const mainnetAddress = publicKeyToAddress(recoveredPubKey, "mainnet");
     const testnetAddress = publicKeyToAddress(recoveredPubKey, "testnet");
 
-    const valid = addressesMatch(mainnetAddress, expectedAddress) ||
-                  addressesMatch(testnetAddress, expectedAddress);
+    const valid = addressesMatchByHash160(mainnetAddress, expectedAddress) ||
+                  addressesMatchByHash160(testnetAddress, expectedAddress);
 
     const recoveredAddress = network === "mainnet" ? mainnetAddress : testnetAddress;
 

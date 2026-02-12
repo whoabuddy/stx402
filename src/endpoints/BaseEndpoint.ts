@@ -14,7 +14,7 @@ import {
   consumeChallenge,
   type SignatureRequest,
 } from "../utils/signatures";
-import { payerMatchesAddress } from "../utils/payment";
+import { payerMatchesAddress, strip0x } from "../utils/payment";
 import type { UserDurableObject } from "../durable-objects/UserDurableObject";
 
 /** Result of dual authentication (signature or payment) */
@@ -86,17 +86,6 @@ export class BaseEndpoint extends OpenAPIRoute {
     return validateTokenType(rawTokenType);
   }
 
-  protected validateAddress(c: AppContext): string | null {
-    const address = c.req.param("address");
-    try {
-      const addressObj = Address.parse(address);
-      return Address.stringify(addressObj);
-    } catch (e) {
-      c.var.logger.warn("Invalid address format", { address, error: String(e) });
-      return null;
-    }
-  }
-
   /**
    * Get the payer's address from the payment settlement result or payment payload
    * This is set by the x402 middleware after successful payment verification
@@ -104,7 +93,7 @@ export class BaseEndpoint extends OpenAPIRoute {
   protected getPayerAddress(c: AppContext): string | null {
     const settleResult = c.get("settleResult") as SettlementResponseV2 | undefined;
     const paymentPayload = c.get("paymentPayload") as PaymentPayloadV2 | undefined;
-    const network = c.env?.X402_NETWORK as "mainnet" | "testnet" || "mainnet";
+    const network = (c.env?.X402_NETWORK ?? "mainnet") as "mainnet" | "testnet";
 
     // V2: Use 'payer' field from settlement result
     if (settleResult?.payer) {
@@ -115,7 +104,7 @@ export class BaseEndpoint extends OpenAPIRoute {
     if (paymentPayload?.payload?.transaction) {
       try {
         const signedTx = paymentPayload.payload.transaction;
-        const hex = signedTx.startsWith("0x") ? signedTx.slice(2) : signedTx;
+        const hex = strip0x(signedTx);
         const tx = deserializeTransaction(hex);
 
         if (tx.auth?.spendingCondition) {

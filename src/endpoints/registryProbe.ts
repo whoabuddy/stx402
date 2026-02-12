@@ -90,12 +90,11 @@ export class RegistryProbe extends BaseEndpoint {
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
 
-    let body: { url?: string; timeout?: number };
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    const { body, error } = await this.parseJsonBody<{
+      url?: string;
+      timeout?: number;
+    }>(c);
+    if (error) return error;
 
     if (!body.url) {
       return this.errorResponse(c, "url is required", 400);

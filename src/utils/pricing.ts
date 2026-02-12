@@ -2,6 +2,24 @@ import { BTCtoSats, STXtoMicroSTX, USDCxToMicroUSDCx } from "x402-stacks";
 
 export type TokenType = "STX" | "sBTC" | "USDCx";
 
+// Free endpoints that don't require payment
+// These endpoints should NOT have paymentMiddleware applied in index.ts
+export const FREE_ENDPOINTS = new Set<string>([
+  "/",
+  "/health",
+  "/docs",
+  "/openapi.json",
+  "/x402.json",
+  "/dashboard",
+  "/guide",
+  "/toolbox",
+  "/registry/list",
+  "/admin/registry/pending",
+  "/admin/registry/verify",
+  "/links/expand/:slug",
+  "/agent/registry",
+]);
+
 // Pricing tiers for different endpoint categories
 export type PricingTier =
   | "simple"
@@ -95,6 +113,27 @@ export const ENDPOINT_TIERS: Record<string, PricingTier> = {
   "/agent/validation/requests": "simple",
   // Note: /agent/registry is free - not in tier list
 };
+
+// Check if a path is a free endpoint (no payment required)
+export function isFreeEndpoint(path: string): boolean {
+  // Check exact match first
+  if (FREE_ENDPOINTS.has(path)) {
+    return true;
+  }
+
+  // Check pattern match for parameterized routes (e.g., /links/expand/:slug)
+  for (const freePattern of FREE_ENDPOINTS) {
+    if (freePattern.includes(":")) {
+      // Convert pattern to regex (e.g., /links/expand/:slug -> /links/expand/[^/]+)
+      const regexPattern = "^" + freePattern.replace(/:[^/]+/g, "[^/]+") + "$";
+      if (new RegExp(regexPattern).test(path)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
 
 // Get pricing tier for an endpoint path (strips path params like :address)
 export function getEndpointTier(path: string): PricingTier {

@@ -1,9 +1,9 @@
-import { OpenAPIRoute } from "chanfana";
 import type { AppContext } from "../types";
 import { ENDPOINT_TIERS } from "../utils/pricing";
 import { getDashboardMetrics, type EndpointMetrics } from "../middleware/metrics";
 import { listAllEntries, type RegistryEntryMinimal } from "../utils/registry";
 import { getNavCSS, getNavHTML } from "../components/nav";
+import { BaseEndpoint } from "./BaseEndpoint";
 
 // Extract category from path (e.g., /registry/probe → Registry)
 function getCategoryFromPath(path: string): string {
@@ -14,7 +14,7 @@ function getCategoryFromPath(path: string): string {
   return cat.charAt(0).toUpperCase() + cat.slice(1);
 }
 
-export class Dashboard extends OpenAPIRoute {
+export class Dashboard extends BaseEndpoint {
   schema = {
     tags: ["System"],
     summary: "View API metrics dashboard (free)",

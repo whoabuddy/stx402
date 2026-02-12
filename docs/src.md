@@ -35,15 +35,13 @@ Request → Hono Router → X402 Middleware → Endpoint Handler → Response
 
 ### Key Patterns
 
-1. **OpenAPIRoute** - Endpoints extend chanfana's `OpenAPIRoute` for auto-documentation:
-   - Schema with tags, summary, parameters, responses
-   - Automatic OpenAPI spec generation
-
-2. **BaseEndpoint** - Paid endpoints can extend `BaseEndpoint` for shared methods:
+1. **BaseEndpoint** - Most endpoints extend `BaseEndpoint` (which extends chanfana's `OpenAPIRoute`):
    - `getTokenType(c)` - Get payment token (STX/sBTC/USDCx)
    - `getPayerAddress(c)` - Extract payer from settlement
+   - `parseJsonBody<T>(c)` - Safe JSON body parsing
+   - `authenticateOwner(c, ...)` - Dual auth (signature or payment)
 
-3. **Durable Objects** - Links endpoints use per-user `UserDurableObject` for SQLite storage
+2. **Durable Objects** - Links endpoints use per-user `UserDurableObject` for SQLite storage
 
 ## Relationships
 

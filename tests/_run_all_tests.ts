@@ -57,6 +57,10 @@ import {
   sampleArray,
   pickRandom,
 } from "./_shared_utils";
+import type {
+  PaymentErrorCode,
+  PaymentErrorResponse,
+} from "../src/middleware/x402-stacks";
 
 // Import lifecycle test runners
 import { runRegistryLifecycle } from "./registry-lifecycle.test";
@@ -79,28 +83,7 @@ const LIFECYCLE_RUNNERS: Record<string, (verbose?: boolean) => Promise<{ passed:
 // Error Types
 // =============================================================================
 
-type PaymentErrorCode =
-  | "FACILITATOR_UNAVAILABLE"
-  | "FACILITATOR_ERROR"
-  | "PAYMENT_INVALID"
-  | "INSUFFICIENT_FUNDS"
-  | "PAYMENT_EXPIRED"
-  | "AMOUNT_TOO_LOW"
-  | "NETWORK_ERROR"
-  | "UNKNOWN_ERROR";
-
-interface PaymentErrorResponse {
-  error: string;
-  code: PaymentErrorCode;
-  retryAfter?: number;
-  tokenType: TokenType;
-  resource: string;
-  details?: {
-    errorReason?: string;
-    exceptionMessage?: string;
-  };
-}
-
+// Type guard for PaymentErrorResponse (imported from middleware)
 function isPaymentErrorResponse(obj: unknown): obj is PaymentErrorResponse {
   return (
     typeof obj === "object" &&

@@ -16,6 +16,7 @@ import type { TokenContract } from "x402-stacks";
 import {
   getPaymentAmountForPath,
   getEndpointTier,
+  isFreeEndpoint,
   type TokenType,
   type PricingTier,
   validateTokenType,
@@ -207,6 +208,11 @@ export const x402PaymentMiddleware = () => {
     c: Context<{ Bindings: Env; Variables: AppVariables }>,
     next: () => Promise<Response | void>
   ) => {
+    // Skip payment for free endpoints (safety check - these shouldn't have middleware applied)
+    if (isFreeEndpoint(c.req.path)) {
+      return next();
+    }
+
     // Determine token type from header or query
     const queryTokenType = c.req.query("tokenType") ?? "STX";
     // V2: token type is embedded in payload, but we still accept query param for 402 response

@@ -26,9 +26,6 @@
       "entrypoint": "LogsRPC"
     }
   ],
-  "ai": {
-    "binding": "AI"
-  },
   "kv_namespaces": [
     {
       "binding": "METRICS",
@@ -89,9 +86,6 @@
           "id": "39d50116da4643c3b47a6be2b5805bf9"
         }
       ],
-      "ai": {
-        "binding": "AI"
-      },
       "durable_objects": {
         "bindings": [
           {

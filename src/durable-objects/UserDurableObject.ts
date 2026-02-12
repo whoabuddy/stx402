@@ -9,61 +9,70 @@ import { DurableObject } from "cloudflare:workers";
  * Design principles (per Cloudflare best practices):
  * - Use SQLite for structured data (recommended over KV)
  * - Use RPC methods for clean interface
- * - Initialize tables lazily on first use
+ * - Initialize tables once in constructor with blockConcurrencyWhile
  * - Each user's data is completely isolated
  */
 export class UserDurableObject extends DurableObject<Env> {
   private sql: SqlStorage;
-  private initialized = false;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.sql = ctx.storage.sql;
-  }
 
-  /**
-   * Initialize the database schema (called lazily)
-   */
-  private initializeSchema(): void {
-    if (this.initialized) return;
+    // Initialize schema once using blockConcurrencyWhile
+    // This ensures schema is created before any methods are called
+    ctx.blockConcurrencyWhile(async () => {
+      // Links table for URL shortener
+      this.sql.exec(`
+        CREATE TABLE IF NOT EXISTS links (
+          slug TEXT PRIMARY KEY,
+          url TEXT NOT NULL,
+          title TEXT,
+          clicks INTEGER NOT NULL DEFAULT 0,
+          expires_at TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `);
 
-    // Links table for URL shortener
-    this.sql.exec(`
-      CREATE TABLE IF NOT EXISTS links (
-        slug TEXT PRIMARY KEY,
-        url TEXT NOT NULL,
-        title TEXT,
-        clicks INTEGER NOT NULL DEFAULT 0,
-        expires_at TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    `);
+      // Link clicks table for tracking stats
+      this.sql.exec(`
+        CREATE TABLE IF NOT EXISTS link_clicks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          slug TEXT NOT NULL,
+          clicked_at TEXT NOT NULL,
+          referrer TEXT,
+          user_agent TEXT,
+          country TEXT,
+          FOREIGN KEY (slug) REFERENCES links(slug) ON DELETE CASCADE
+        )
+      `);
 
-    // Link clicks table for tracking stats
-    this.sql.exec(`
-      CREATE TABLE IF NOT EXISTS link_clicks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        slug TEXT NOT NULL,
-        clicked_at TEXT NOT NULL,
-        referrer TEXT,
-        user_agent TEXT,
-        country TEXT,
-        FOREIGN KEY (slug) REFERENCES links(slug) ON DELETE CASCADE
-      )
-    `);
-
-    // Index for efficient click queries
-    this.sql.exec(`
-      CREATE INDEX IF NOT EXISTS idx_link_clicks_slug ON link_clicks(slug)
-    `);
-
-    this.initialized = true;
+      // Index for efficient click queries
+      this.sql.exec(`
+        CREATE INDEX IF NOT EXISTS idx_link_clicks_slug ON link_clicks(slug)
+      `);
+    });
   }
 
   // ===========================================================================
   // Link Operations (URL Shortener)
   // ===========================================================================
+
+  /**
+   * Clean up expired links
+   * @param slug - Optional specific slug to check, or undefined to clean all expired
+   */
+  private cleanupExpired(slug?: string): void {
+    const now = new Date().toISOString();
+    if (slug) {
+      // Single-item cleanup for specific slug
+      this.sql.exec("DELETE FROM links WHERE slug = ? AND expires_at IS NOT NULL AND expires_at < ?", slug, now);
+    } else {
+      // Batch cleanup for all expired links
+      this.sql.exec("DELETE FROM links WHERE expires_at IS NOT NULL AND expires_at < ?", now);
+    }
+  }
 
   /**
    * Generate a random slug for short links
@@ -94,7 +103,6 @@ export class UserDurableObject extends DurableObject<Env> {
     expiresAt: string | null;
     createdAt: string;
   }> {
-    this.initializeSchema();
     const now = new Date().toISOString();
 
     // Generate or validate slug
@@ -168,8 +176,6 @@ export class UserDurableObject extends DurableObject<Env> {
     expiresAt: string | null;
     createdAt: string;
   } | null> {
-    this.initializeSchema();
-
     const result = this.sql
       .exec(
         "SELECT slug, url, title, clicks, expires_at, created_at FROM links WHERE slug = ?",
@@ -184,10 +190,9 @@ export class UserDurableObject extends DurableObject<Env> {
     const row = result[0];
     const expiresAt = row.expires_at as string | null;
 
-    // Check if expired
+    // Check if expired and clean up if needed
     if (expiresAt && new Date(expiresAt) < new Date()) {
-      // Clean up expired link
-      this.sql.exec("DELETE FROM links WHERE slug = ?", slug);
+      this.cleanupExpired(slug);
       return null;
     }
 
@@ -212,24 +217,23 @@ export class UserDurableObject extends DurableObject<Env> {
       country?: string;
     }
   ): Promise<{ recorded: boolean; clicks: number }> {
-    this.initializeSchema();
     const now = new Date().toISOString();
 
-    // Check if link exists
-    const existing = this.sql
-      .exec("SELECT clicks FROM links WHERE slug = ?", slug)
-      .toArray();
-
-    if (existing.length === 0) {
-      return { recorded: false, clicks: 0 };
-    }
-
-    // Increment click count
+    // Increment click count (no-op if slug doesn't exist due to WHERE clause)
     this.sql.exec(
       "UPDATE links SET clicks = clicks + 1, updated_at = ? WHERE slug = ?",
       now,
       slug
     );
+
+    // Check if the update affected a row by reading the new count
+    const result = this.sql
+      .exec("SELECT clicks FROM links WHERE slug = ?", slug)
+      .toArray();
+
+    if (result.length === 0) {
+      return { recorded: false, clicks: 0 };
+    }
 
     // Record click details
     this.sql.exec(
@@ -242,8 +246,7 @@ export class UserDurableObject extends DurableObject<Env> {
       metadata?.country ?? null
     );
 
-    const newClicks = (existing[0].clicks as number) + 1;
-    return { recorded: true, clicks: newClicks };
+    return { recorded: true, clicks: result[0].clicks as number };
   }
 
   /**
@@ -263,8 +266,6 @@ export class UserDurableObject extends DurableObject<Env> {
       country: string | null;
     }>;
   } | null> {
-    this.initializeSchema();
-
     // Get link info
     const linkResult = this.sql
       .exec(
@@ -347,13 +348,8 @@ export class UserDurableObject extends DurableObject<Env> {
       createdAt: string;
     }>
   > {
-    this.initializeSchema();
-
     // Clean up expired links first
-    this.sql.exec(
-      "DELETE FROM links WHERE expires_at IS NOT NULL AND expires_at < ?",
-      new Date().toISOString()
-    );
+    this.cleanupExpired();
 
     const results = this.sql
       .exec(
@@ -375,20 +371,8 @@ export class UserDurableObject extends DurableObject<Env> {
    * Delete a link
    */
   async linkDelete(slug: string): Promise<{ deleted: boolean; slug: string }> {
-    this.initializeSchema();
-
-    const existing = this.sql
-      .exec("SELECT 1 FROM links WHERE slug = ?", slug)
-      .toArray();
-
-    if (existing.length === 0) {
-      return { deleted: false, slug };
-    }
-
-    // Delete clicks first (cascade should handle this but be explicit)
-    this.sql.exec("DELETE FROM link_clicks WHERE slug = ?", slug);
-    this.sql.exec("DELETE FROM links WHERE slug = ?", slug);
-
-    return { deleted: true, slug };
+    // CASCADE handles link_clicks deletion automatically
+    const cursor = this.sql.exec("DELETE FROM links WHERE slug = ?", slug);
+    return { deleted: cursor.rowsWritten > 0, slug };
   }
 }
