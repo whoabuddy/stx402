@@ -150,57 +150,8 @@ function buildOutputSchema(
 }
 
 // =============================================================================
-// Endpoint Descriptions (for static generation without OpenAPI fetch)
-// =============================================================================
-
-const ENDPOINT_DESCRIPTIONS: Record<string, { method: "GET" | "POST"; description: string }> = {
-  // Registry endpoints
-  "/registry/probe": { method: "POST", description: "Probe an x402 endpoint to discover payment requirements" },
-  "/registry/register": { method: "POST", description: "Register a new x402 endpoint in the directory" },
-  "/registry/details": { method: "POST", description: "Get details for a registered endpoint" },
-  "/registry/update": { method: "POST", description: "Update an endpoint you own" },
-  "/registry/delete": { method: "POST", description: "Delete an endpoint you own" },
-  "/registry/my-endpoints": { method: "POST", description: "List endpoints registered by your address" },
-  "/registry/transfer": { method: "POST", description: "Transfer endpoint ownership to another address" },
-
-  // Links endpoints
-  "/links/create": { method: "POST", description: "Create a shortened URL with tracking" },
-  "/links/stats": { method: "POST", description: "Get click statistics for a shortened URL" },
-  "/links/delete": { method: "POST", description: "Delete a shortened URL you own" },
-  "/links/list": { method: "GET", description: "List all your shortened URLs" },
-
-  // Agent Identity endpoints
-  "/agent/info": { method: "POST", description: "Get agent information by ID" },
-  "/agent/owner": { method: "GET", description: "Get the owner address of an agent" },
-  "/agent/uri": { method: "GET", description: "Get the metadata URI for an agent" },
-  "/agent/metadata": { method: "POST", description: "Get specific metadata value for an agent" },
-  "/agent/version": { method: "GET", description: "Get the agent registry contract version" },
-  "/agent/lookup": { method: "POST", description: "Find agents owned by an address" },
-
-  // Agent Reputation endpoints
-  "/agent/reputation/summary": { method: "POST", description: "Get reputation summary for an agent" },
-  "/agent/reputation/feedback": { method: "POST", description: "Get specific feedback entry for an agent" },
-  "/agent/reputation/list": { method: "POST", description: "List all feedback for an agent" },
-  "/agent/reputation/clients": { method: "POST", description: "List clients who provided feedback" },
-  "/agent/reputation/auth-hash": { method: "POST", description: "Generate auth hash for submitting feedback" },
-
-  // Agent Validation endpoints
-  "/agent/validation/status": { method: "POST", description: "Get validation request status" },
-  "/agent/validation/summary": { method: "POST", description: "Get validation summary for an agent" },
-  "/agent/validation/list": { method: "POST", description: "List validations for an agent" },
-  "/agent/validation/requests": { method: "POST", description: "List pending validation requests" },
-};
-
-// =============================================================================
 // Main Generator
 // =============================================================================
-
-export interface GeneratorConfig {
-  network: "mainnet" | "testnet";
-  payTo: string;
-  name?: string;
-  image?: string;
-}
 
 /**
  * Generate x402.json schema from OpenAPI spec
@@ -298,18 +249,23 @@ export async function generateX402SchemaFromUrl(
 }
 
 /**
- * Generate x402.json statically without fetching OpenAPI
- * Uses hardcoded endpoint descriptions - no network calls needed
+ * Generate x402.json statically without fetching OpenAPI (v2 format)
+ * Uses Bazaar metadata registry - no network calls needed
  */
 export function generateX402SchemaStatic(config: GeneratorConfig): X402Schema {
   const accepts: X402Entry[] = [];
 
   // Process each paid endpoint from ENDPOINT_TIERS
   for (const [path, tier] of Object.entries(ENDPOINT_TIERS)) {
-    const endpointInfo = ENDPOINT_DESCRIPTIONS[path];
-    if (!endpointInfo) continue; // Skip if no description defined
+    // Get metadata from Bazaar registry
+    const metadata = getEndpointMetadata(path);
+    if (!metadata) continue; // Skip if no metadata defined
 
+    const method = metadata.method;
     const timeout = getTimeoutForTier(tier);
+
+    // Build rich input/output schemas from Bazaar metadata
+    const outputSchema = buildOutputSchema(path, method, tier);
 
     // Create entry for each supported token
     for (const token of TOKENS) {
@@ -324,21 +280,15 @@ export function generateX402SchemaStatic(config: GeneratorConfig): X402Schema {
         maxAmountRequired: amount,
         maxTimeoutSeconds: timeout,
         resource: path,
-        description: endpointInfo.description,
+        description: metadata.description,
         mimeType: "application/json",
-        outputSchema: {
-          input: {
-            type: "http",
-            method: endpointInfo.method,
-          },
-          output: {},
-        },
+        outputSchema,
       });
     }
   }
 
   return {
-    x402Version: 1,
+    x402Version: 2,
     name: config.name || "stx402 Directory",
     image: config.image || "https://stx402.com/favicon.svg",
     accepts,
