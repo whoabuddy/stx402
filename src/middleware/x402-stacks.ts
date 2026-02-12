@@ -21,6 +21,7 @@ import {
   validateTokenType,
 } from "../utils/pricing";
 import type { AppVariables } from "../types";
+import { getEndpointMetadata, buildBazaarExtension } from "../bazaar";
 
 // Correct mainnet token contracts (x402-stacks has outdated sBTC address)
 const TOKEN_CONTRACTS: Record<"mainnet" | "testnet", Record<"sBTC" | "USDCx", TokenContract>> = {
