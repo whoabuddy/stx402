@@ -12,12 +12,6 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { log } from "./logger";
 
 // SIP-018 Domain for STX402 Registry
-export const STX402_DOMAIN = Cl.tuple({
-  name: Cl.stringAscii("stx402-registry"),
-  version: Cl.stringAscii("1.0.0"),
-  "chain-id": Cl.uint(1), // 1 for mainnet, will be overridden based on network
-});
-
 export function getDomain(network: "mainnet" | "testnet"): ClarityValue {
   return Cl.tuple({
     name: Cl.stringAscii("stx402-registry"),
