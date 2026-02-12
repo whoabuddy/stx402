@@ -343,9 +343,7 @@ export const metricsMiddleware = () => {
     if (!paymentHeader) return;
 
     // Get token type from query (V2 embeds it in payload, query param is backup)
-    const headerTokenType = "";
-    const queryTokenType = c.req.query("tokenType") ?? "STX";
-    const tokenTypeStr = headerTokenType || queryTokenType;
+    const tokenTypeStr = c.req.query("tokenType") ?? "STX";
 
     let tokenType: TokenType;
     try {

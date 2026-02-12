@@ -31,7 +31,8 @@ export type SignedAction =
   | "delete-endpoint"
   | "list-my-endpoints"
   | "transfer-ownership"
-  | "challenge-response";
+  | "challenge-response"
+  | "authenticate";
 
 // Create a structured message for an action
 export function createActionMessage(
@@ -74,6 +75,13 @@ export function createActionMessage(
         action: Cl.stringAscii("challenge-response"),
         owner: Cl.stringAscii(data.owner),
         nonce: Cl.stringAscii(data.nonce || ""),
+        timestamp: Cl.uint(data.timestamp),
+      });
+
+    case "authenticate":
+      return Cl.tuple({
+        action: Cl.stringAscii("authenticate"),
+        owner: Cl.stringAscii(data.owner),
         timestamp: Cl.uint(data.timestamp),
       });
 

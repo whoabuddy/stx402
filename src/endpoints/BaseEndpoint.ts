@@ -104,7 +104,7 @@ export class BaseEndpoint extends OpenAPIRoute {
   protected getPayerAddress(c: AppContext): string | null {
     const settleResult = c.get("settleResult") as SettlementResponseV2 | undefined;
     const paymentPayload = c.get("paymentPayload") as PaymentPayloadV2 | undefined;
-    const network = c.env?.X402_NETWORK as "mainnet" | "testnet" || "mainnet";
+    const network = (c.env?.X402_NETWORK ?? "mainnet") as "mainnet" | "testnet";
 
     // V2: Use 'payer' field from settlement result
     if (settleResult?.payer) {
