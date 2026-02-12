@@ -60,6 +60,21 @@ export class UserDurableObject extends DurableObject<Env> {
   // ===========================================================================
 
   /**
+   * Clean up expired links
+   * @param slug - Optional specific slug to check, or undefined to clean all expired
+   */
+  private cleanupExpired(slug?: string): void {
+    const now = new Date().toISOString();
+    if (slug) {
+      // Single-item cleanup for specific slug
+      this.sql.exec("DELETE FROM links WHERE slug = ? AND expires_at IS NOT NULL AND expires_at < ?", slug, now);
+    } else {
+      // Batch cleanup for all expired links
+      this.sql.exec("DELETE FROM links WHERE expires_at IS NOT NULL AND expires_at < ?", now);
+    }
+  }
+
+  /**
    * Generate a random slug for short links
    */
   private generateSlug(length: number = 6): string {
@@ -175,10 +190,9 @@ export class UserDurableObject extends DurableObject<Env> {
     const row = result[0];
     const expiresAt = row.expires_at as string | null;
 
-    // Check if expired
+    // Check if expired and clean up if needed
     if (expiresAt && new Date(expiresAt) < new Date()) {
-      // Clean up expired link
-      this.sql.exec("DELETE FROM links WHERE slug = ?", slug);
+      this.cleanupExpired(slug);
       return null;
     }
 
@@ -335,10 +349,7 @@ export class UserDurableObject extends DurableObject<Env> {
     }>
   > {
     // Clean up expired links first
-    this.sql.exec(
-      "DELETE FROM links WHERE expires_at IS NOT NULL AND expires_at < ?",
-      new Date().toISOString()
-    );
+    this.cleanupExpired();
 
     const results = this.sql
       .exec(
