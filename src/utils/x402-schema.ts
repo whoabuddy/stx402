@@ -106,74 +106,47 @@ function getTimeoutForTier(tier: PricingTier): number {
 }
 
 /**
- * Simplify OpenAPI type to x402 type string
+ * Build rich input/output schema from Bazaar metadata
  */
-function simplifyType(schema: OpenAPISchema | undefined): string {
-  if (!schema || !schema.type) return "object";
+function buildOutputSchema(
+  path: string,
+  method: "GET" | "POST" | "DELETE",
+  tier: PricingTier
+): { input: X402InputSchema; output: X402OutputSchema } {
+  // Lookup metadata in Bazaar registry
+  const metadata = getEndpointMetadata(path, method);
 
-  switch (schema.type) {
-    case "string":
-      return "string";
-    case "boolean":
-      return "boolean";
-    case "number":
-    case "integer":
-      return "number";
-    case "array":
-      return "array";
-    case "object":
-    default:
-      return "object";
-  }
-}
+  // Build input schema
+  const input: X402InputSchema = {
+    type: "http",
+    method: method,
+  };
 
-/**
- * Convert OpenAPI request body schema to x402 bodyFields
- */
-function extractBodyFields(
-  requestBody: OpenAPIOperation["requestBody"]
-): Record<string, X402FieldSchema> | undefined {
-  const schema = requestBody?.content?.["application/json"]?.schema;
-  if (!schema?.properties) return undefined;
-
-  const requiredFields = schema.required || [];
-  const fields: Record<string, X402FieldSchema> = {};
-
-  for (const [name, propSchema] of Object.entries(schema.properties)) {
-    fields[name] = {
-      type: simplifyType(propSchema),
-      required: requiredFields.includes(name),
-      description: propSchema.description,
-    };
+  // Add rich metadata if available
+  if (metadata) {
+    if (metadata.bodyType) {
+      input.bodyType = metadata.bodyType;
+    }
+    if (metadata.bodySchema) {
+      input.bodySchema = metadata.bodySchema;
+    }
+    if (metadata.queryParams) {
+      input.queryParams = metadata.queryParams;
+    }
   }
 
-  return Object.keys(fields).length > 0 ? fields : undefined;
-}
+  // Build output schema
+  const output: X402OutputSchema = {
+    type: "json",
+    example: metadata?.outputExample || {},
+  };
 
-/**
- * Convert OpenAPI response schema to x402 output format
- */
-function extractOutputSchema(
-  responses: OpenAPIOperation["responses"]
-): Record<string, string> {
-  const schema = responses?.["200"]?.content?.["application/json"]?.schema;
-  if (!schema?.properties) return {};
-
-  const output: Record<string, string> = {};
-
-  for (const [name, propSchema] of Object.entries(schema.properties)) {
-    output[name] = simplifyType(propSchema);
+  // Add output schema if available
+  if (metadata?.outputSchema) {
+    output.schema = metadata.outputSchema;
   }
 
-  return output;
-}
-
-/**
- * Clean description - remove "(paid)" prefix and trim
- */
-function cleanDescription(summary?: string): string {
-  if (!summary) return "";
-  return summary.replace(/^\(paid\)\s*/i, "").trim();
+  return { input, output };
 }
 
 // =============================================================================
