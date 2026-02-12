@@ -1,7 +1,7 @@
 import { X402PaymentClient, X402_HEADERS } from "x402-stacks";
 import type { TokenType, PaymentRequiredV2, PaymentRequirementsV2 } from "x402-stacks";
 import { deriveChildAccount } from "../src/utils/wallet";
-import { createTestLogger, X402_CLIENT_PK, X402_NETWORK, X402_WORKER_URL, buildPaymentPayloadV2 } from "./_shared_utils";
+import { createTestLogger, X402_CLIENT_PK, X402_NETWORK, X402_WORKER_URL, buildPaymentPayloadV2, sleep } from "./_shared_utils";
 
 async function makeX402Request(
   x402Client: X402PaymentClient,
@@ -111,7 +111,7 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger.error(`Registry info error: ${err}`);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await sleep(300);
 
   // Test 2: Agent info for agent ID 0 (first registered agent)
   logger.info("2. Testing /agent/info...");
@@ -134,7 +134,7 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger.error(`Agent info failed: ${JSON.stringify(infoResult.data)}`);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await sleep(300);
 
   // Test 3: Agent owner lookup
   logger.info("3. Testing /agent/owner...");
@@ -157,7 +157,7 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger.error(`Owner lookup failed: ${JSON.stringify(ownerResult.data)}`);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await sleep(300);
 
   // Test 4: Agent version
   logger.info("4. Testing /agent/version...");
@@ -177,7 +177,7 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger.error(`Version lookup failed: ${JSON.stringify(versionResult.data)}`);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await sleep(300);
 
   // Test 5: Reputation summary for agent 0
   logger.info("5. Testing /agent/reputation/summary...");
@@ -201,7 +201,7 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger.error(`Reputation summary failed: ${JSON.stringify(repSummaryResult.data)}`);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await sleep(300);
 
   // Test 6: Reputation clients for agent 0
   logger.info("6. Testing /agent/reputation/clients...");
@@ -225,7 +225,7 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger.error(`Reputation clients failed: ${JSON.stringify(repClientsResult.data)}`);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await sleep(300);
 
   // Test 7: Validation summary for agent 0
   logger.info("7. Testing /agent/validation/summary...");
@@ -249,7 +249,7 @@ export async function runAgentLifecycle(verbose = false): Promise<LifecycleTestR
     logger.error(`Validation summary failed: ${JSON.stringify(valSummaryResult.data)}`);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await sleep(300);
 
   // Test 8: Agent lookup by owner
   logger.info("8. Testing /agent/lookup...");

@@ -20,6 +20,7 @@ import {
 import { getFetchOptions, setFetchOptions } from "@stacks/common";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+import { sleep } from "./hiro";
 
 // Fix stacks.js fetch for Workers
 type StacksRequestInit = RequestInit & { referrerPolicy?: string };
@@ -71,13 +72,6 @@ export function parseContractId(contractId: string): {
 } {
   const [address, name] = contractId.split(".");
   return { address, name };
-}
-
-/**
- * Sleep for a given number of milliseconds
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**

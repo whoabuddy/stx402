@@ -28,6 +28,9 @@ export const TOKEN_TYPE_PARAM = {
   },
 };
 
+/** Inner schema object for TOKEN_TYPE_PARAM (used in Bazaar registry) */
+export const TOKEN_TYPE_SCHEMA = TOKEN_TYPE_PARAM.schema;
+
 export const AGENT_ID_QUERY_PARAM = {
   name: "agentId",
   in: "query" as const,

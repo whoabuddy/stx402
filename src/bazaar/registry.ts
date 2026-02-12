@@ -6,17 +6,14 @@
  */
 
 import type { EndpointMetadata } from "./types";
+import { TOKEN_TYPE_SCHEMA } from "../utils/schema-helpers";
 
 // =============================================================================
 // Shared Constants
 // =============================================================================
 
 /** Token type query parameter, repeated across most paid endpoints */
-const TOKEN_TYPE_PARAM = {
-  type: "string",
-  enum: ["STX", "sBTC", "USDCx"],
-  default: "STX",
-} as const;
+const TOKEN_TYPE_PARAM = TOKEN_TYPE_SCHEMA;
 
 /** Standard queryParams containing only the tokenType selector */
 const TOKEN_TYPE_QUERY: Record<string, unknown> = {
