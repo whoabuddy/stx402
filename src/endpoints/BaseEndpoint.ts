@@ -86,17 +86,6 @@ export class BaseEndpoint extends OpenAPIRoute {
     return validateTokenType(rawTokenType);
   }
 
-  protected validateAddress(c: AppContext): string | null {
-    const address = c.req.param("address");
-    try {
-      const addressObj = Address.parse(address);
-      return Address.stringify(addressObj);
-    } catch (e) {
-      c.var.logger.warn("Invalid address format", { address, error: String(e) });
-      return null;
-    }
-  }
-
   /**
    * Get the payer's address from the payment settlement result or payment payload
    * This is set by the x402 middleware after successful payment verification
