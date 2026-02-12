@@ -166,6 +166,9 @@ dist
 !.env.example
 .wrangler/
 
+# Quest planning (local only)
+.planning/
+
 # Sprout docs state (local only)
 sprout-docs.json
 
