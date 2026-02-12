@@ -10,6 +10,7 @@ import {
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { log } from "./logger";
+import { addressesMatchByHash160 } from "./payment";
 
 // SIP-018 Domain for STX402 Registry
 export function getDomain(network: "mainnet" | "testnet"): ClarityValue {
@@ -155,8 +156,8 @@ export function verifyStructuredSignature(
     const testnetAddress = publicKeyToAddress(recoveredPubKey, "testnet");
 
     // Compare addresses - check against both mainnet and testnet versions
-    const valid = addressesMatch(mainnetAddress, expectedAddress) ||
-                  addressesMatch(testnetAddress, expectedAddress);
+    const valid = addressesMatchByHash160(mainnetAddress, expectedAddress) ||
+                  addressesMatchByHash160(testnetAddress, expectedAddress);
 
     const recoveredAddress = network === "mainnet" ? mainnetAddress : testnetAddress;
 
@@ -193,21 +194,6 @@ function publicKeyToAddress(publicKey: string, network: "mainnet" | "testnet" = 
   }
 }
 
-// Check if two addresses match (handles mainnet/testnet variations)
-function addressesMatch(addr1: string, addr2: string): boolean {
-  // Normalize addresses - strip version prefix and compare the hash portion
-  // SP/ST addresses have same hash160 just different version bytes
-  try {
-    const parsed1 = Address.parse(addr1);
-    const parsed2 = Address.parse(addr2);
-
-    // Compare the hash portion (the actual identity)
-    return parsed1.hash160 === parsed2.hash160;
-  } catch {
-    return addr1.toLowerCase() === addr2.toLowerCase();
-  }
-}
-
 // Verify a simple message signature (for basic auth)
 export function verifySimpleSignature(
   message: string,
@@ -227,8 +213,8 @@ export function verifySimpleSignature(
     const mainnetAddress = publicKeyToAddress(recoveredPubKey, "mainnet");
     const testnetAddress = publicKeyToAddress(recoveredPubKey, "testnet");
 
-    const valid = addressesMatch(mainnetAddress, expectedAddress) ||
-                  addressesMatch(testnetAddress, expectedAddress);
+    const valid = addressesMatchByHash160(mainnetAddress, expectedAddress) ||
+                  addressesMatchByHash160(testnetAddress, expectedAddress);
 
     const recoveredAddress = network === "mainnet" ? mainnetAddress : testnetAddress;
 

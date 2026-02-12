@@ -14,7 +14,7 @@ import {
   consumeChallenge,
   type SignatureRequest,
 } from "../utils/signatures";
-import { payerMatchesAddress } from "../utils/payment";
+import { payerMatchesAddress, strip0x } from "../utils/payment";
 import type { UserDurableObject } from "../durable-objects/UserDurableObject";
 
 /** Result of dual authentication (signature or payment) */
@@ -115,7 +115,7 @@ export class BaseEndpoint extends OpenAPIRoute {
     if (paymentPayload?.payload?.transaction) {
       try {
         const signedTx = paymentPayload.payload.transaction;
-        const hex = signedTx.startsWith("0x") ? signedTx.slice(2) : signedTx;
+        const hex = strip0x(signedTx);
         const tx = deserializeTransaction(hex);
 
         if (tx.auth?.spendingCondition) {

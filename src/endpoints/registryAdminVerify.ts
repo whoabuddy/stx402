@@ -87,17 +87,12 @@ export class RegistryAdminVerify extends BaseEndpoint {
       return this.errorResponse(c, "Registry storage not configured", 500);
     }
 
-    let body: {
+    const { body, error } = await this.parseJsonBody<{
       url?: string;
       action?: "verify" | "reject";
       adminAddress?: string;
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (error) return error;
 
     if (!body.url) {
       return this.errorResponse(c, "url is required", 400);

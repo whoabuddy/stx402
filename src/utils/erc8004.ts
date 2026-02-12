@@ -21,6 +21,7 @@ import { getFetchOptions, setFetchOptions } from "@stacks/common";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { sleep } from "./hiro";
+import { strip0x } from "./payment";
 
 // Fix stacks.js fetch for Workers
 type StacksRequestInit = RequestInit & { referrerPolicy?: string };
@@ -187,7 +188,7 @@ export function principal(p: string): ClarityValue {
  * Build buffer Clarity value from hex string
  */
 export function buffer(hex: string): ClarityValue {
-  const cleanHex = hex.startsWith("0x") ? hex.slice(2) : hex;
+  const cleanHex = strip0x(hex);
   return bufferCV(hexToBytes(cleanHex));
 }
 

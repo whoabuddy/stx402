@@ -116,20 +116,15 @@ export class RegistryRegister extends BaseEndpoint {
       return this.errorResponse(c, "Registry storage not configured", 500);
     }
 
-    let body: {
+    const { body, error } = await this.parseJsonBody<{
       url?: string;
       name?: string;
       description?: string;
       owner?: string;
       category?: string;
       tags?: string[];
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (error) return error;
 
     // Validate required fields
     if (!body.url) {

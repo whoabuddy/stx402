@@ -74,15 +74,10 @@ export class RegistryAdminPending extends BaseEndpoint {
       return this.errorResponse(c, "Registry storage not configured", 500);
     }
 
-    let body: {
+    const { body, error } = await this.parseJsonBody<{
       adminAddress?: string;
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      return this.errorResponse(c, "Invalid JSON body", 400);
-    }
+    }>(c);
+    if (error) return error;
 
     if (!body.adminAddress) {
       return this.errorResponse(c, "adminAddress is required", 400);
