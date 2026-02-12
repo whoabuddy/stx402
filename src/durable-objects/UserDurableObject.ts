@@ -371,17 +371,8 @@ export class UserDurableObject extends DurableObject<Env> {
    * Delete a link
    */
   async linkDelete(slug: string): Promise<{ deleted: boolean; slug: string }> {
-    const existing = this.sql
-      .exec("SELECT 1 FROM links WHERE slug = ?", slug)
-      .toArray();
-
-    if (existing.length === 0) {
-      return { deleted: false, slug };
-    }
-
     // CASCADE handles link_clicks deletion automatically
-    this.sql.exec("DELETE FROM links WHERE slug = ?", slug);
-
-    return { deleted: true, slug };
+    const cursor = this.sql.exec("DELETE FROM links WHERE slug = ?", slug);
+    return { deleted: cursor.rowsWritten > 0, slug };
   }
 }
