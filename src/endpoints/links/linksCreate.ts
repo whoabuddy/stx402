@@ -10,27 +10,27 @@ export class LinksCreate extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["url"],
             properties: {
               url: {
-                type: "string" as const,
+                type: "string",
                 description: "Target URL to shorten",
                 format: "uri",
               },
               slug: {
-                type: "string" as const,
+                type: "string",
                 description: "Custom slug (3-32 chars, optional)",
                 minLength: 3,
                 maxLength: 32,
               },
               title: {
-                type: "string" as const,
+                type: "string",
                 description: "Optional title/description for the link",
                 maxLength: 256,
               },
               ttl: {
-                type: "number" as const,
+                type: "number",
                 description: "Time to live in seconds (optional, no expiration if omitted)",
                 minimum: 60,
               },
@@ -45,7 +45,7 @@ export class LinksCreate extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -57,15 +57,15 @@ export class LinksCreate extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                slug: { type: "string" as const },
-                shortUrl: { type: "string" as const },
-                url: { type: "string" as const },
-                title: { type: "string" as const, nullable: true },
-                expiresAt: { type: "string" as const, nullable: true },
-                createdAt: { type: "string" as const },
-                tokenType: { type: "string" as const },
+                slug: { type: "string" },
+                shortUrl: { type: "string" },
+                url: { type: "string" },
+                title: { type: "string", nullable: true },
+                expiresAt: { type: "string", nullable: true },
+                createdAt: { type: "string" },
+                tokenType: { type: "string" },
               },
             },
           },

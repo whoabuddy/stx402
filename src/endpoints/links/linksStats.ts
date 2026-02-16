@@ -10,11 +10,11 @@ export class LinksStats extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["slug"],
             properties: {
               slug: {
-                type: "string" as const,
+                type: "string",
                 description: "The short link slug",
               },
             },
@@ -28,7 +28,7 @@ export class LinksStats extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -40,30 +40,30 @@ export class LinksStats extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                slug: { type: "string" as const },
-                url: { type: "string" as const },
-                title: { type: "string" as const, nullable: true },
-                clicks: { type: "number" as const },
-                createdAt: { type: "string" as const },
-                lastClickAt: { type: "string" as const, nullable: true },
+                slug: { type: "string" },
+                url: { type: "string" },
+                title: { type: "string", nullable: true },
+                clicks: { type: "number" },
+                createdAt: { type: "string" },
+                lastClickAt: { type: "string", nullable: true },
                 referrers: {
-                  type: "object" as const,
-                  additionalProperties: { type: "number" as const },
+                  type: "object",
+                  additionalProperties: { type: "number" },
                 },
                 recentClicks: {
-                  type: "array" as const,
+                  type: "array",
                   items: {
-                    type: "object" as const,
+                    type: "object",
                     properties: {
-                      clickedAt: { type: "string" as const },
-                      referrer: { type: "string" as const, nullable: true },
-                      country: { type: "string" as const, nullable: true },
+                      clickedAt: { type: "string" },
+                      referrer: { type: "string", nullable: true },
+                      country: { type: "string", nullable: true },
                     },
                   },
                 },
-                tokenType: { type: "string" as const },
+                tokenType: { type: "string" },
               },
             },
           },

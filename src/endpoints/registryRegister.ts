@@ -18,32 +18,32 @@ export class RegistryRegister extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["url", "name", "description"],
             properties: {
               url: {
-                type: "string" as const,
+                type: "string",
                 description: "The x402 endpoint URL to register",
               },
               name: {
-                type: "string" as const,
+                type: "string",
                 description: "Display name for the endpoint",
               },
               description: {
-                type: "string" as const,
+                type: "string",
                 description: "Description of what the endpoint does",
               },
               owner: {
-                type: "string" as const,
+                type: "string",
                 description: "Owner STX address (defaults to payer address if not specified)",
               },
               category: {
-                type: "string" as const,
+                type: "string",
                 description: "Category for filtering (e.g., 'ai', 'data', 'utility')",
               },
               tags: {
-                type: "array" as const,
-                items: { type: "string" as const },
+                type: "array",
+                items: { type: "string" },
                 description: "Tags for discovery",
               },
             },
@@ -57,7 +57,7 @@ export class RegistryRegister extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -69,24 +69,24 @@ export class RegistryRegister extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                success: { type: "boolean" as const },
+                success: { type: "boolean" },
                 entry: {
-                  type: "object" as const,
+                  type: "object",
                   properties: {
-                    id: { type: "string" as const },
-                    url: { type: "string" as const },
-                    name: { type: "string" as const },
-                    description: { type: "string" as const },
-                    owner: { type: "string" as const },
-                    status: { type: "string" as const },
-                    category: { type: "string" as const },
-                    registeredAt: { type: "string" as const },
+                    id: { type: "string" },
+                    url: { type: "string" },
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    owner: { type: "string" },
+                    status: { type: "string" },
+                    category: { type: "string" },
+                    registeredAt: { type: "string" },
                   },
                 },
-                probeResult: { type: "object" as const },
-                tokenType: { type: "string" as const },
+                probeResult: { type: "object" },
+                tokenType: { type: "string" },
               },
             },
           },

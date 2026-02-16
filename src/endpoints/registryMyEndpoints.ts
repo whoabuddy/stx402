@@ -11,18 +11,18 @@ export class RegistryMyEndpoints extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             properties: {
               owner: {
-                type: "string" as const,
+                type: "string",
                 description: "Owner STX address to list endpoints for (defaults to payer address)",
               },
               signature: {
-                type: "string" as const,
+                type: "string",
                 description: "SIP-018 signature proving ownership (optional if paying from same address)",
               },
               timestamp: {
-                type: "number" as const,
+                type: "number",
                 description: "Timestamp when signature was created (required with signature)",
               },
             },
@@ -36,7 +36,7 @@ export class RegistryMyEndpoints extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -48,30 +48,30 @@ export class RegistryMyEndpoints extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
                 entries: {
-                  type: "array" as const,
+                  type: "array",
                   items: {
-                    type: "object" as const,
+                    type: "object",
                     properties: {
-                      id: { type: "string" as const },
-                      url: { type: "string" as const },
-                      name: { type: "string" as const },
-                      description: { type: "string" as const },
-                      category: { type: "string" as const },
-                      status: { type: "string" as const },
-                      registeredAt: { type: "string" as const },
+                      id: { type: "string" },
+                      url: { type: "string" },
+                      name: { type: "string" },
+                      description: { type: "string" },
+                      category: { type: "string" },
+                      status: { type: "string" },
+                      registeredAt: { type: "string" },
                     },
                   },
                 },
-                count: { type: "number" as const },
-                authenticatedBy: { type: "string" as const },
+                count: { type: "number" },
+                authenticatedBy: { type: "string" },
                 signatureRequest: {
-                  type: "object" as const,
+                  type: "object",
                   description: "Provided when signature is needed",
                 },
-                tokenType: { type: "string" as const },
+                tokenType: { type: "string" },
               },
             },
           },

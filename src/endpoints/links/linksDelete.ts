@@ -10,11 +10,11 @@ export class LinksDelete extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["slug"],
             properties: {
               slug: {
-                type: "string" as const,
+                type: "string",
                 description: "The short link slug to delete",
               },
             },
@@ -28,7 +28,7 @@ export class LinksDelete extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -40,11 +40,11 @@ export class LinksDelete extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                deleted: { type: "boolean" as const },
-                slug: { type: "string" as const },
-                tokenType: { type: "string" as const },
+                deleted: { type: "boolean" },
+                slug: { type: "string" },
+                tokenType: { type: "string" },
               },
             },
           },

@@ -11,7 +11,7 @@ export class GuidePage extends BaseEndpoint {
         description: "HTML guide page",
         content: {
           "text/html": {
-            schema: { type: "string" as const },
+            schema: { type: "string" },
           },
         },
       },

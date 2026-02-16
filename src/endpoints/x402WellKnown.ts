@@ -22,25 +22,25 @@ export class X402WellKnown extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
                 x402Version: {
-                  type: "number" as const,
+                  type: "number",
                   description: "X402 schema version",
                 },
                 name: {
-                  type: "string" as const,
+                  type: "string",
                   description: "Service name",
                 },
                 image: {
-                  type: "string" as const,
+                  type: "string",
                   description: "Service logo URL",
                 },
                 accepts: {
-                  type: "array" as const,
+                  type: "array",
                   description: "List of paid endpoints with payment details",
                   items: {
-                    type: "object" as const,
+                    type: "object",
                   },
                 },
               },

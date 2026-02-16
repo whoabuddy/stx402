@@ -11,7 +11,7 @@ export class LinksExpand extends BaseEndpoint {
         in: "path" as const,
         required: true,
         schema: {
-          type: "string" as const,
+          type: "string",
           description: "The short link slug",
         },
       },
@@ -20,7 +20,7 @@ export class LinksExpand extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "boolean" as const,
+          type: "boolean",
           description: "If true, return 302 redirect instead of JSON",
           default: false,
         },
@@ -32,12 +32,12 @@ export class LinksExpand extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                slug: { type: "string" as const },
-                url: { type: "string" as const },
-                title: { type: "string" as const, nullable: true },
-                clicks: { type: "number" as const },
+                slug: { type: "string" },
+                url: { type: "string" },
+                title: { type: "string", nullable: true },
+                clicks: { type: "number" },
               },
             },
           },

@@ -9,7 +9,7 @@ export class ToolboxPage extends BaseEndpoint {
     responses: {
       "200": {
         description: "HTML page",
-        content: { "text/html": { schema: { type: "string" as const } } },
+        content: { "text/html": { schema: { type: "string" } } },
       },
     },
   };

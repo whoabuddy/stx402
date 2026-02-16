@@ -23,7 +23,7 @@ export class Dashboard extends BaseEndpoint {
         description: "HTML dashboard",
         content: {
           "text/html": {
-            schema: { type: "string" as const },
+            schema: { type: "string" },
           },
         },
       },

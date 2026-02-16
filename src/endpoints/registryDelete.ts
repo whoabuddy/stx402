@@ -14,23 +14,23 @@ export class RegistryDelete extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["url"],
             properties: {
               url: {
-                type: "string" as const,
+                type: "string",
                 description: "The endpoint URL to delete",
               },
               owner: {
-                type: "string" as const,
+                type: "string",
                 description: "Owner STX address (defaults to payer address, must match registered owner)",
               },
               signature: {
-                type: "string" as const,
+                type: "string",
                 description: "SIP-018 signature of the delete challenge (required for deletion)",
               },
               challengeId: {
-                type: "string" as const,
+                type: "string",
                 description: "Challenge ID from initial request (required with signature)",
               },
             },
@@ -44,7 +44,7 @@ export class RegistryDelete extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -56,29 +56,29 @@ export class RegistryDelete extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                success: { type: "boolean" as const },
+                success: { type: "boolean" },
                 deleted: {
-                  type: "object" as const,
+                  type: "object",
                   properties: {
-                    id: { type: "string" as const },
-                    url: { type: "string" as const },
-                    name: { type: "string" as const },
+                    id: { type: "string" },
+                    url: { type: "string" },
+                    name: { type: "string" },
                   },
                 },
                 challenge: {
-                  type: "object" as const,
+                  type: "object",
                   description: "Signature challenge (when signature not provided)",
                   properties: {
-                    challengeId: { type: "string" as const },
-                    domain: { type: "string" as const },
-                    message: { type: "string" as const },
-                    action: { type: "string" as const },
-                    expiresAt: { type: "number" as const },
+                    challengeId: { type: "string" },
+                    domain: { type: "string" },
+                    message: { type: "string" },
+                    action: { type: "string" },
+                    expiresAt: { type: "number" },
                   },
                 },
-                tokenType: { type: "string" as const },
+                tokenType: { type: "string" },
               },
             },
           },
