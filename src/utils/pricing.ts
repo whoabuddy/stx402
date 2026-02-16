@@ -196,11 +196,9 @@ export function validateTokenType(tokenTypeStr: string): TokenType {
     SBTC: "sBTC",
     USDCX: "USDCx",
   };
-  const validTokens: TokenType[] = ["STX", "sBTC", "USDCx"];
   if (validMap[upper]) {
     return validMap[upper];
   }
-  throw new Error(
-    `Invalid tokenType: ${tokenTypeStr}. Supported: ${validTokens.join(", ")}`
-  );
+  const validTokens = Object.values(validMap).join(", ");
+  throw new Error(`Invalid tokenType: ${tokenTypeStr}. Supported: ${validTokens}`);
 }
