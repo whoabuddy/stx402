@@ -1,6 +1,7 @@
 {
-  "name": "cloudflare-workers-openapi",
+  "name": "stx402",
   "version": "1.0.0",
+  "description": "The X402 Directory - Endpoint registry and ERC-8004 agent interface",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
