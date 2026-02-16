@@ -40,7 +40,7 @@ export class RegistryInfo extends BaseEndpoint {
                 specification: {
                   type: "object",
                   properties: {
-                    sipUrl: { type: "string" },
+                    discussionUrl: { type: "string" },
                     erc8004Url: { type: "string" },
                     referenceImpl: { type: "string" },
                   },
@@ -70,8 +70,8 @@ export class RegistryInfo extends BaseEndpoint {
         mainnet: ERC8004_CONTRACTS.mainnet,
       },
       specification: {
-        sipUrl:
-          "https://github.com/stacksgov/sips/blob/feat/sip-erc-8004-agent-registries/sips/sip-XXX/sip-XXX-agent-registries.md",
+        discussionUrl:
+          "https://forum.stacks.org/t/sip-agent-coordination-framework/18650",
         erc8004Url: "https://eips.ethereum.org/EIPS/eip-8004",
         referenceImpl: "https://github.com/aibtcdev/erc-8004-stacks",
       },
