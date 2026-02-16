@@ -119,11 +119,11 @@ Defined in `src/utils/pricing.ts`:
 
 ### X402 Payment Flow
 
-1. Request without `X-PAYMENT` header → 402 with payment requirements
+1. Request without payment → 402 with `payment-required` header (base64 JSON)
 2. Client signs payment using X402PaymentClient
-3. Retry with `X-PAYMENT` header (+ `X-PAYMENT-TOKEN-TYPE`)
+3. Retry with `payment-signature` header (base64 JSON) + optional `X-PAYMENT-TOKEN-TYPE`
 4. Server verifies via X402PaymentVerifier, settles payment
-5. If valid, adds `X-PAYMENT-RESPONSE` header, continues to endpoint
+5. If valid, adds `payment-response` header (base64 JSON), continues to endpoint
 
 ## Environment Variables
 
