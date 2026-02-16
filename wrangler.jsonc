@@ -19,34 +19,38 @@
   "observability": {
     "enabled": false
   },
+  // Service bindings for inter-worker communication
   "services": [
     {
-      "binding": "LOGS",
+      "binding": "LOGS", // Centralized logging service binding
       "service": "worker-logs",
       "entrypoint": "LogsRPC"
     }
   ],
+  // KV namespaces for persistent data storage
   "kv_namespaces": [
     {
-      "binding": "METRICS",
+      "binding": "METRICS", // Usage tracking: API calls, earnings, latency
       "id": "fc344acd7f724b2a85ad0c961e9eb5a4",
       "preview_id": "f17f2a7478934003adcc7afc1a8418f4"
     },
     {
-      "binding": "STORAGE",
+      "binding": "STORAGE", // Registry data and endpoint metadata
       "id": "a93080d37b764914b09fbcb7c25bf7c5",
       "preview_id": "39d50116da4643c3b47a6be2b5805bf9"
     }
   ],
+  // Environment variables for X402 payment configuration
   "vars": {
-    "X402_FACILITATOR_URL": "https://facilitator.stacksx402.com",
-    "X402_NETWORK": "mainnet", // "testnet"
-    "X402_SERVER_ADDRESS": "SP31JEZWX4S131326VKM05QKJ0TDGNVVE0CDWWVA2" // "ST31JEZWX4S131326VKM05QKJ0TDGNVVE0DGNM4BP"
+    "X402_FACILITATOR_URL": "https://facilitator.stacksx402.com", // X402 payment facilitator endpoint
+    "X402_NETWORK": "mainnet", // Stacks network: "mainnet" or "testnet"
+    "X402_SERVER_ADDRESS": "SP31JEZWX4S131326VKM05QKJ0TDGNVVE0CDWWVA2" // Payment recipient address (testnet: "ST31JEZWX4S131326VKM05QKJ0TDGNVVE0DGNM4BP")
   },
+  // Durable Objects for stateful user data
   "durable_objects": {
     "bindings": [
       {
-        "name": "USER_DO",
+        "name": "USER_DO", // SQLite-backed storage for per-user links
         "class_name": "UserDurableObject"
       }
     ]
@@ -57,7 +61,9 @@
       "new_sqlite_classes": ["UserDurableObject"]
     }
   ],
+  // Environment-specific configurations
   "env": {
+    // Staging environment - uses testnet for safe testing
     "staging": {
       "name": "stx402-staging",
       "workers_dev": true,
@@ -73,19 +79,21 @@
       ],
       "vars": {
         "X402_FACILITATOR_URL": "https://facilitator.stacksx402.com",
-        "X402_NETWORK": "testnet",
-        "X402_SERVER_ADDRESS": "ST31JEZWX4S131326VKM05QKJ0TDGNVVE0DGNM4BP"
+        "X402_NETWORK": "testnet", // Staging uses testnet
+        "X402_SERVER_ADDRESS": "ST31JEZWX4S131326VKM05QKJ0TDGNVVE0DGNM4BP" // Testnet payment address
       },
+      // Staging-specific KV namespaces (separate from production)
       "kv_namespaces": [
         {
           "binding": "METRICS",
-          "id": "f17f2a7478934003adcc7afc1a8418f4"
+          "id": "f17f2a7478934003adcc7afc1a8418f4" // Staging metrics KV
         },
         {
           "binding": "STORAGE",
-          "id": "39d50116da4643c3b47a6be2b5805bf9"
+          "id": "39d50116da4643c3b47a6be2b5805bf9" // Staging storage KV
         }
       ],
+      // Durable Objects configuration (same class, different instances per env)
       "durable_objects": {
         "bindings": [
           {
