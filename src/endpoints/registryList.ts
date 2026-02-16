@@ -11,7 +11,7 @@ export class RegistryList extends BaseEndpoint {
         name: "category",
         in: "query" as const,
         required: false,
-        schema: { type: "string" as const },
+        schema: { type: "string" },
         description: "Filter by category",
       },
       {
@@ -19,7 +19,7 @@ export class RegistryList extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["unverified", "verified", "rejected"] as const,
         },
         description: "Filter by status (default: show all except rejected)",
@@ -28,14 +28,14 @@ export class RegistryList extends BaseEndpoint {
         name: "limit",
         in: "query" as const,
         required: false,
-        schema: { type: "number" as const, default: 50 },
+        schema: { type: "number", default: 50 },
         description: "Maximum number of results (max 100)",
       },
       {
         name: "offset",
         in: "query" as const,
         required: false,
-        schema: { type: "number" as const, default: 0 },
+        schema: { type: "number", default: 0 },
         description: "Offset for pagination",
       },
     ],
@@ -45,25 +45,25 @@ export class RegistryList extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
                 entries: {
-                  type: "array" as const,
+                  type: "array",
                   items: {
-                    type: "object" as const,
+                    type: "object",
                     properties: {
-                      id: { type: "string" as const },
-                      url: { type: "string" as const },
-                      name: { type: "string" as const },
-                      category: { type: "string" as const },
-                      status: { type: "string" as const },
-                      owner: { type: "string" as const },
+                      id: { type: "string" },
+                      url: { type: "string" },
+                      name: { type: "string" },
+                      category: { type: "string" },
+                      status: { type: "string" },
+                      owner: { type: "string" },
                     },
                   },
                 },
-                total: { type: "number" as const },
-                limit: { type: "number" as const },
-                offset: { type: "number" as const },
+                total: { type: "number" },
+                limit: { type: "number" },
+                offset: { type: "number" },
               },
             },
           },

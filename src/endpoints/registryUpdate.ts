@@ -15,45 +15,45 @@ export class RegistryUpdate extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["url"],
             properties: {
               url: {
-                type: "string" as const,
+                type: "string",
                 description: "The endpoint URL to update",
               },
               owner: {
-                type: "string" as const,
+                type: "string",
                 description: "Owner STX address (defaults to payer address, must match registered owner)",
               },
               name: {
-                type: "string" as const,
+                type: "string",
                 description: "New display name",
               },
               description: {
-                type: "string" as const,
+                type: "string",
                 description: "New description",
               },
               category: {
-                type: "string" as const,
+                type: "string",
                 description: "New category",
               },
               tags: {
-                type: "array" as const,
-                items: { type: "string" as const },
+                type: "array",
+                items: { type: "string" },
                 description: "New tags",
               },
               reprobeEndpoint: {
-                type: "boolean" as const,
+                type: "boolean",
                 description: "Re-probe the endpoint to update probe data",
                 default: false,
               },
               signature: {
-                type: "string" as const,
+                type: "string",
                 description: "SIP-018 signature proving ownership (optional if payment is from owner)",
               },
               timestamp: {
-                type: "number" as const,
+                type: "number",
                 description: "Unix timestamp (ms) for signature (required with signature)",
               },
             },
@@ -67,7 +67,7 @@ export class RegistryUpdate extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -79,11 +79,11 @@ export class RegistryUpdate extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                success: { type: "boolean" as const },
-                entry: { type: "object" as const },
-                tokenType: { type: "string" as const },
+                success: { type: "boolean" },
+                entry: { type: "object" },
+                tokenType: { type: "string" },
               },
             },
           },

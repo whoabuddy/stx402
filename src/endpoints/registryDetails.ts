@@ -16,22 +16,22 @@ export class RegistryDetails extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             properties: {
               url: {
-                type: "string" as const,
+                type: "string",
                 description: "The endpoint URL to look up",
               },
               id: {
-                type: "string" as const,
+                type: "string",
                 description: "The endpoint ID (alternative to URL)",
               },
               owner: {
-                type: "string" as const,
+                type: "string",
                 description: "Owner address (required if using id)",
               },
               liveProbe: {
-                type: "boolean" as const,
+                type: "boolean",
                 description: "Perform a live health check (default: true)",
                 default: true,
               },
@@ -46,7 +46,7 @@ export class RegistryDetails extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -58,37 +58,37 @@ export class RegistryDetails extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
                 entry: {
-                  type: "object" as const,
+                  type: "object",
                   properties: {
-                    id: { type: "string" as const },
-                    url: { type: "string" as const },
-                    name: { type: "string" as const },
-                    description: { type: "string" as const },
-                    owner: { type: "string" as const },
-                    status: { type: "string" as const },
-                    category: { type: "string" as const },
+                    id: { type: "string" },
+                    url: { type: "string" },
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    owner: { type: "string" },
+                    status: { type: "string" },
+                    category: { type: "string" },
                     tags: {
-                      type: "array" as const,
-                      items: { type: "string" as const },
+                      type: "array",
+                      items: { type: "string" },
                     },
-                    registeredAt: { type: "string" as const },
-                    updatedAt: { type: "string" as const },
-                    registeredBy: { type: "string" as const },
-                    probeData: { type: "object" as const },
+                    registeredAt: { type: "string" },
+                    updatedAt: { type: "string" },
+                    registeredBy: { type: "string" },
+                    probeData: { type: "object" },
                   },
                 },
                 liveStatus: {
-                  type: "object" as const,
+                  type: "object",
                   properties: {
-                    isOnline: { type: "boolean" as const },
-                    responseTimeMs: { type: "number" as const },
-                    checkedAt: { type: "string" as const },
+                    isOnline: { type: "boolean" },
+                    responseTimeMs: { type: "number" },
+                    checkedAt: { type: "string" },
                   },
                 },
-                tokenType: { type: "string" as const },
+                tokenType: { type: "string" },
               },
             },
           },

@@ -16,20 +16,20 @@ export class RegistryAdminVerify extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["url", "action", "adminAddress"],
             properties: {
               url: {
-                type: "string" as const,
+                type: "string",
                 description: "The endpoint URL to verify/reject",
               },
               action: {
-                type: "string" as const,
+                type: "string",
                 enum: ["verify", "reject"] as const,
                 description: "Action to perform",
               },
               adminAddress: {
-                type: "string" as const,
+                type: "string",
                 description: "Admin STX address (must match server address)",
               },
             },
@@ -43,7 +43,7 @@ export class RegistryAdminVerify extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -55,11 +55,11 @@ export class RegistryAdminVerify extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                success: { type: "boolean" as const },
-                entry: { type: "object" as const },
-                tokenType: { type: "string" as const },
+                success: { type: "boolean" },
+                entry: { type: "object" },
+                tokenType: { type: "string" },
               },
             },
           },

@@ -11,7 +11,7 @@ export class LinksList extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -23,24 +23,24 @@ export class LinksList extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
                 links: {
-                  type: "array" as const,
+                  type: "array",
                   items: {
-                    type: "object" as const,
+                    type: "object",
                     properties: {
-                      slug: { type: "string" as const },
-                      url: { type: "string" as const },
-                      title: { type: "string" as const, nullable: true },
-                      clicks: { type: "number" as const },
-                      expiresAt: { type: "string" as const, nullable: true },
-                      createdAt: { type: "string" as const },
+                      slug: { type: "string" },
+                      url: { type: "string" },
+                      title: { type: "string", nullable: true },
+                      clicks: { type: "number" },
+                      expiresAt: { type: "string", nullable: true },
+                      createdAt: { type: "string" },
                     },
                   },
                 },
-                count: { type: "number" as const },
-                tokenType: { type: "string" as const },
+                count: { type: "number" },
+                tokenType: { type: "string" },
               },
             },
           },

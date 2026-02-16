@@ -12,19 +12,19 @@ export class Health extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                status: { type: "string" as const, const: "ok" } as const,
+                status: { type: "string", const: "ok" } as const,
                 details: {
-                  type: "object" as const,
+                  type: "object",
                   properties: {
-                    timestamp: { type: "string" as const } as const,
+                    timestamp: { type: "string" } as const,
                     network: {
-                      type: "string" as const,
+                      type: "string",
                       enum: ["mainnet", "testnet"] as const,
                     } as const,
                     environment: {
-                      type: "string" as const,
+                      type: "string",
                       enum: ["production", "staging"] as const,
                     } as const,
                   } as const,

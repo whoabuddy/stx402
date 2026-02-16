@@ -27,7 +27,6 @@ export type PricingTier =
   | "heavy_ai"
   | "storage_read"
   | "storage_write"
-  | "storage_write_large"
   | "storage_ai";
 
 // Amount per tier per token type
@@ -42,6 +41,7 @@ export const TIER_AMOUNTS: Record<PricingTier, Record<TokenType, string>> = {
     sBTC: "0.000003",
     USDCx: "0.003",
   },
+  // Reserved for future heavy AI endpoints - currently used only in x402-schema.ts for timeout calculation
   heavy_ai: {
     STX: "0.01",
     sBTC: "0.00001",
@@ -58,11 +58,7 @@ export const TIER_AMOUNTS: Record<PricingTier, Record<TokenType, string>> = {
     sBTC: "0.000001",
     USDCx: "0.001",
   },
-  storage_write_large: {
-    STX: "0.005",
-    sBTC: "0.000005",
-    USDCx: "0.005",
-  },
+  // Reserved for future AI-enhanced storage endpoints - currently used only in x402-schema.ts for timeout calculation
   storage_ai: {
     STX: "0.003",
     sBTC: "0.000003",
@@ -196,11 +192,9 @@ export function validateTokenType(tokenTypeStr: string): TokenType {
     SBTC: "sBTC",
     USDCX: "USDCx",
   };
-  const validTokens: TokenType[] = ["STX", "sBTC", "USDCx"];
   if (validMap[upper]) {
     return validMap[upper];
   }
-  throw new Error(
-    `Invalid tokenType: ${tokenTypeStr}. Supported: ${validTokens.join(", ")}`
-  );
+  const validTokens = Object.values(validMap).join(", ");
+  throw new Error(`Invalid tokenType: ${tokenTypeStr}. Supported: ${validTokens}`);
 }

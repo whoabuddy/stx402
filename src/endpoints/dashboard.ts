@@ -23,7 +23,7 @@ export class Dashboard extends BaseEndpoint {
         description: "HTML dashboard",
         content: {
           "text/html": {
-            schema: { type: "string" as const },
+            schema: { type: "string" },
           },
         },
       },
@@ -245,7 +245,6 @@ function generateDashboardHTML(data: {
     }
     .tier-badge.simple { background: #164e63; color: #22d3ee; }
     .tier-badge.ai { background: #581c87; color: #c4b5fd; }
-    .tier-badge.heavy_ai { background: #7c2d12; color: #fdba74; }
     .section-title {
       font-size: 18px;
       font-weight: 600;
@@ -334,7 +333,6 @@ function generateDashboardHTML(data: {
     }
     .tier-simple { color: #22d3ee; }
     .tier-ai { color: #c4b5fd; }
-    .tier-heavy_ai { color: #fdba74; }
     .cat-stacks { color: #f7931a; }
     .cat-crypto { color: #fb923c; }
     .cat-ai { color: #a855f7; }

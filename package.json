@@ -1,6 +1,7 @@
 {
-  "name": "cloudflare-workers-openapi",
+  "name": "stx402",
   "version": "1.0.0",
+  "description": "The X402 Directory - Endpoint registry and ERC-8004 agent interface",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
@@ -17,8 +18,7 @@
     "@stacks/wallet-sdk": "^7.2.0",
     "chanfana": "^3.0.0",
     "hono": "^4.11.3",
-    "x402-stacks": "^2.0.1",
-    "zod": "^4.3.5"
+    "x402-stacks": "^2.0.1"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

@@ -17,27 +17,27 @@ export class RegistryTransfer extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["url", "newOwner"],
             properties: {
               url: {
-                type: "string" as const,
+                type: "string",
                 description: "The endpoint URL to transfer",
               },
               owner: {
-                type: "string" as const,
+                type: "string",
                 description: "Current owner STX address (defaults to payer address)",
               },
               newOwner: {
-                type: "string" as const,
+                type: "string",
                 description: "New owner STX address to transfer to",
               },
               signature: {
-                type: "string" as const,
+                type: "string",
                 description: "SIP-018 signature of the transfer challenge",
               },
               challengeId: {
-                type: "string" as const,
+                type: "string",
                 description: "Challenge ID from initial request",
               },
             },
@@ -51,7 +51,7 @@ export class RegistryTransfer extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -63,12 +63,12 @@ export class RegistryTransfer extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                success: { type: "boolean" as const },
-                entry: { type: "object" as const },
-                challenge: { type: "object" as const },
-                tokenType: { type: "string" as const },
+                success: { type: "boolean" },
+                entry: { type: "object" },
+                challenge: { type: "object" },
+                tokenType: { type: "string" },
               },
             },
           },

@@ -11,15 +11,15 @@ export class RegistryProbe extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["url"],
             properties: {
               url: {
-                type: "string" as const,
+                type: "string",
                 description: "The x402 endpoint URL to probe",
               },
               timeout: {
-                type: "number" as const,
+                type: "number",
                 description: "Timeout in milliseconds (default: 10000)",
                 default: 10000,
               },
@@ -34,7 +34,7 @@ export class RegistryProbe extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -46,33 +46,33 @@ export class RegistryProbe extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
-                success: { type: "boolean" as const },
-                isX402Endpoint: { type: "boolean" as const },
+                success: { type: "boolean" },
+                isX402Endpoint: { type: "boolean" },
                 data: {
-                  type: "object" as const,
+                  type: "object",
                   properties: {
-                    paymentAddress: { type: "string" as const },
+                    paymentAddress: { type: "string" },
                     acceptedTokens: {
-                      type: "array" as const,
-                      items: { type: "string" as const },
+                      type: "array",
+                      items: { type: "string" },
                     },
                     prices: {
-                      type: "object" as const,
-                      additionalProperties: { type: "string" as const },
+                      type: "object",
+                      additionalProperties: { type: "string" },
                     },
-                    responseTimeMs: { type: "number" as const },
+                    responseTimeMs: { type: "number" },
                     supportedMethods: {
-                      type: "array" as const,
-                      items: { type: "string" as const },
+                      type: "array",
+                      items: { type: "string" },
                     },
-                    openApiSchema: { type: "object" as const },
-                    probeTimestamp: { type: "string" as const },
+                    openApiSchema: { type: "object" },
+                    probeTimestamp: { type: "string" },
                   },
                 },
-                error: { type: "string" as const },
-                tokenType: { type: "string" as const },
+                error: { type: "string" },
+                tokenType: { type: "string" },
               },
             },
           },

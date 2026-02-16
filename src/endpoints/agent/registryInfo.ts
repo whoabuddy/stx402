@@ -17,41 +17,41 @@ export class RegistryInfo extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
                 networks: {
-                  type: "object" as const,
+                  type: "object",
                   properties: {
                     testnet: {
-                      type: "object" as const,
+                      type: "object",
                       properties: {
-                        deployer: { type: "string" as const },
-                        identity: { type: "string" as const },
-                        reputation: { type: "string" as const },
-                        validation: { type: "string" as const },
+                        deployer: { type: "string" },
+                        identity: { type: "string" },
+                        reputation: { type: "string" },
+                        validation: { type: "string" },
                       },
                     },
                     mainnet: {
-                      type: "object" as const,
+                      type: "object",
                       nullable: true,
                     },
                   },
                 },
                 specification: {
-                  type: "object" as const,
+                  type: "object",
                   properties: {
-                    sipUrl: { type: "string" as const },
-                    erc8004Url: { type: "string" as const },
-                    referenceImpl: { type: "string" as const },
+                    discussionUrl: { type: "string" },
+                    erc8004Url: { type: "string" },
+                    referenceImpl: { type: "string" },
                   },
                 },
                 registries: {
-                  type: "array" as const,
+                  type: "array",
                   items: {
-                    type: "object" as const,
+                    type: "object",
                     properties: {
-                      name: { type: "string" as const },
-                      description: { type: "string" as const },
+                      name: { type: "string" },
+                      description: { type: "string" },
                     },
                   },
                 },
@@ -70,8 +70,8 @@ export class RegistryInfo extends BaseEndpoint {
         mainnet: ERC8004_CONTRACTS.mainnet,
       },
       specification: {
-        sipUrl:
-          "https://github.com/stacksgov/sips/blob/feat/sip-erc-8004-agent-registries/sips/sip-XXX/sip-XXX-agent-registries.md",
+        discussionUrl:
+          "https://forum.stacks.org/t/sip-agent-coordination-framework/18650",
         erc8004Url: "https://eips.ethereum.org/EIPS/eip-8004",
         referenceImpl: "https://github.com/aibtcdev/erc-8004-stacks",
       },

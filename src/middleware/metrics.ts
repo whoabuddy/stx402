@@ -250,12 +250,12 @@ async function updateMetrics(
     // Save back
     await saveMetrics(kv, data);
   } catch (error) {
-    // Log but don't fail the request
+    // Log but don't fail the request - logger should always be available
     if (logger) {
       logger.error("Failed to update metrics", { error: String(error), path });
-    } else {
-      console.error("Failed to update metrics", { error: String(error), path });
     }
+    // If logger is unavailable (shouldn't happen), error is silently dropped
+    // to avoid using console.error in production
   }
 }
 

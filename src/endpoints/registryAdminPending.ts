@@ -12,11 +12,11 @@ export class RegistryAdminPending extends BaseEndpoint {
       content: {
         "application/json": {
           schema: {
-            type: "object" as const,
+            type: "object",
             required: ["adminAddress"],
             properties: {
               adminAddress: {
-                type: "string" as const,
+                type: "string",
                 description: "Admin STX address (must match server address)",
               },
             },
@@ -30,7 +30,7 @@ export class RegistryAdminPending extends BaseEndpoint {
         in: "query" as const,
         required: false,
         schema: {
-          type: "string" as const,
+          type: "string",
           enum: ["STX", "sBTC", "USDCx"] as const,
           default: "STX",
         },
@@ -42,14 +42,14 @@ export class RegistryAdminPending extends BaseEndpoint {
         content: {
           "application/json": {
             schema: {
-              type: "object" as const,
+              type: "object",
               properties: {
                 entries: {
-                  type: "array" as const,
-                  items: { type: "object" as const },
+                  type: "array",
+                  items: { type: "object" },
                 },
-                count: { type: "number" as const },
-                tokenType: { type: "string" as const },
+                count: { type: "number" },
+                tokenType: { type: "string" },
               },
             },
           },
