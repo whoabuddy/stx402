@@ -27,7 +27,6 @@ export type PricingTier =
   | "heavy_ai"
   | "storage_read"
   | "storage_write"
-  | "storage_write_large"
   | "storage_ai";
 
 // Amount per tier per token type
@@ -57,11 +56,6 @@ export const TIER_AMOUNTS: Record<PricingTier, Record<TokenType, string>> = {
     STX: "0.001",
     sBTC: "0.000001",
     USDCx: "0.001",
-  },
-  storage_write_large: {
-    STX: "0.005",
-    sBTC: "0.000005",
-    USDCx: "0.005",
   },
   storage_ai: {
     STX: "0.003",
