@@ -41,6 +41,7 @@ export const TIER_AMOUNTS: Record<PricingTier, Record<TokenType, string>> = {
     sBTC: "0.000003",
     USDCx: "0.003",
   },
+  // Reserved for future heavy AI endpoints - currently used only in x402-schema.ts for timeout calculation
   heavy_ai: {
     STX: "0.01",
     sBTC: "0.00001",
@@ -57,6 +58,7 @@ export const TIER_AMOUNTS: Record<PricingTier, Record<TokenType, string>> = {
     sBTC: "0.000001",
     USDCx: "0.001",
   },
+  // Reserved for future AI-enhanced storage endpoints - currently used only in x402-schema.ts for timeout calculation
   storage_ai: {
     STX: "0.003",
     sBTC: "0.000003",
