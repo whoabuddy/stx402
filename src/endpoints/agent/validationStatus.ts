@@ -103,14 +103,18 @@ export class ValidationStatus extends BaseEndpoint {
         });
       }
 
+      if (!tupleValue) {
+        return this.errorResponse(c, "Unexpected null validation response", 500);
+      }
+
       return c.json({
         requestHash: `0x${cleanHash}`,
-        validator: tupleValue!.value.validator.value,
-        agentId: parseInt(tupleValue!.value["agent-id"].value, 10),
-        score: parseInt(tupleValue!.value.response.value, 10),
-        responseHash: tupleValue!.value["response-hash"].value,
-        tag: tupleValue!.value.tag.value,
-        lastUpdate: parseInt(tupleValue!.value["last-update"].value, 10),
+        validator: tupleValue.value.validator.value,
+        agentId: parseInt(tupleValue.value["agent-id"].value, 10),
+        score: parseInt(tupleValue.value.response.value, 10),
+        responseHash: tupleValue.value["response-hash"].value,
+        tag: tupleValue.value.tag.value,
+        lastUpdate: parseInt(tupleValue.value["last-update"].value, 10),
         network,
         tokenType,
       });

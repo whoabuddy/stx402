@@ -99,14 +99,18 @@ export class ReputationFeedback extends BaseEndpoint {
         });
       }
 
+      if (!tupleValue) {
+        return this.errorResponse(c, "Unexpected null feedback response", 500);
+      }
+
       return c.json({
         agentId,
         client,
         index,
-        score: parseInt(tupleValue!.value.score.value, 10),
-        tag1: tupleValue!.value.tag1.value,
-        tag2: tupleValue!.value.tag2.value,
-        isRevoked: tupleValue!.value["is-revoked"].value,
+        score: parseInt(tupleValue.value.score.value, 10),
+        tag1: tupleValue.value.tag1.value,
+        tag2: tupleValue.value.tag2.value,
+        isRevoked: tupleValue.value["is-revoked"].value,
         network,
         tokenType,
       });
