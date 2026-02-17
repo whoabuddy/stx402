@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/whoabuddy/stx402/compare/v1.0.0...v1.0.1) (2026-02-17)
+
+
+### Bug Fixes
+
+* code hardening - security, DRY, performance, and cleanup ([#39](https://github.com/whoabuddy/stx402/issues/39)) ([330dc4a](https://github.com/whoabuddy/stx402/commit/330dc4ad9034289429af8d5121776c7fe3ab3e23))
+
 ## 1.0.0 (2026-01-30)
 
 
