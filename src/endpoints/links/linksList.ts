@@ -69,7 +69,7 @@ export class LinksList extends BaseEndpoint {
       });
     } catch (error) {
       c.var.logger.error("Link list error", { error: String(error) });
-      return this.errorResponse(c, `Link operation failed: ${error}`, 500);
+      return this.errorResponse(c, `Link operation failed: ${String(error)}`, 500);
     }
   }
 }

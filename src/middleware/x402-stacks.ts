@@ -258,14 +258,13 @@ export const x402PaymentMiddleware = () => {
     }
 
     // Determine token type from header or query
-    const queryTokenType = c.req.query("tokenType") ?? "STX";
     // V2: token type is embedded in payload, but we still accept query param for 402 response
-    const tokenTypeStr = queryTokenType;
+    const queryTokenType = c.req.query("tokenType") ?? "STX";
 
     let tokenType: TokenType;
     let minAmount: bigint;
     try {
-      tokenType = validateTokenType(tokenTypeStr);
+      tokenType = validateTokenType(queryTokenType);
       // Use path-based pricing for tiered amounts
       minAmount = getPaymentAmountForPath(c.req.path, tokenType);
     } catch (error) {

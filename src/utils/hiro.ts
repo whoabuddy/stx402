@@ -94,11 +94,9 @@ export async function hiroFetch(
   url: string,
   options?: HiroFetchOptions
 ): Promise<Response> {
-  // Extract standard RequestInit options
-  const fetchOptions: RequestInit = { ...options };
-  delete (fetchOptions as HiroFetchOptions).maxRetries;
-  delete (fetchOptions as HiroFetchOptions).baseDelay;
-  delete (fetchOptions as HiroFetchOptions).maxDelay;
+  // Extract standard RequestInit options, excluding retry-specific fields
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { maxRetries: _maxRetries, baseDelay: _baseDelay, maxDelay: _maxDelay, ...fetchOptions } = options ?? {};
 
   // Use withRetry but we need to handle Response objects, not errors
   // So we use a custom pattern here

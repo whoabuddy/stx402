@@ -95,7 +95,7 @@ export class LinksStats extends BaseEndpoint {
       return c.json({ ...stats, tokenType });
     } catch (error) {
       c.var.logger.error("Link stats error", { error: String(error) });
-      return this.errorResponse(c, `Link operation failed: ${error}`, 500);
+      return this.errorResponse(c, `Link operation failed: ${String(error)}`, 500);
     }
   }
 }

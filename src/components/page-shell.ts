@@ -108,11 +108,5 @@ export function getPageShellCSS(): string {
       }
     }
 
-    /* Extra small screens */
-    @media (max-width: 380px) {
-      .card .value {
-        font-size: 24px;
-      }
-    }
   `;
 }

@@ -75,7 +75,7 @@ export class LinksDelete extends BaseEndpoint {
       return c.json({ ...result, tokenType });
     } catch (error) {
       c.var.logger.error("Link delete error", { error: String(error) });
-      return this.errorResponse(c, `Link operation failed: ${error}`, 500);
+      return this.errorResponse(c, `Link operation failed: ${String(error)}`, 500);
     }
   }
 }
