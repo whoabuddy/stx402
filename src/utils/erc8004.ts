@@ -258,6 +258,60 @@ export function extractTypedValue(result: unknown): unknown {
 
 
 /**
+ * Call a registry function and extract an optional value (for some/none returns)
+ * This helper encapsulates the common pattern: call → clarityToJson → isSome/isNone → extract
+ *
+ * @returns { found: boolean, value: T | null } - found=true if some, found=false if none
+ */
+export async function callAndExtractOptional<T = unknown>(
+  network: ERC8004Network,
+  registry: "identity" | "reputation" | "validation",
+  functionName: string,
+  functionArgs: ClarityValue[] = []
+): Promise<{ found: boolean; value: T | null }> {
+  try {
+    const result = await callRegistryFunction(network, registry, functionName, functionArgs);
+    const json = clarityToJson(result);
+
+    if (isNone(json)) {
+      return { found: false, value: null };
+    }
+
+    if (!isSome(json)) {
+      throw new Error("Unexpected response format: expected optional type");
+    }
+
+    const extracted = extractValue(json);
+    const value = extractTypedValue(extracted) as T;
+    return { found: true, value };
+  } catch (error) {
+    throw new Error(`Failed to call ${registry}.${functionName}: ${String(error)}`);
+  }
+}
+
+
+/**
+ * Call a registry function and return the JSON result directly (for tuple/list returns)
+ * This helper encapsulates: call → clarityToJson → return
+ *
+ * @returns The JSON representation of the Clarity value
+ */
+export async function callAndExtractDirect(
+  network: ERC8004Network,
+  registry: "identity" | "reputation" | "validation",
+  functionName: string,
+  functionArgs: ClarityValue[] = []
+): Promise<unknown> {
+  try {
+    const result = await callRegistryFunction(network, registry, functionName, functionArgs);
+    return clarityToJson(result);
+  } catch (error) {
+    throw new Error(`Failed to call ${registry}.${functionName}: ${String(error)}`);
+  }
+}
+
+
+/**
  * Error code descriptions for all registries
  */
 export const ERROR_CODES: Record<number, string> = {
