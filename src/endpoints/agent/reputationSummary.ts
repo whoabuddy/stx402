@@ -1,8 +1,7 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
+  callAndExtractDirect,
   isTuple,
 } from "../../utils/erc8004";
 import { uintCV, principalCV, bufferCV, listCV, noneCV, someCV } from "@stacks/transactions";
@@ -80,13 +79,12 @@ export class ReputationSummary extends BaseEndpoint {
         filterByTag2 ? someCV(bufferCV(hexToBytes(strip0x(filterByTag2)))) : noneCV(),
       ];
 
-      const result = await callRegistryFunction(
+      const json = await callAndExtractDirect(
         network,
         "reputation",
         "get-summary",
         args
       );
-      const json = clarityToJson(result);
 
       // get-summary returns a tuple directly: { count, average-score }
       // cvToJSON structure: { type: "(tuple (count uint) (average-score uint))", value: { count: { type: "uint", value: "0" }, ... } }

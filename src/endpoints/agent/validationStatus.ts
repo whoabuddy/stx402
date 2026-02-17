@@ -1,11 +1,7 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  isSome,
-  isNone,
+  callAndExtractOptional,
 } from "../../utils/erc8004";
 import { bufferCV } from "@stacks/transactions";
 import { hexToBytes } from "@noble/hashes/utils";
@@ -84,26 +80,7 @@ export class ValidationStatus extends BaseEndpoint {
 
     try {
       // get-validation-status returns (optional tuple)
-      const result = await callRegistryFunction(
-        network,
-        "validation",
-        "get-validation-status",
-        [bufferCV(hexToBytes(cleanHash))]
-      );
-      const json = clarityToJson(result);
-
-      if (isNone(json)) {
-        return this.errorResponse(c, "Validation not found", 404, {
-          requestHash,
-        });
-      }
-
-      if (!isSome(json)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
-      // Extract tuple from some
-      const tupleValue = extractValue(json) as {
+      const { found, value: tupleValue } = await callAndExtractOptional<{
         type: string;
         value: {
           validator: { type: string; value: string };
@@ -113,16 +90,27 @@ export class ValidationStatus extends BaseEndpoint {
           tag: { type: string; value: string };
           "last-update": { type: string; value: string };
         };
-      };
+      }>(
+        network,
+        "validation",
+        "get-validation-status",
+        [bufferCV(hexToBytes(cleanHash))]
+      );
+
+      if (!found) {
+        return this.errorResponse(c, "Validation not found", 404, {
+          requestHash,
+        });
+      }
 
       return c.json({
         requestHash: `0x${cleanHash}`,
-        validator: tupleValue.value.validator.value,
-        agentId: parseInt(tupleValue.value["agent-id"].value, 10),
-        score: parseInt(tupleValue.value.response.value, 10),
-        responseHash: tupleValue.value["response-hash"].value,
-        tag: tupleValue.value.tag.value,
-        lastUpdate: parseInt(tupleValue.value["last-update"].value, 10),
+        validator: tupleValue!.value.validator.value,
+        agentId: parseInt(tupleValue!.value["agent-id"].value, 10),
+        score: parseInt(tupleValue!.value.response.value, 10),
+        responseHash: tupleValue!.value["response-hash"].value,
+        tag: tupleValue!.value.tag.value,
+        lastUpdate: parseInt(tupleValue!.value["last-update"].value, 10),
         network,
         tokenType,
       });

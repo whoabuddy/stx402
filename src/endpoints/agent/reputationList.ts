@@ -1,8 +1,7 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
+  callAndExtractDirect,
   isList,
   boolCV,
 } from "../../utils/erc8004";
@@ -98,13 +97,12 @@ export class ReputationList extends BaseEndpoint {
         boolCV(includeRevoked),
       ];
 
-      const result = await callRegistryFunction(
+      const json = await callAndExtractDirect(
         network,
         "reputation",
         "read-all-feedback",
         args
       );
-      const json = clarityToJson(result);
 
       // Result is { type: "(list ...)", value: [...] }
       if (!isList(json)) {

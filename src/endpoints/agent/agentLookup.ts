@@ -1,11 +1,7 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  extractTypedValue,
-  isSome,
+  callAndExtractOptional,
 } from "../../utils/erc8004";
 import { uintCV } from "@stacks/transactions";
 import {
@@ -98,16 +94,15 @@ export class AgentLookup extends BaseEndpoint {
 
         try {
           // owner-of returns (optional principal)
-          const ownerResult = await callRegistryFunction(
+          const { found, value: agentOwner } = await callAndExtractOptional<string>(
             network,
             "identity",
             "owner-of",
             [uintCV(id)]
           );
-          const ownerJson = clarityToJson(ownerResult);
 
-          if (!isSome(ownerJson)) {
-            // Agent doesn't exist (none) or unexpected format
+          if (!found) {
+            // Agent doesn't exist (none)
             consecutiveNotFound++;
             if (consecutiveNotFound >= MAX_CONSECUTIVE_NOT_FOUND) {
               // Assume we've reached the end of registered agents
@@ -117,24 +112,18 @@ export class AgentLookup extends BaseEndpoint {
           }
 
           consecutiveNotFound = 0;
-          const ownerValue = extractValue(ownerJson);
-          const agentOwner = extractTypedValue(ownerValue) as string;
 
           if (agentOwner === owner) {
             // Found a match, get the URI too
             let uri: string | null = null;
             try {
-              const uriResult = await callRegistryFunction(
+              const { value: fetchedUri } = await callAndExtractOptional<string>(
                 network,
                 "identity",
                 "get-uri",
                 [uintCV(id)]
               );
-              const uriJson = clarityToJson(uriResult);
-              if (isSome(uriJson)) {
-                const uriValue = extractValue(uriJson);
-                uri = (extractTypedValue(uriValue) as string) || null;
-              }
+              uri = fetchedUri || null;
             } catch {
               // URI fetch failed, continue without it
             }

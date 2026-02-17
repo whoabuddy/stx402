@@ -1,8 +1,7 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
+  callAndExtractDirect,
   isTuple,
 } from "../../utils/erc8004";
 import { uintCV, principalCV, bufferCV, listCV, noneCV, someCV } from "@stacks/transactions";
@@ -76,13 +75,12 @@ export class ValidationSummary extends BaseEndpoint {
         filterByTag ? someCV(bufferCV(hexToBytes(strip0x(filterByTag)))) : noneCV(),
       ];
 
-      const result = await callRegistryFunction(
+      const json = await callAndExtractDirect(
         network,
         "validation",
         "get-summary",
         args
       );
-      const json = clarityToJson(result);
 
       // get-summary returns a tuple directly: { count, avg-response }
       // cvToJSON structure: { type: "(tuple ...)", value: { ... } }

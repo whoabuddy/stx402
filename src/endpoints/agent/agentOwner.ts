@@ -1,12 +1,7 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  extractTypedValue,
-  isSome,
-  isNone,
+  callAndExtractOptional,
 } from "../../utils/erc8004";
 import { uintCV } from "@stacks/transactions";
 import {
@@ -52,24 +47,16 @@ export class AgentOwner extends BaseEndpoint {
 
     try {
       // owner-of returns (optional principal)
-      const result = await callRegistryFunction(
+      const { found, value: owner } = await callAndExtractOptional<string>(
         network,
         "identity",
         "owner-of",
         [uintCV(agentId)]
       );
-      const json = clarityToJson(result);
 
-      if (isNone(json)) {
+      if (!found) {
         return this.errorResponse(c, "Agent not found", 404, { agentId });
       }
-
-      if (!isSome(json)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
-      const ownerValue = extractValue(json);
-      const owner = extractTypedValue(ownerValue) as string;
 
       return c.json({
         agentId,

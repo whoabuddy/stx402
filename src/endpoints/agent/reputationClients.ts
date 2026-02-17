@@ -1,11 +1,7 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  isSome,
-  isNone,
+  callAndExtractOptional,
 } from "../../utils/erc8004";
 import { uintCV } from "@stacks/transactions";
 import {
@@ -51,16 +47,18 @@ export class ReputationClients extends BaseEndpoint {
 
     try {
       // get-clients returns (optional (list principal))
-      const result = await callRegistryFunction(
+      const { found, value: listValue } = await callAndExtractOptional<{
+        type: string;
+        value: Array<{ type: string; value: string }>;
+      }>(
         network,
         "reputation",
         "get-clients",
         [uintCV(agentId)]
       );
-      const json = clarityToJson(result);
 
       // none means no clients yet (or agent doesn't exist in reputation registry)
-      if (isNone(json)) {
+      if (!found) {
         return c.json({
           agentId,
           clients: [],
@@ -70,17 +68,7 @@ export class ReputationClients extends BaseEndpoint {
         });
       }
 
-      if (!isSome(json)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
-      // Extract: { type: "some", value: { type: "list", value: [...] } }
-      const listValue = extractValue(json) as {
-        type: string;
-        value: Array<{ type: string; value: string }>;
-      };
-
-      const clients = listValue.value.map((item) => item.value);
+      const clients = listValue!.value.map((item) => item.value);
 
       return c.json({
         agentId,
