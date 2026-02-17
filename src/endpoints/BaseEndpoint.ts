@@ -1,5 +1,5 @@
 import { OpenAPIRoute } from "chanfana";
-import { Address, deserializeTransaction } from "@stacks/transactions";
+import { Address } from "@stacks/transactions";
 import { validateTokenType } from "../utils/pricing";
 import type { AppContext, SettlementResponseV2, PaymentPayloadV2 } from "../types";
 import { ContentfulStatusCode } from "hono/utils/http-status";
@@ -14,7 +14,7 @@ import {
   consumeChallenge,
   type SignatureRequest,
 } from "../utils/signatures";
-import { payerMatchesAddress, strip0x } from "../utils/payment";
+import { payerMatchesAddress, extractSenderHash160FromSignedTx } from "../utils/payment";
 import type { UserDurableObject } from "../durable-objects/UserDurableObject";
 
 /** Result of dual authentication (signature or payment) */
@@ -102,27 +102,12 @@ export class BaseEndpoint extends OpenAPIRoute {
 
     // Fallback: extract sender from payment payload's signed transaction
     if (paymentPayload?.payload?.transaction) {
-      try {
-        const signedTx = paymentPayload.payload.transaction;
-        const hex = strip0x(signedTx);
-        const tx = deserializeTransaction(hex);
-
-        if (tx.auth?.spendingCondition) {
-          const spendingCondition = tx.auth.spendingCondition as {
-            signer?: string;
-            hashMode?: number;
-          };
-
-          if (spendingCondition.signer) {
-            // Convert hash160 to address using the appropriate network
-            const hash160 = spendingCondition.signer;
-            const addressVersion = network === "mainnet" ? 22 : 26; // P2PKH versions
-            const address = Address.stringify({ hash160, type: addressVersion });
-            return address;
-          }
-        }
-      } catch (error) {
-        c.var.logger.warn("Failed to extract sender from payment payload", { error: String(error) });
+      const signedTx = paymentPayload.payload.transaction;
+      const hash160 = extractSenderHash160FromSignedTx(signedTx);
+      if (hash160) {
+        const network = c.env.X402_NETWORK as "mainnet" | "testnet";
+        const addressVersion = network === "mainnet" ? 22 : 26;
+        return Address.stringify({ hash160, type: addressVersion });
       }
     }
 

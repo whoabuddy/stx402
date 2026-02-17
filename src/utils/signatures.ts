@@ -101,8 +101,20 @@ export function generateChallenge(): { nonce: string; expiresAt: number } {
   return { nonce, expiresAt };
 }
 
-// Store for active challenges (in-memory, will reset on worker restart)
-// For production, consider using KV storage
+/**
+ * In-memory challenge store for signature-based authentication.
+ *
+ * WARNING: Cloudflare Workers run across multiple isolates. Each isolate
+ * maintains its own copy of this Map. A challenge stored in one isolate
+ * will NOT be visible to another isolate. This means challenge verification
+ * may fail if the creation and verification requests are handled by
+ * different isolates.
+ *
+ * For production reliability, migrate to KV storage or Durable Objects.
+ *
+ * @see https://developers.cloudflare.com/workers/learning/how-workers-works/
+ * TODO: Migrate to KV or Durable Objects for cross-isolate reliability
+ */
 const activeChallenges = new Map<string, { nonce: string; expiresAt: number; owner: string }>();
 
 export function storeChallenge(
