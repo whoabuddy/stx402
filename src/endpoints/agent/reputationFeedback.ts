@@ -6,9 +6,8 @@ import {
   extractValue,
   isSome,
   isNone,
-  uint,
-  principal,
 } from "../../utils/erc8004";
+import { uintCV, principalCV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -85,7 +84,7 @@ export class ReputationFeedback extends BaseEndpoint {
         network,
         "reputation",
         "read-feedback",
-        [uint(agentId), principal(client), uint(index)]
+        [uintCV(agentId), principalCV(client), uintCV(index)]
       );
       const json = clarityToJson(result);
 

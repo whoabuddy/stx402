@@ -7,9 +7,8 @@ import {
   extractTypedValue,
   isSome,
   isNone,
-  uint,
-  stringUtf8,
 } from "../../utils/erc8004";
+import { uintCV, stringUtf8CV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -75,7 +74,7 @@ export class AgentMetadata extends BaseEndpoint {
         network,
         "identity",
         "get-metadata",
-        [uint(agentId), stringUtf8(key)]
+        [uintCV(agentId), stringUtf8CV(key)]
       );
       const json = clarityToJson(result);
 

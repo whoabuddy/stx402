@@ -6,8 +6,9 @@ import {
   extractValue,
   isSome,
   isNone,
-  buffer,
 } from "../../utils/erc8004";
+import { bufferCV } from "@stacks/transactions";
+import { hexToBytes } from "@noble/hashes/utils";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -87,7 +88,7 @@ export class ValidationStatus extends BaseEndpoint {
         network,
         "validation",
         "get-validation-status",
-        [buffer(cleanHash)]
+        [bufferCV(hexToBytes(cleanHash))]
       );
       const json = clarityToJson(result);
 

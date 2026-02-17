@@ -6,8 +6,8 @@ import {
   extractValue,
   extractTypedValue,
   isSome,
-  uint,
 } from "../../utils/erc8004";
+import { uintCV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   COMMON_ERROR_RESPONSES,
@@ -102,7 +102,7 @@ export class AgentLookup extends BaseEndpoint {
             network,
             "identity",
             "owner-of",
-            [uint(id)]
+            [uintCV(id)]
           );
           const ownerJson = clarityToJson(ownerResult);
 
@@ -128,7 +128,7 @@ export class AgentLookup extends BaseEndpoint {
                 network,
                 "identity",
                 "get-uri",
-                [uint(id)]
+                [uintCV(id)]
               );
               const uriJson = clarityToJson(uriResult);
               if (isSome(uriJson)) {

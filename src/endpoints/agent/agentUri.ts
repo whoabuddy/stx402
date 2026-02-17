@@ -7,8 +7,8 @@ import {
   extractTypedValue,
   isSome,
   isNone,
-  uint,
 } from "../../utils/erc8004";
+import { uintCV } from "@stacks/transactions";
 import {
   AGENT_WITH_ID_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -56,7 +56,7 @@ export class AgentUri extends BaseEndpoint {
         network,
         "identity",
         "get-uri",
-        [uint(agentId)]
+        [uintCV(agentId)]
       );
       const json = clarityToJson(result);
 

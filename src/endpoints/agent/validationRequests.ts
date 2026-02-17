@@ -6,8 +6,8 @@ import {
   extractValue,
   isSome,
   isNone,
-  principal,
 } from "../../utils/erc8004";
+import { principalCV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   COMMON_ERROR_RESPONSES,
@@ -71,7 +71,7 @@ export class ValidationRequests extends BaseEndpoint {
         network,
         "validation",
         "get-validator-requests",
-        [principal(validator)]
+        [principalCV(validator)]
       );
       const json = clarityToJson(result);
 

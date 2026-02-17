@@ -170,55 +170,6 @@ export function clarityToJson(cv: ClarityValue): unknown {
   return cvToJSON(cv);
 }
 
-/**
- * Build uint Clarity value
- */
-export function uint(n: number | bigint): ClarityValue {
-  return uintCV(n);
-}
-
-/**
- * Build principal Clarity value
- */
-export function principal(p: string): ClarityValue {
-  return principalCV(p);
-}
-
-/**
- * Build buffer Clarity value from hex string
- */
-export function buffer(hex: string): ClarityValue {
-  const cleanHex = strip0x(hex);
-  return bufferCV(hexToBytes(cleanHex));
-}
-
-/**
- * Build string-utf8 Clarity value
- */
-export function stringUtf8(s: string): ClarityValue {
-  return stringUtf8CV(s);
-}
-
-/**
- * Build optional none
- */
-export function none(): ClarityValue {
-  return noneCV();
-}
-
-/**
- * Build optional some
- */
-export function some(cv: ClarityValue): ClarityValue {
-  return someCV(cv);
-}
-
-/**
- * Build list of Clarity values
- */
-export function list(items: ClarityValue[]): ClarityValue {
-  return listCV(items);
-}
 
 /**
  * Build bool Clarity value

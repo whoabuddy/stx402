@@ -6,8 +6,8 @@ import {
   extractValue,
   isSome,
   isNone,
-  uint,
 } from "../../utils/erc8004";
+import { uintCV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ID_BODY_SCHEMA,
@@ -61,7 +61,7 @@ export class ValidationList extends BaseEndpoint {
         network,
         "validation",
         "get-agent-validations",
-        [uint(agentId)]
+        [uintCV(agentId)]
       );
       const json = clarityToJson(result);
 

@@ -7,9 +7,9 @@ import {
   extractTypedValue,
   isSome,
   isNone,
-  uint,
   ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import { uintCV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ID_BODY_SCHEMA,
@@ -56,7 +56,7 @@ export class AgentInfo extends BaseEndpoint {
         network,
         "identity",
         "owner-of",
-        [uint(agentId!)]
+        [uintCV(agentId!)]
       );
       const ownerJson = clarityToJson(ownerResult);
 
@@ -78,7 +78,7 @@ export class AgentInfo extends BaseEndpoint {
         network,
         "identity",
         "get-uri",
-        [uint(agentId!)]
+        [uintCV(agentId!)]
       );
       const uriJson = clarityToJson(uriResult);
       let uri: string | null = null;

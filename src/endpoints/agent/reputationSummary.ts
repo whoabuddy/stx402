@@ -4,13 +4,10 @@ import {
   callRegistryFunction,
   clarityToJson,
   isTuple,
-  uint,
-  principal,
-  buffer,
-  list,
-  none,
-  some,
 } from "../../utils/erc8004";
+import { uintCV, principalCV, bufferCV, listCV, noneCV, someCV } from "@stacks/transactions";
+import { hexToBytes } from "@noble/hashes/utils";
+import { strip0x } from "../../utils/payment";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -75,12 +72,12 @@ export class ReputationSummary extends BaseEndpoint {
       // Build function arguments
       // get-summary(agent-id, opt-clients, opt-tag1, opt-tag2)
       const args = [
-        uint(agentId),
+        uintCV(agentId),
         filterByClients && filterByClients.length > 0
-          ? some(list(filterByClients.map((p) => principal(p))))
-          : none(),
-        filterByTag1 ? some(buffer(filterByTag1)) : none(),
-        filterByTag2 ? some(buffer(filterByTag2)) : none(),
+          ? someCV(listCV(filterByClients.map((p) => principalCV(p))))
+          : noneCV(),
+        filterByTag1 ? someCV(bufferCV(hexToBytes(strip0x(filterByTag1)))) : noneCV(),
+        filterByTag2 ? someCV(bufferCV(hexToBytes(strip0x(filterByTag2)))) : noneCV(),
       ];
 
       const result = await callRegistryFunction(
