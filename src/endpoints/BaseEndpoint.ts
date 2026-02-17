@@ -13,6 +13,7 @@ import {
   getChallenge,
   consumeChallenge,
   type SignatureRequest,
+  type SignedAction,
 } from "../utils/signatures";
 import { payerMatchesAddress, extractSenderHash160FromSignedTx } from "../utils/payment";
 import type { UserDurableObject } from "../durable-objects/UserDurableObject";
@@ -156,7 +157,7 @@ export class BaseEndpoint extends OpenAPIRoute {
     ownerAddress: string,
     signature?: string,
     timestamp?: number,
-    action?: string,
+    action?: SignedAction,
     actionData?: Record<string, unknown>
   ): AuthResult {
     const tokenType = this.getTokenType(c);
