@@ -25,6 +25,7 @@ export function getDomain(network: "mainnet" | "testnet"): ClarityValue {
 export type SignedAction =
   | "delete-endpoint"
   | "list-my-endpoints"
+  | "update-endpoint"
   | "transfer-ownership"
   | "challenge-response"
   | "authenticate";
@@ -52,6 +53,14 @@ export function createActionMessage(
     case "list-my-endpoints":
       return Cl.tuple({
         action: Cl.stringAscii("list-my-endpoints"),
+        owner: Cl.stringAscii(data.owner),
+        timestamp: Cl.uint(data.timestamp),
+      });
+
+    case "update-endpoint":
+      return Cl.tuple({
+        action: Cl.stringAscii("update-endpoint"),
+        url: Cl.stringAscii(data.url || ""),
         owner: Cl.stringAscii(data.owner),
         timestamp: Cl.uint(data.timestamp),
       });

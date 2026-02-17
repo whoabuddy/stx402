@@ -159,8 +159,8 @@ export class RegistryUpdate extends BaseEndpoint {
       ownerAddress,
       body.signature,
       body.timestamp,
-      "list-my-endpoints",
-      { owner: ownerAddress }
+      "update-endpoint",
+      { url: body.url, owner: ownerAddress }
     );
     if (!authResult.authenticated) return authResult.error;
 
