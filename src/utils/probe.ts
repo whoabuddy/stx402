@@ -124,6 +124,34 @@ function parsePaymentRequirements(body: unknown): {
   return null;
 }
 
+// Parse probe response body and construct X402ProbeData
+function parseProbeResponse(
+  body: unknown,
+  responseTimeMs: number,
+  method: "GET" | "POST"
+): X402ProbeData {
+  const paymentInfo = parsePaymentRequirements(body);
+
+  // Check for OpenAPI schema in response
+  let openApiSchema: Record<string, unknown> | undefined;
+  if (typeof body === "object" && body !== null) {
+    const b = body as Record<string, unknown>;
+    if (b.schema || b.openapi || b.swagger) {
+      openApiSchema = b as Record<string, unknown>;
+    }
+  }
+
+  return {
+    paymentAddress: paymentInfo?.paymentAddress || "",
+    acceptedTokens: paymentInfo?.acceptedTokens || [],
+    prices: paymentInfo?.prices || {},
+    responseTimeMs,
+    supportedMethods: [method],
+    openApiSchema,
+    probeTimestamp: new Date().toISOString(),
+  };
+}
+
 // Probe an X402 endpoint to get payment requirements and metadata
 export async function probeX402Endpoint(
   url: string,
@@ -198,19 +226,10 @@ export async function probeX402Endpoint(
           };
         }
 
-        const paymentInfo = parsePaymentRequirements(body);
         return {
           success: true,
           isX402Endpoint: true,
-          data: {
-            paymentAddress: paymentInfo?.paymentAddress || "",
-            acceptedTokens: paymentInfo?.acceptedTokens || [],
-            prices: paymentInfo?.prices || {},
-            responseTimeMs,
-            supportedMethods: ["GET"],
-            openApiSchema: typeof body === "object" ? (body as Record<string, unknown>) : undefined,
-            probeTimestamp: new Date().toISOString(),
-          },
+          data: parseProbeResponse(body, responseTimeMs, "GET"),
         };
       }
 
@@ -242,20 +261,9 @@ export async function probeX402Endpoint(
       };
     }
 
-    const paymentInfo = parsePaymentRequirements(body);
+    const probeData = parseProbeResponse(body, responseTimeMs, "POST");
 
-    // Check for OpenAPI schema in response
-    let openApiSchema: Record<string, unknown> | undefined;
-    if (typeof body === "object" && body !== null) {
-      const b = body as Record<string, unknown>;
-      if (b.schema || b.openapi || b.swagger) {
-        openApiSchema = b as Record<string, unknown>;
-      }
-    }
-
-    // Determine supported methods
-    const supportedMethods = ["POST"]; // We know POST works
-    // Try OPTIONS to discover other methods
+    // Try OPTIONS to discover other methods beyond POST
     try {
       const optionsRes = await fetch(url, {
         method: "OPTIONS",
@@ -264,8 +272,7 @@ export async function probeX402Endpoint(
       const allowHeader = optionsRes.headers.get("Allow");
       if (allowHeader) {
         const methods = allowHeader.split(",").map((m) => m.trim().toUpperCase());
-        supportedMethods.length = 0;
-        supportedMethods.push(...methods);
+        probeData.supportedMethods = methods;
       }
     } catch {
       // Ignore OPTIONS failures
@@ -274,15 +281,7 @@ export async function probeX402Endpoint(
     return {
       success: true,
       isX402Endpoint: true,
-      data: {
-        paymentAddress: paymentInfo?.paymentAddress || "",
-        acceptedTokens: paymentInfo?.acceptedTokens || [],
-        prices: paymentInfo?.prices || {},
-        responseTimeMs,
-        supportedMethods,
-        openApiSchema,
-        probeTimestamp: new Date().toISOString(),
-      },
+      data: probeData,
     };
   } catch (error) {
     clearTimeout(timeoutId);
