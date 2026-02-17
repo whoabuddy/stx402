@@ -1,46 +1,71 @@
 /**
- * X402 Schema Endpoint
+ * X402 Well-Known Manifest Endpoint
  *
- * Serves /x402.json for StacksX402 scanner discovery.
- * Generates schema directly from endpoint registry and pricing tiers.
+ * Serves /x402.json V2 discovery manifest for Bazaar/scanner registration.
+ * Generates manifest directly from ENDPOINT_TIERS — no network calls needed.
+ *
+ * V2 format: per-endpoint items[] with CAIP-2 network IDs, resource objects,
+ * service metadata, and Bazaar extensions.
  */
 
 import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
-import { generateX402SchemaStatic } from "../utils/x402-schema";
+import { generateX402Manifest } from "../utils/x402-schema";
 
 export class X402WellKnown extends BaseEndpoint {
   schema = {
     tags: ["Discovery"],
-    summary: "X402 service discovery schema",
+    summary: "X402 V2 service discovery manifest",
     description:
-      "Returns the x402.json schema for StacksX402 scanner discovery. " +
-      "Lists all paid endpoints with their pricing.",
+      "Returns the x402.json V2 discovery manifest for Bazaar/scanner registration. " +
+      "Lists all paid endpoints grouped per-endpoint with CAIP-2 network IDs, " +
+      "resource objects, payment requirements, and Bazaar extensions.",
     responses: {
       "200": {
-        description: "X402 discovery schema",
+        description: "X402 V2 discovery manifest",
         content: {
           "application/json": {
             schema: {
               type: "object",
               properties: {
-                x402Version: {
-                  type: "number",
-                  description: "X402 schema version",
-                },
-                name: {
+                version: {
                   type: "string",
-                  description: "Service name",
+                  description: "Manifest version (2.0)",
+                  example: "2.0",
                 },
-                image: {
+                service: {
+                  type: "object",
+                  description: "Service metadata",
+                  properties: {
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    url: { type: "string" },
+                  },
+                },
+                lastUpdated: {
                   type: "string",
-                  description: "Service logo URL",
+                  description: "ISO 8601 timestamp of manifest generation",
                 },
-                accepts: {
+                items: {
                   type: "array",
-                  description: "List of paid endpoints with payment details",
+                  description: "Per-endpoint payment discovery entries",
                   items: {
                     type: "object",
+                    properties: {
+                      resource: {
+                        type: "object",
+                        properties: {
+                          url: { type: "string" },
+                          description: { type: "string" },
+                          mimeType: { type: "string" },
+                        },
+                      },
+                      paymentRequirements: {
+                        type: "array",
+                        items: { type: "object" },
+                      },
+                      extensions: { type: "object" },
+                    },
                   },
                 },
               },
@@ -52,18 +77,20 @@ export class X402WellKnown extends BaseEndpoint {
   };
 
   async handle(c: AppContext) {
-    // Determine canonical URL for image
     const url = new URL(c.req.url);
-    const isLocalhost = url.host.includes("localhost") || url.host.includes("127.0.0.1");
-    const canonicalUrl = isLocalhost ? `${url.protocol}//${url.host}` : `https://${url.host}`;
+    const isLocalhost =
+      url.host.includes("localhost") || url.host.includes("127.0.0.1");
+    const baseUrl = isLocalhost
+      ? `${url.protocol}//${url.host}`
+      : `https://${url.host}`;
 
-    const schema = generateX402SchemaStatic({
+    const manifest = generateX402Manifest({
       network: (c.env.X402_NETWORK as "mainnet" | "testnet") || "mainnet",
       payTo: c.env.X402_SERVER_ADDRESS,
-      name: "stx402 Directory",
-      image: `${canonicalUrl}/favicon.svg`,
+      baseUrl,
+      facilitatorUrl: c.env.X402_FACILITATOR_URL,
     });
 
-    return c.json(schema);
+    return c.json(manifest);
   }
 }
