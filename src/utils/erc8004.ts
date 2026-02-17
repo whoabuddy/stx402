@@ -43,7 +43,7 @@ export const ERC8004_CONTRACTS = {
 export type ERC8004Network = "mainnet" | "testnet";
 
 // SIP-018 constants for signature generation
-export const SIP018_PREFIX = "534950303138"; // "SIP018" in hex
+const SIP018_PREFIX = "534950303138"; // "SIP018" in hex
 export const REPUTATION_DOMAIN = {
   name: "reputation-registry",
   version: "1.0.0",

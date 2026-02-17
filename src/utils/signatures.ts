@@ -194,42 +194,6 @@ function publicKeyToAddress(publicKey: string, network: "mainnet" | "testnet" = 
   }
 }
 
-// Verify a simple message signature (for basic auth)
-export function verifySimpleSignature(
-  message: string,
-  signature: string,
-  expectedAddress: string,
-  network: "mainnet" | "testnet" = "mainnet"
-): { valid: boolean; recoveredAddress?: string; error?: string } {
-  try {
-    // For simple messages, we hash the message directly
-    const messageBytes = new TextEncoder().encode(message);
-    const messageHash = bytesToHex(sha256(messageBytes));
-
-    // Recover public key from signature
-    const recoveredPubKey = publicKeyFromSignatureRsv(messageHash, signature);
-
-    // Convert to address for both networks and check match
-    const mainnetAddress = publicKeyToAddress(recoveredPubKey, "mainnet");
-    const testnetAddress = publicKeyToAddress(recoveredPubKey, "testnet");
-
-    const valid = addressesMatchByHash160(mainnetAddress, expectedAddress) ||
-                  addressesMatchByHash160(testnetAddress, expectedAddress);
-
-    const recoveredAddress = network === "mainnet" ? mainnetAddress : testnetAddress;
-
-    return {
-      valid,
-      recoveredAddress,
-      error: valid ? undefined : "Recovered address does not match expected address",
-    };
-  } catch (error) {
-    return {
-      valid: false,
-      error: `Signature verification failed: ${String(error)}`,
-    };
-  }
-}
 
 // Validate timestamp is within acceptable range (prevents replay attacks)
 export function isTimestampValid(

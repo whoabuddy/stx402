@@ -155,13 +155,3 @@ export async function hiroFetch(
   throw new Error("Unexpected error in hiroFetch retry logic");
 }
 
-/**
- * Type guard to check if an error is a Hiro rate limit error
- */
-export function isHiroRateLimitError(error: unknown): error is Error & { rateLimitError: HiroRateLimitError } {
-  return (
-    error instanceof Error &&
-    "rateLimitError" in error &&
-    (error as any).rateLimitError?.code === "RATE_LIMITED"
-  );
-}
