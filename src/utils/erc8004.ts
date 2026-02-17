@@ -23,7 +23,8 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { withRetry } from "./retry";
 import { strip0x } from "./payment";
 
-// Fix stacks.js fetch for Workers
+// Patch stacks.js fetch for Workers: remove referrerPolicy which is unsupported in CF Workers.
+// This is a module-level side effect that runs once when this module is first imported.
 type StacksRequestInit = RequestInit & { referrerPolicy?: string };
 const fetchOptions: StacksRequestInit = getFetchOptions();
 delete fetchOptions.referrerPolicy;
@@ -133,14 +134,6 @@ export async function callRegistryFunction(
 }
 
 /**
- * Convert Clarity response to JSON with proper typing
- */
-export function clarityToJson(cv: ClarityValue): unknown {
-  return cvToJSON(cv);
-}
-
-
-/**
  * Build bool Clarity value
  */
 export function boolCV(b: boolean): ClarityValue {
@@ -228,7 +221,7 @@ export function extractTypedValue(result: unknown): unknown {
 
 /**
  * Call a registry function and extract an optional value (for some/none returns)
- * This helper encapsulates the common pattern: call → clarityToJson → isSome/isNone → extract
+ * This helper encapsulates the common pattern: call → cvToJSON → isSome/isNone → extract
  *
  * @returns { found: boolean, value: T | null } - found=true if some, found=false if none
  */
@@ -240,7 +233,7 @@ export async function callAndExtractOptional<T = unknown>(
 ): Promise<{ found: boolean; value: T | null }> {
   try {
     const result = await callRegistryFunction(network, registry, functionName, functionArgs);
-    const json = clarityToJson(result);
+    const json = cvToJSON(result);
 
     if (isNone(json)) {
       return { found: false, value: null };
@@ -261,7 +254,7 @@ export async function callAndExtractOptional<T = unknown>(
 
 /**
  * Call a registry function and return the JSON result directly (for tuple/list returns)
- * This helper encapsulates: call → clarityToJson → return
+ * This helper encapsulates: call → cvToJSON → return
  *
  * @returns The JSON representation of the Clarity value
  */
@@ -273,44 +266,11 @@ export async function callAndExtractDirect(
 ): Promise<unknown> {
   try {
     const result = await callRegistryFunction(network, registry, functionName, functionArgs);
-    return clarityToJson(result);
+    return cvToJSON(result);
   } catch (error) {
     throw new Error(`Failed to call ${registry}.${functionName}: ${String(error)}`);
   }
 }
-
-
-/**
- * Error code descriptions for all registries
- */
-export const ERROR_CODES: Record<number, string> = {
-  // Identity Registry (1000-1003)
-  1000: "Not authorized",
-  1001: "Agent not found",
-  1002: "Agent already exists",
-  1003: "Metadata set failed",
-
-  // Validation Registry (2000-2005)
-  2000: "Not authorized",
-  2001: "Agent not found",
-  2002: "Validation not found",
-  2003: "Validation already exists",
-  2004: "Invalid validator (cannot be self)",
-  2005: "Invalid response score (exceeds 100)",
-
-  // Reputation Registry (3000-3010)
-  3000: "Not authorized",
-  3001: "Agent not found",
-  3002: "Feedback not found",
-  3003: "Feedback already revoked",
-  3004: "Invalid score (exceeds 100)",
-  3005: "Self-feedback not allowed",
-  3006: "Invalid index",
-  3007: "Signature verification failed",
-  3008: "Authorization expired",
-  3009: "Index limit exceeded",
-  3010: "Empty feedback URI",
-};
 
 
 /**
