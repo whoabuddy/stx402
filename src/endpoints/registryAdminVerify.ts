@@ -6,6 +6,7 @@ import {
   updateEntryStatus,
 } from "../utils/registry";
 import { Address } from "@stacks/transactions";
+import { TOKEN_TYPE_PARAM } from "../utils/schema-helpers";
 
 export class RegistryAdminVerify extends BaseEndpoint {
   schema = {
@@ -37,18 +38,7 @@ export class RegistryAdminVerify extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Action successful",

@@ -7,6 +7,7 @@ import {
   type RegistryEntry,
 } from "../utils/registry";
 import { Address } from "@stacks/transactions";
+import { TOKEN_TYPE_PARAM } from "../utils/schema-helpers";
 
 export class RegistryTransfer extends BaseEndpoint {
   schema = {
@@ -45,18 +46,7 @@ export class RegistryTransfer extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Transfer successful or challenge issued",
@@ -132,16 +122,8 @@ export class RegistryTransfer extends BaseEndpoint {
     }
 
     // Verify ownership
-    if (entry.owner !== ownerAddress) {
-      return c.json(
-        {
-          error: "Not authorized - you are not the owner of this endpoint",
-          registeredOwner: entry.owner,
-          tokenType,
-        },
-        403
-      );
-    }
+    const ownershipError = this.verifyOwnership(c, entry, ownerAddress);
+    if (ownershipError) return ownershipError;
 
     // Authenticate with challenge-based signature
     const authResult = this.authenticateWithChallenge(

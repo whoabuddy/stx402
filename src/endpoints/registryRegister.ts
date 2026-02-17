@@ -8,6 +8,7 @@ import {
   type RegistryEntry,
 } from "../utils/registry";
 import { Address } from "@stacks/transactions";
+import { TOKEN_TYPE_PARAM } from "../utils/schema-helpers";
 
 export class RegistryRegister extends BaseEndpoint {
   schema = {
@@ -51,18 +52,7 @@ export class RegistryRegister extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Registration successful",

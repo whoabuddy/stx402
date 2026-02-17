@@ -5,6 +5,7 @@ import {
   saveRegistryEntry,
 } from "../utils/registry";
 import { probeX402Endpoint } from "../utils/probe";
+import { TOKEN_TYPE_PARAM } from "../utils/schema-helpers";
 
 export class RegistryUpdate extends BaseEndpoint {
   schema = {
@@ -61,18 +62,7 @@ export class RegistryUpdate extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Update successful",
@@ -142,16 +132,8 @@ export class RegistryUpdate extends BaseEndpoint {
     }
 
     // Verify ownership (address must match registered owner)
-    if (entry.owner !== ownerAddress) {
-      return c.json(
-        {
-          error: "Not authorized - you are not the owner of this endpoint",
-          registeredOwner: entry.owner,
-          tokenType,
-        },
-        403
-      );
-    }
+    const ownershipError = this.verifyOwnership(c, entry, ownerAddress);
+    if (ownershipError) return ownershipError;
 
     // Authenticate via signature or payment
     const authResult = this.authenticateOwner(

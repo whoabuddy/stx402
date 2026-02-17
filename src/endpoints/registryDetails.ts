@@ -6,6 +6,7 @@ import {
   generateUrlHash,
 } from "../utils/registry";
 import { probeX402Endpoint } from "../utils/probe";
+import { TOKEN_TYPE_PARAM } from "../utils/schema-helpers";
 
 export class RegistryDetails extends BaseEndpoint {
   schema = {
@@ -40,18 +41,7 @@ export class RegistryDetails extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Full endpoint details",

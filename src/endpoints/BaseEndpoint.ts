@@ -146,6 +146,29 @@ export class BaseEndpoint extends OpenAPIRoute {
   }
 
   /**
+   * Verify that the ownerAddress matches the entry's owner.
+   * Returns null if verified, error Response if not.
+   */
+  protected verifyOwnership(
+    c: AppContext,
+    entry: { owner: string },
+    ownerAddress: string
+  ): Response | null {
+    if (entry.owner !== ownerAddress) {
+      const tokenType = this.getTokenType(c);
+      return c.json(
+        {
+          error: "Not authorized - you are not the owner of this endpoint",
+          registeredOwner: entry.owner,
+          tokenType,
+        },
+        403
+      );
+    }
+    return null;
+  }
+
+  /**
    * Authenticate owner via signature OR payment from same address.
    * Used for operations that accept dual authentication.
    *

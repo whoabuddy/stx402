@@ -1,5 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
+import { TOKEN_TYPE_PARAM } from "../../utils/schema-helpers";
 
 export class LinksCreate extends BaseEndpoint {
   schema = {
@@ -39,18 +40,7 @@ export class LinksCreate extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Link created successfully",
