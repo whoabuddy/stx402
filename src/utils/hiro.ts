@@ -57,26 +57,6 @@ export function checkHiroRateLimit(response: Response): HiroRateLimitError | nul
 }
 
 /**
- * Check if a response is a rate limit error (for withRetry)
- */
-function isHiroRateLimitResponse(response: Response): boolean {
-  return response.status === 429;
-}
-
-/**
- * Parse retry delay from Hiro rate limit response
- */
-function parseHiroRetryDelay(response: Response): number | null {
-  if (response.status === 429) {
-    const retryAfter = response.headers.get("Retry-After");
-    if (retryAfter) {
-      return parseInt(retryAfter, 10);
-    }
-  }
-  return null;
-}
-
-/**
  * Wrapper for fetch that handles Hiro API rate limits with automatic retry.
  *
  * Features:

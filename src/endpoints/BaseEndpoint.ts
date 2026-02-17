@@ -283,8 +283,8 @@ export class BaseEndpoint extends OpenAPIRoute {
   protected authenticateWithChallenge(
     c: AppContext,
     ownerAddress: string,
-    action: string,
-    actionData: Record<string, unknown>,
+    action: SignedAction,
+    actionData: { url?: string; owner: string; newOwner?: string },
     signature?: string,
     challengeId?: string
   ): AuthResult {
