@@ -131,6 +131,9 @@ export function isFreeEndpoint(path: string): boolean {
   return false;
 }
 
+// Track paths already warned about to avoid log spam from crawlers/attackers
+const warnedPaths = new Set<string>();
+
 // Get pricing tier for an endpoint path (strips path params like :address)
 export function getEndpointTier(path: string): PricingTier {
   // Normalize path by removing path parameters
@@ -156,7 +159,13 @@ export function getEndpointTier(path: string): PricingTier {
     }
   }
 
-  // Default to simple tier
+  // Default to simple tier (warn once per path per isolate to avoid log spam)
+  if (!warnedPaths.has(normalizedPath)) {
+    warnedPaths.add(normalizedPath);
+    console.warn(
+      `[pricing] No tier match for path: ${path} (normalized: ${normalizedPath}). Defaulting to "simple" tier.`
+    );
+  }
   return "simple";
 }
 
@@ -170,8 +179,11 @@ export function getPaymentAmountForPath(
   return convertToSmallestUnit(amountStr, tokenType);
 }
 
-// Convert amount string to smallest unit (microSTX, sats, microUSDCx)
-function convertToSmallestUnit(amountStr: string, tokenType: TokenType): bigint {
+/**
+ * Convert human-readable amount to smallest unit (microSTX, sats, microUSDCx).
+ * Exported for use in x402-schema.ts.
+ */
+export function convertToSmallestUnit(amountStr: string, tokenType: TokenType): bigint {
   const amountNum = parseFloat(amountStr);
   switch (tokenType) {
     case "STX":

@@ -65,7 +65,51 @@ export interface PaymentErrorResponse {
   };
 }
 
-// Helper to classify errors from facilitator (V2 error codes)
+/**
+ * Build a structured payment error response with optional retry headers.
+ *
+ * @param classified - Classified error details (code, message, status, retryAfter)
+ * @param tokenType - Token type for the payment
+ * @param resource - Resource path that was accessed
+ * @param details - Raw error details for debugging
+ * @returns Error response object and optional Retry-After header value
+ */
+function buildPaymentErrorResponse(
+  classified: { code: PaymentErrorCode; message: string; httpStatus: number; retryAfter?: number },
+  tokenType: TokenType,
+  resource: string,
+  details: { errorReason?: string; exceptionMessage?: string }
+): { response: PaymentErrorResponse; retryAfterHeader?: string } {
+  const errorResponse: PaymentErrorResponse = {
+    error: classified.message,
+    code: classified.code,
+    retryAfter: classified.retryAfter,
+    tokenType,
+    resource,
+    details,
+  };
+
+  return {
+    response: errorResponse,
+    retryAfterHeader: classified.retryAfter ? String(classified.retryAfter) : undefined,
+  };
+}
+
+/**
+ * Classify payment errors from facilitator into structured error codes.
+ *
+ * Uses order-dependent pattern matching - more specific patterns first:
+ * 1. Network/connection errors (fetch, timeout) - transient, retry soon
+ * 2. Facilitator unavailable (503, service unavailable)
+ * 3. V2 error codes (insufficient funds, expired, amount too low)
+ * 4. Invalid payment (signature, recipient mismatch)
+ * 5. Broadcast/transaction failures
+ * 6. Generic facilitator errors (500, 502)
+ * 7. Unknown error (fallback)
+ *
+ * @param errorReason - Error message from facilitator or exception
+ * @returns Classified error with code, message, HTTP status, and optional retry delay
+ */
 function classifyPaymentError(errorReason?: string): {
   code: PaymentErrorCode;
   message: string;
@@ -214,14 +258,13 @@ export const x402PaymentMiddleware = () => {
     }
 
     // Determine token type from header or query
-    const queryTokenType = c.req.query("tokenType") ?? "STX";
     // V2: token type is embedded in payload, but we still accept query param for 402 response
-    const tokenTypeStr = queryTokenType;
+    const queryTokenType = c.req.query("tokenType") ?? "STX";
 
     let tokenType: TokenType;
     let minAmount: bigint;
     try {
-      tokenType = validateTokenType(tokenTypeStr);
+      tokenType = validateTokenType(queryTokenType);
       // Use path-based pricing for tiered amounts
       minAmount = getPaymentAmountForPath(c.req.path, tokenType);
     } catch (error) {
@@ -346,24 +389,19 @@ export const x402PaymentMiddleware = () => {
 
       // Classify the error and return appropriate response
       const classified = classifyPaymentError(String(error));
-
-      const errorResponse: PaymentErrorResponse = {
-        error: classified.message,
-        code: classified.code,
-        retryAfter: classified.retryAfter,
+      const { response, retryAfterHeader } = buildPaymentErrorResponse(
+        classified,
         tokenType,
-        resource: c.req.path,
-        details: {
-          exceptionMessage: String(error),
-        },
-      };
+        c.req.path,
+        { exceptionMessage: String(error) }
+      );
 
       // Set Retry-After header for transient errors
-      if (classified.retryAfter) {
-        c.header("Retry-After", String(classified.retryAfter));
+      if (retryAfterHeader) {
+        c.header("Retry-After", retryAfterHeader);
       }
 
-      return c.json(errorResponse, classified.httpStatus as 400 | 402 | 500 | 502 | 503);
+      return c.json(response, classified.httpStatus as 400 | 402 | 500 | 502 | 503);
     }
 
     if (!settleResult.success) {
@@ -371,24 +409,19 @@ export const x402PaymentMiddleware = () => {
 
       // Classify based on the settle result
       const classified = classifyPaymentError(settleResult.errorReason);
-
-      const errorResponse: PaymentErrorResponse = {
-        error: classified.message,
-        code: classified.code,
-        retryAfter: classified.retryAfter,
+      const { response, retryAfterHeader } = buildPaymentErrorResponse(
+        classified,
         tokenType,
-        resource: c.req.path,
-        details: {
-          errorReason: settleResult.errorReason,
-        },
-      };
+        c.req.path,
+        { errorReason: settleResult.errorReason }
+      );
 
       // Set Retry-After header for transient errors
-      if (classified.retryAfter) {
-        c.header("Retry-After", String(classified.retryAfter));
+      if (retryAfterHeader) {
+        c.header("Retry-After", retryAfterHeader);
       }
 
-      return c.json(errorResponse, classified.httpStatus as 400 | 402 | 500 | 502 | 503);
+      return c.json(response, classified.httpStatus as 400 | 402 | 500 | 502 | 503);
     }
 
     // Set V2 response header (base64 encoded)

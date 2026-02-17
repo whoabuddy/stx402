@@ -1,5 +1,6 @@
 import type { AppContext } from "../types";
 import { getNavCSS, getNavHTML } from "../components/nav";
+import { getPageShellCSS } from "../components/page-shell";
 import { BaseEndpoint } from "./BaseEndpoint";
 
 export class ToolboxPage extends BaseEndpoint {
@@ -32,43 +33,7 @@ function generateToolboxHTML(): string {
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
     ${getNavCSS()}
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #09090b;
-      color: #fafafa;
-      min-height: 100vh;
-      line-height: 1.5;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    h1 {
-      font-size: 32px;
-      font-weight: 700;
-      color: #fafafa;
-      margin-bottom: 8px;
-    }
-
-    h1 .accent {
-      color: #f7931a;
-    }
-
-    .subtitle {
-      color: #71717a;
-      margin-bottom: 32px;
-      font-size: 18px;
-    }
+    ${getPageShellCSS()}
 
     .tool-card {
       background: #0f0f12;

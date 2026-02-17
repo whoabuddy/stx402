@@ -21,7 +21,7 @@
 
 import type { TokenType, NetworkType } from "x402-stacks";
 import { X402PaymentClient } from "x402-stacks";
-import { deriveChildAccount } from "../src/utils/wallet";
+import { deriveChildAccount } from "./_shared_wallet";
 import {
   Cl,
   cvToHex,

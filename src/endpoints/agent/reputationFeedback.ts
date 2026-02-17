@@ -1,14 +1,9 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  isSome,
-  isNone,
-  uint,
-  principal,
+  callAndExtractOptional,
 } from "../../utils/erc8004";
+import { uintCV, principalCV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -61,7 +56,7 @@ export class ReputationFeedback extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
 
     const mainnetError = this.checkMainnetDeployment(c, network);
     if (mainnetError) return mainnetError;
@@ -81,28 +76,7 @@ export class ReputationFeedback extends BaseEndpoint {
 
     try {
       // read-feedback returns (optional tuple)
-      const result = await callRegistryFunction(
-        network,
-        "reputation",
-        "read-feedback",
-        [uint(agentId), principal(client), uint(index)]
-      );
-      const json = clarityToJson(result);
-
-      if (isNone(json)) {
-        return this.errorResponse(c, "Feedback not found", 404, {
-          agentId,
-          client,
-          index,
-        });
-      }
-
-      if (!isSome(json)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
-      // Extract tuple: { type: "tuple", value: { score: {}, tag1: {}, ... } }
-      const tupleValue = extractValue(json) as {
+      const { found, value: tupleValue } = await callAndExtractOptional<{
         type: string;
         value: {
           score: { type: string; value: string };
@@ -110,7 +84,24 @@ export class ReputationFeedback extends BaseEndpoint {
           tag2: { type: string; value: string };
           "is-revoked": { type: string; value: boolean };
         };
-      };
+      }>(
+        network,
+        "reputation",
+        "read-feedback",
+        [uintCV(agentId), principalCV(client), uintCV(index)]
+      );
+
+      if (!found) {
+        return this.errorResponse(c, "Feedback not found", 404, {
+          agentId,
+          client,
+          index,
+        });
+      }
+
+      if (!tupleValue) {
+        return this.errorResponse(c, "Unexpected null feedback response", 500);
+      }
 
       return c.json({
         agentId,

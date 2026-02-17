@@ -1,22 +1,12 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
+import { TOKEN_TYPE_PARAM } from "../../utils/schema-helpers";
 
 export class LinksList extends BaseEndpoint {
   schema = {
     tags: ["Links"],
     summary: "(paid) List all your short links",
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Links listed successfully",
@@ -79,7 +69,7 @@ export class LinksList extends BaseEndpoint {
       });
     } catch (error) {
       c.var.logger.error("Link list error", { error: String(error) });
-      return this.errorResponse(c, `Link operation failed: ${error}`, 500);
+      return this.errorResponse(c, `Link operation failed: ${String(error)}`, 500);
     }
   }
 }

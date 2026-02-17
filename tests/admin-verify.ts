@@ -17,7 +17,7 @@
  */
 
 import type { NetworkType } from "x402-stacks";
-import { deriveChildAccount } from "../src/utils/wallet";
+import { deriveChildAccount } from "./_shared_wallet";
 import { COLORS } from "./_shared_utils";
 
 // =============================================================================

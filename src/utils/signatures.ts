@@ -25,6 +25,7 @@ export function getDomain(network: "mainnet" | "testnet"): ClarityValue {
 export type SignedAction =
   | "delete-endpoint"
   | "list-my-endpoints"
+  | "update-endpoint"
   | "transfer-ownership"
   | "challenge-response"
   | "authenticate";
@@ -52,6 +53,14 @@ export function createActionMessage(
     case "list-my-endpoints":
       return Cl.tuple({
         action: Cl.stringAscii("list-my-endpoints"),
+        owner: Cl.stringAscii(data.owner),
+        timestamp: Cl.uint(data.timestamp),
+      });
+
+    case "update-endpoint":
+      return Cl.tuple({
+        action: Cl.stringAscii("update-endpoint"),
+        url: Cl.stringAscii(data.url || ""),
         owner: Cl.stringAscii(data.owner),
         timestamp: Cl.uint(data.timestamp),
       });
@@ -92,8 +101,20 @@ export function generateChallenge(): { nonce: string; expiresAt: number } {
   return { nonce, expiresAt };
 }
 
-// Store for active challenges (in-memory, will reset on worker restart)
-// For production, consider using KV storage
+/**
+ * In-memory challenge store for signature-based authentication.
+ *
+ * WARNING: Cloudflare Workers run across multiple isolates. Each isolate
+ * maintains its own copy of this Map. A challenge stored in one isolate
+ * will NOT be visible to another isolate. This means challenge verification
+ * may fail if the creation and verification requests are handled by
+ * different isolates.
+ *
+ * For production reliability, migrate to KV storage or Durable Objects.
+ *
+ * @see https://developers.cloudflare.com/workers/learning/how-workers-works/
+ * TODO: Migrate to KV or Durable Objects for cross-isolate reliability
+ */
 const activeChallenges = new Map<string, { nonce: string; expiresAt: number; owner: string }>();
 
 export function storeChallenge(
@@ -174,9 +195,9 @@ export function verifyStructuredSignature(
   }
 }
 
-// Address version constants for c32check encoding
-const ADDRESS_VERSION_MAINNET_SINGLE_SIG = 22; // SP prefix
-const ADDRESS_VERSION_TESTNET_SINGLE_SIG = 26; // ST prefix
+// Address version constants for c32check encoding (c32check address type, NOT TransactionVersion)
+export const ADDRESS_VERSION_MAINNET_SINGLE_SIG = 22; // SP prefix
+export const ADDRESS_VERSION_TESTNET_SINGLE_SIG = 26; // ST prefix
 
 // Convert a compressed public key to a Stacks address
 function publicKeyToAddress(publicKey: string, network: "mainnet" | "testnet" = "mainnet"): string {
@@ -194,42 +215,6 @@ function publicKeyToAddress(publicKey: string, network: "mainnet" | "testnet" = 
   }
 }
 
-// Verify a simple message signature (for basic auth)
-export function verifySimpleSignature(
-  message: string,
-  signature: string,
-  expectedAddress: string,
-  network: "mainnet" | "testnet" = "mainnet"
-): { valid: boolean; recoveredAddress?: string; error?: string } {
-  try {
-    // For simple messages, we hash the message directly
-    const messageBytes = new TextEncoder().encode(message);
-    const messageHash = bytesToHex(sha256(messageBytes));
-
-    // Recover public key from signature
-    const recoveredPubKey = publicKeyFromSignatureRsv(messageHash, signature);
-
-    // Convert to address for both networks and check match
-    const mainnetAddress = publicKeyToAddress(recoveredPubKey, "mainnet");
-    const testnetAddress = publicKeyToAddress(recoveredPubKey, "testnet");
-
-    const valid = addressesMatchByHash160(mainnetAddress, expectedAddress) ||
-                  addressesMatchByHash160(testnetAddress, expectedAddress);
-
-    const recoveredAddress = network === "mainnet" ? mainnetAddress : testnetAddress;
-
-    return {
-      valid,
-      recoveredAddress,
-      error: valid ? undefined : "Recovered address does not match expected address",
-    };
-  } catch (error) {
-    return {
-      valid: false,
-      error: `Signature verification failed: ${String(error)}`,
-    };
-  }
-}
 
 // Validate timestamp is within acceptable range (prevents replay attacks)
 export function isTimestampValid(

@@ -5,7 +5,6 @@ export class Health extends BaseEndpoint {
   schema = {
     tags: ["Health"],
     summary: "Check the STX402 service health",
-    request: {},
     responses: {
       "200": {
         description: "Service health status",

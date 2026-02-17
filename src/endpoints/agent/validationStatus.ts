@@ -1,13 +1,10 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  isSome,
-  isNone,
-  buffer,
+  callAndExtractOptional,
 } from "../../utils/erc8004";
+import { bufferCV } from "@stacks/transactions";
+import { hexToBytes } from "@noble/hashes/utils";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -55,7 +52,7 @@ export class ValidationStatus extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
 
     const mainnetError = this.checkMainnetDeployment(c, network);
     if (mainnetError) return mainnetError;
@@ -83,26 +80,7 @@ export class ValidationStatus extends BaseEndpoint {
 
     try {
       // get-validation-status returns (optional tuple)
-      const result = await callRegistryFunction(
-        network,
-        "validation",
-        "get-validation-status",
-        [buffer(cleanHash)]
-      );
-      const json = clarityToJson(result);
-
-      if (isNone(json)) {
-        return this.errorResponse(c, "Validation not found", 404, {
-          requestHash,
-        });
-      }
-
-      if (!isSome(json)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
-      // Extract tuple from some
-      const tupleValue = extractValue(json) as {
+      const { found, value: tupleValue } = await callAndExtractOptional<{
         type: string;
         value: {
           validator: { type: string; value: string };
@@ -112,7 +90,22 @@ export class ValidationStatus extends BaseEndpoint {
           tag: { type: string; value: string };
           "last-update": { type: string; value: string };
         };
-      };
+      }>(
+        network,
+        "validation",
+        "get-validation-status",
+        [bufferCV(hexToBytes(cleanHash))]
+      );
+
+      if (!found) {
+        return this.errorResponse(c, "Validation not found", 404, {
+          requestHash,
+        });
+      }
+
+      if (!tupleValue) {
+        return this.errorResponse(c, "Unexpected null validation response", 500);
+      }
 
       return c.json({
         requestHash: `0x${cleanHash}`,

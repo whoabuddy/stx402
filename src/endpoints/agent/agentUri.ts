@@ -1,14 +1,9 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  extractTypedValue,
-  isSome,
-  isNone,
-  uint,
+  callAndExtractOptional,
 } from "../../utils/erc8004";
+import { uintCV } from "@stacks/transactions";
 import {
   AGENT_WITH_ID_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -35,7 +30,7 @@ export class AgentUri extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
 
     const mainnetError = this.checkMainnetDeployment(c, network);
     if (mainnetError) return mainnetError;
@@ -52,26 +47,14 @@ export class AgentUri extends BaseEndpoint {
 
     try {
       // get-uri returns (optional (string-utf8 512))
-      const result = await callRegistryFunction(
+      const { found, value: uri } = await callAndExtractOptional<string>(
         network,
         "identity",
         "get-uri",
-        [uint(agentId)]
+        [uintCV(agentId)]
       );
-      const json = clarityToJson(result);
 
-      if (isNone(json)) {
-        return this.errorResponse(c, "Agent has no URI set", 404, { agentId });
-      }
-
-      if (!isSome(json)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
-      const uriValue = extractValue(json);
-      const uri = extractTypedValue(uriValue) as string;
-
-      if (!uri) {
+      if (!found || !uri) {
         return this.errorResponse(c, "Agent has no URI set", 404, { agentId });
       }
 

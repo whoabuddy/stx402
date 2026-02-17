@@ -2,6 +2,7 @@ import { BaseEndpoint } from "./BaseEndpoint";
 import type { AppContext } from "../types";
 import { listEntriesByStatus } from "../utils/registry";
 import { Address } from "@stacks/transactions";
+import { TOKEN_TYPE_PARAM } from "../utils/schema-helpers";
 
 export class RegistryAdminPending extends BaseEndpoint {
   schema = {
@@ -24,18 +25,7 @@ export class RegistryAdminPending extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "List of pending entries",

@@ -13,6 +13,7 @@
 import {
   ENDPOINT_TIERS,
   TIER_AMOUNTS,
+  convertToSmallestUnit,
   type PricingTier,
   type TokenType,
 } from "./pricing";
@@ -72,23 +73,6 @@ export interface GeneratorConfig {
 // =============================================================================
 
 const TOKENS: TokenType[] = ["STX", "sBTC", "USDCx"];
-
-/**
- * Convert human-readable amount to smallest unit
- */
-function toSmallestUnit(amountStr: string, token: TokenType): string {
-  const amount = parseFloat(amountStr);
-  switch (token) {
-    case "STX":
-      return String(Math.round(amount * 1_000_000)); // microSTX
-    case "sBTC":
-      return String(Math.round(amount * 100_000_000)); // sats
-    case "USDCx":
-      return String(Math.round(amount * 1_000_000)); // microUSDCx
-    default:
-      return String(Math.round(amount * 1_000_000));
-  }
-}
 
 /**
  * Get timeout based on tier complexity
@@ -174,7 +158,7 @@ export function generateX402SchemaStatic(config: GeneratorConfig): X402Schema {
     // Create entry for each supported token
     for (const token of TOKENS) {
       const tierAmounts = TIER_AMOUNTS[tier];
-      const amount = toSmallestUnit(tierAmounts[token], token);
+      const amount = String(convertToSmallestUnit(tierAmounts[token], token));
 
       accepts.push({
         scheme: "exact",

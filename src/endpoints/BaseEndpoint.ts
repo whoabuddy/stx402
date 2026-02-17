@@ -1,5 +1,5 @@
 import { OpenAPIRoute } from "chanfana";
-import { Address, deserializeTransaction } from "@stacks/transactions";
+import { Address } from "@stacks/transactions";
 import { validateTokenType } from "../utils/pricing";
 import type { AppContext, SettlementResponseV2, PaymentPayloadV2 } from "../types";
 import { ContentfulStatusCode } from "hono/utils/http-status";
@@ -12,9 +12,12 @@ import {
   isTimestampValid,
   getChallenge,
   consumeChallenge,
+  ADDRESS_VERSION_MAINNET_SINGLE_SIG,
+  ADDRESS_VERSION_TESTNET_SINGLE_SIG,
   type SignatureRequest,
+  type SignedAction,
 } from "../utils/signatures";
-import { payerMatchesAddress, strip0x } from "../utils/payment";
+import { payerMatchesAddress, extractSenderHash160FromSignedTx } from "../utils/payment";
 import type { UserDurableObject } from "../durable-objects/UserDurableObject";
 
 /** Result of dual authentication (signature or payment) */
@@ -24,9 +27,10 @@ export type AuthResult =
 
 export class BaseEndpoint extends OpenAPIRoute {
   /**
-   * Get the network from query parameter with consistent default
+   * Get the ERC-8004 agent registry network from query parameter (mainnet or testnet).
+   * Defaults to testnet if not specified.
    */
-  protected getNetwork(c: AppContext): ERC8004Network {
+  protected getAgentNetwork(c: AppContext): ERC8004Network {
     return (c.req.query("network") || "testnet") as ERC8004Network;
   }
 
@@ -93,7 +97,7 @@ export class BaseEndpoint extends OpenAPIRoute {
   protected getPayerAddress(c: AppContext): string | null {
     const settleResult = c.get("settleResult") as SettlementResponseV2 | undefined;
     const paymentPayload = c.get("paymentPayload") as PaymentPayloadV2 | undefined;
-    const network = (c.env?.X402_NETWORK ?? "mainnet") as "mainnet" | "testnet";
+    const network = c.env.X402_NETWORK as "mainnet" | "testnet";
 
     // V2: Use 'payer' field from settlement result
     if (settleResult?.payer) {
@@ -102,27 +106,13 @@ export class BaseEndpoint extends OpenAPIRoute {
 
     // Fallback: extract sender from payment payload's signed transaction
     if (paymentPayload?.payload?.transaction) {
-      try {
-        const signedTx = paymentPayload.payload.transaction;
-        const hex = strip0x(signedTx);
-        const tx = deserializeTransaction(hex);
-
-        if (tx.auth?.spendingCondition) {
-          const spendingCondition = tx.auth.spendingCondition as {
-            signer?: string;
-            hashMode?: number;
-          };
-
-          if (spendingCondition.signer) {
-            // Convert hash160 to address using the appropriate network
-            const hash160 = spendingCondition.signer;
-            const addressVersion = network === "mainnet" ? 22 : 26; // P2PKH versions
-            const address = Address.stringify({ hash160, type: addressVersion });
-            return address;
-          }
-        }
-      } catch (error) {
-        c.var.logger.warn("Failed to extract sender from payment payload", { error: String(error) });
+      const signedTx = paymentPayload.payload.transaction;
+      const hash160 = extractSenderHash160FromSignedTx(signedTx);
+      if (hash160) {
+        const addressVersion = network === "mainnet"
+          ? ADDRESS_VERSION_MAINNET_SINGLE_SIG
+          : ADDRESS_VERSION_TESTNET_SINGLE_SIG;
+        return Address.stringify({ hash160, type: addressVersion });
       }
     }
 
@@ -160,6 +150,29 @@ export class BaseEndpoint extends OpenAPIRoute {
   }
 
   /**
+   * Verify that the ownerAddress matches the entry's owner.
+   * Returns null if verified, error Response if not.
+   */
+  protected verifyOwnership(
+    c: AppContext,
+    entry: { owner: string },
+    ownerAddress: string
+  ): Response | null {
+    if (entry.owner !== ownerAddress) {
+      const tokenType = this.getTokenType(c);
+      return c.json(
+        {
+          error: "Not authorized - you are not the owner of this endpoint",
+          registeredOwner: entry.owner,
+          tokenType,
+        },
+        403
+      );
+    }
+    return null;
+  }
+
+  /**
    * Authenticate owner via signature OR payment from same address.
    * Used for operations that accept dual authentication.
    *
@@ -171,7 +184,7 @@ export class BaseEndpoint extends OpenAPIRoute {
     ownerAddress: string,
     signature?: string,
     timestamp?: number,
-    action?: string,
+    action?: SignedAction,
     actionData?: Record<string, unknown>
   ): AuthResult {
     const tokenType = this.getTokenType(c);
@@ -270,8 +283,8 @@ export class BaseEndpoint extends OpenAPIRoute {
   protected authenticateWithChallenge(
     c: AppContext,
     ownerAddress: string,
-    action: string,
-    actionData: Record<string, unknown>,
+    action: SignedAction,
+    actionData: { url?: string; owner: string; newOwner?: string },
     signature?: string,
     challengeId?: string
   ): AuthResult {

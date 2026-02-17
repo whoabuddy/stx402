@@ -1,13 +1,9 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  isSome,
-  isNone,
-  uint,
+  callAndExtractOptional,
 } from "../../utils/erc8004";
+import { uintCV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ID_BODY_SCHEMA,
@@ -43,7 +39,7 @@ export class ValidationList extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
 
     const mainnetError = this.checkMainnetDeployment(c, network);
     if (mainnetError) return mainnetError;
@@ -57,16 +53,18 @@ export class ValidationList extends BaseEndpoint {
 
     try {
       // get-agent-validations returns (optional (list buffer))
-      const result = await callRegistryFunction(
+      const { found, value: listValue } = await callAndExtractOptional<{
+        type: string;
+        value: Array<{ type: string; value: string }>;
+      }>(
         network,
         "validation",
         "get-agent-validations",
-        [uint(agentId)]
+        [uintCV(agentId)]
       );
-      const json = clarityToJson(result);
 
       // none means no validations yet
-      if (isNone(json)) {
+      if (!found) {
         return c.json({
           agentId,
           validations: [],
@@ -76,17 +74,7 @@ export class ValidationList extends BaseEndpoint {
         });
       }
 
-      if (!isSome(json)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
-      // Extract list from some
-      const listValue = extractValue(json) as {
-        type: string;
-        value: Array<{ type: string; value: string }>;
-      };
-
-      const validations = listValue.value.map((item) => item.value);
+      const validations = listValue!.value.map((item) => item.value);
 
       return c.json({
         agentId,

@@ -1,15 +1,10 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
+  callAndExtractOptional,
   extractTypedValue,
-  isSome,
-  isNone,
-  uint,
-  stringUtf8,
 } from "../../utils/erc8004";
+import { uintCV, stringUtf8CV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -50,7 +45,7 @@ export class AgentMetadata extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
 
     const mainnetError = this.checkMainnetDeployment(c, network);
     if (mainnetError) return mainnetError;
@@ -71,27 +66,21 @@ export class AgentMetadata extends BaseEndpoint {
 
     try {
       // get-metadata returns (optional (buffer 512))
-      const result = await callRegistryFunction(
+      const { found, value: bufferValue } = await callAndExtractOptional(
         network,
         "identity",
         "get-metadata",
-        [uint(agentId), stringUtf8(key)]
+        [uintCV(agentId), stringUtf8CV(key)]
       );
-      const json = clarityToJson(result);
 
-      if (isNone(json)) {
+      if (!found) {
         return this.errorResponse(c, "Metadata key not found", 404, {
           agentId,
           key,
         });
       }
 
-      if (!isSome(json)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
       // Extract buffer value
-      const bufferValue = extractValue(json);
       const valueHex = extractTypedValue(bufferValue) as string;
 
       // Try to decode as UTF-8 text

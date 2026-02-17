@@ -35,7 +35,7 @@
 
 import { X402PaymentClient, X402_HEADERS } from "x402-stacks";
 import type { TokenType, NetworkType, PaymentRequiredV2 } from "x402-stacks";
-import { deriveChildAccount } from "../src/utils/wallet";
+import { deriveChildAccount } from "./_shared_wallet";
 import {
   STATELESS_ENDPOINTS,
   ENDPOINT_CATEGORIES,

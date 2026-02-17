@@ -1,15 +1,10 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
-  extractValue,
-  extractTypedValue,
-  isSome,
-  isNone,
-  uint,
+  callAndExtractOptional,
   ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
+import { uintCV } from "@stacks/transactions";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ID_BODY_SCHEMA,
@@ -38,7 +33,7 @@ export class AgentInfo extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
 
     const mainnetError = this.checkMainnetDeployment(c, network);
     if (mainnetError) return mainnetError;
@@ -52,40 +47,25 @@ export class AgentInfo extends BaseEndpoint {
 
     try {
       // Fetch owner - returns (optional principal)
-      const ownerResult = await callRegistryFunction(
+      const { found, value: owner } = await callAndExtractOptional<string>(
         network,
         "identity",
         "owner-of",
-        [uint(agentId!)]
+        [uintCV(agentId!)]
       );
-      const ownerJson = clarityToJson(ownerResult);
 
       // owner-of returns (optional principal): some = exists, none = not found
-      if (isNone(ownerJson)) {
+      if (!found) {
         return this.errorResponse(c, "Agent not found", 404, { agentId });
       }
 
-      if (!isSome(ownerJson)) {
-        return this.errorResponse(c, "Unexpected response format", 400);
-      }
-
-      // Extract: { type: "some", value: { type: "principal", value: "SP..." } }
-      const ownerValue = extractValue(ownerJson); // { type: "principal", value: "SP..." }
-      const owner = extractTypedValue(ownerValue) as string;
-
       // Fetch URI - returns (optional (string-utf8 512))
-      const uriResult = await callRegistryFunction(
+      const { value: uri } = await callAndExtractOptional<string>(
         network,
         "identity",
         "get-uri",
-        [uint(agentId!)]
+        [uintCV(agentId!)]
       );
-      const uriJson = clarityToJson(uriResult);
-      let uri: string | null = null;
-      if (isSome(uriJson)) {
-        const uriValue = extractValue(uriJson);
-        uri = extractTypedValue(uriValue) as string;
-      }
 
       const contracts = ERC8004_CONTRACTS[network]!;
 

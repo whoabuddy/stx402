@@ -197,7 +197,21 @@ interface MetricsUpdateData {
   amount: string;
 }
 
-/** Update metrics - read-modify-write pattern */
+/**
+ * Update metrics - read-modify-write pattern.
+ *
+ * RACE CONDITION: Multiple concurrent requests to the same endpoint may race
+ * on KV writes, causing the last write to win and potentially losing some
+ * increments. This is acceptable for metrics (eventual consistency) but means
+ * exact counts may drift under high concurrency.
+ *
+ * For strongly consistent counters, migrate to Durable Objects with
+ * per-endpoint state isolation.
+ *
+ * @param kv - KV namespace for metrics storage
+ * @param update - Metrics update data (path, latency, success, token, amount)
+ * @param logger - Optional logger for error reporting
+ */
 async function updateMetrics(
   kv: KVNamespace,
   update: MetricsUpdateData,

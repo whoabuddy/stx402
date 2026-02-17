@@ -1,16 +1,12 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
+  callAndExtractDirect,
   isTuple,
-  uint,
-  principal,
-  buffer,
-  list,
-  none,
-  some,
 } from "../../utils/erc8004";
+import { uintCV, principalCV, bufferCV, listCV, noneCV, someCV } from "@stacks/transactions";
+import { hexToBytes } from "@noble/hashes/utils";
+import { strip0x } from "../../utils/payment";
 import {
   AGENT_COMMON_PARAMS,
   AGENT_ERROR_RESPONSES,
@@ -53,7 +49,7 @@ export class ValidationSummary extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
 
     const mainnetError = this.checkMainnetDeployment(c, network);
     if (mainnetError) return mainnetError;
@@ -72,20 +68,19 @@ export class ValidationSummary extends BaseEndpoint {
     try {
       // get-summary(agent-id, opt-validators, opt-tag)
       const args = [
-        uint(agentId),
+        uintCV(agentId),
         filterByValidators && filterByValidators.length > 0
-          ? some(list(filterByValidators.map((p) => principal(p))))
-          : none(),
-        filterByTag ? some(buffer(filterByTag)) : none(),
+          ? someCV(listCV(filterByValidators.map((p) => principalCV(p))))
+          : noneCV(),
+        filterByTag ? someCV(bufferCV(hexToBytes(strip0x(filterByTag)))) : noneCV(),
       ];
 
-      const result = await callRegistryFunction(
+      const json = await callAndExtractDirect(
         network,
         "validation",
         "get-summary",
         args
       );
-      const json = clarityToJson(result);
 
       // get-summary returns a tuple directly: { count, avg-response }
       // cvToJSON structure: { type: "(tuple ...)", value: { ... } }

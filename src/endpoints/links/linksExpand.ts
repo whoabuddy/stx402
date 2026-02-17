@@ -98,7 +98,7 @@ export class LinksExpand extends BaseEndpoint {
       });
     } catch (error) {
       c.var.logger.error("Link expand error", { error: String(error) });
-      return this.errorResponse(c, `Link operation failed: ${error}`, 500);
+      return this.errorResponse(c, `Link operation failed: ${String(error)}`, 500);
     }
   }
 }

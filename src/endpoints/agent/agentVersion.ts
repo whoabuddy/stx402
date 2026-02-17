@@ -1,8 +1,7 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
 import {
-  callRegistryFunction,
-  clarityToJson,
+  callAndExtractDirect,
   extractTypedValue,
   ERC8004_CONTRACTS,
 } from "../../utils/erc8004";
@@ -30,20 +29,19 @@ export class AgentVersion extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
 
     const mainnetError = this.checkMainnetDeployment(c, network);
     if (mainnetError) return mainnetError;
 
     try {
       // get-version returns (string-utf8 5) directly, not wrapped in (ok ...)
-      const result = await callRegistryFunction(
+      const json = await callAndExtractDirect(
         network,
         "identity",
         "get-version",
         []
       );
-      const json = clarityToJson(result);
 
       // Result is { type: "string-utf8", value: "1.0.0" }
       const version = extractTypedValue(json) as string;

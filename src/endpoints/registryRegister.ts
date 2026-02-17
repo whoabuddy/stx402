@@ -7,7 +7,7 @@ import {
   getRegistryEntryByUrl,
   type RegistryEntry,
 } from "../utils/registry";
-import { Address } from "@stacks/transactions";
+import { TOKEN_TYPE_PARAM } from "../utils/schema-helpers";
 
 export class RegistryRegister extends BaseEndpoint {
   schema = {
@@ -51,18 +51,7 @@ export class RegistryRegister extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Registration successful",
@@ -149,23 +138,10 @@ export class RegistryRegister extends BaseEndpoint {
       return this.errorResponse(c, "URL must use http or https", 400);
     }
 
-    // Validate owner address if provided, otherwise use payer address
-    let ownerAddress: string;
-    if (body.owner) {
-      try {
-        const addressObj = Address.parse(body.owner);
-        ownerAddress = Address.stringify(addressObj);
-      } catch {
-        return this.errorResponse(c, "Invalid owner address format", 400);
-      }
-    } else {
-      // Use payer address as owner when not explicitly specified
-      const payerAddress = this.getPayerAddress(c);
-      if (!payerAddress) {
-        return this.errorResponse(c, "Could not determine owner from payment. Please specify owner address.", 400);
-      }
-      ownerAddress = payerAddress;
-    }
+    // Resolve owner address: validate provided value or fall back to payer address
+    const ownerResult = this.resolveOwnerAddress(c, body.owner);
+    if (ownerResult.error) return ownerResult.error;
+    const ownerAddress = ownerResult.address;
 
     // Validate name length
     if (body.name.length > 100) {

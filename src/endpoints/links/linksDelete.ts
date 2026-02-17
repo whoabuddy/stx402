@@ -1,5 +1,6 @@
 import { BaseEndpoint } from "../BaseEndpoint";
 import type { AppContext } from "../../types";
+import { TOKEN_TYPE_PARAM } from "../../utils/schema-helpers";
 
 export class LinksDelete extends BaseEndpoint {
   schema = {
@@ -22,18 +23,7 @@ export class LinksDelete extends BaseEndpoint {
         },
       },
     },
-    parameters: [
-      {
-        name: "tokenType",
-        in: "query" as const,
-        required: false,
-        schema: {
-          type: "string",
-          enum: ["STX", "sBTC", "USDCx"] as const,
-          default: "STX",
-        },
-      },
-    ],
+    parameters: [TOKEN_TYPE_PARAM],
     responses: {
       "200": {
         description: "Link deleted",
@@ -85,7 +75,7 @@ export class LinksDelete extends BaseEndpoint {
       return c.json({ ...result, tokenType });
     } catch (error) {
       c.var.logger.error("Link delete error", { error: String(error) });
-      return this.errorResponse(c, `Link operation failed: ${error}`, 500);
+      return this.errorResponse(c, `Link operation failed: ${String(error)}`, 500);
     }
   }
 }

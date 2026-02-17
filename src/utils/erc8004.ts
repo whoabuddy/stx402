@@ -20,10 +20,11 @@ import {
 import { getFetchOptions, setFetchOptions } from "@stacks/common";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
-import { sleep } from "./hiro";
+import { withRetry } from "./retry";
 import { strip0x } from "./payment";
 
-// Fix stacks.js fetch for Workers
+// Patch stacks.js fetch for Workers: remove referrerPolicy which is unsupported in CF Workers.
+// This is a module-level side effect that runs once when this module is first imported.
 type StacksRequestInit = RequestInit & { referrerPolicy?: string };
 const fetchOptions: StacksRequestInit = getFetchOptions();
 delete fetchOptions.referrerPolicy;
@@ -43,7 +44,7 @@ export const ERC8004_CONTRACTS = {
 export type ERC8004Network = "mainnet" | "testnet";
 
 // SIP-018 constants for signature generation
-export const SIP018_PREFIX = "534950303138"; // "SIP018" in hex
+const SIP018_PREFIX = "534950303138"; // "SIP018" in hex
 export const REPUTATION_DOMAIN = {
   name: "reputation-registry",
   version: "1.0.0",
@@ -76,17 +77,6 @@ export function parseContractId(contractId: string): {
 }
 
 /**
- * Parse retry delay from error message (e.g., "try again in 11 seconds")
- */
-function parseRetryDelay(errorMessage: string): number | null {
-  const match = errorMessage.match(/try again in (\d+) seconds?/i);
-  if (match) {
-    return parseInt(match[1], 10);
-  }
-  return null;
-}
-
-/**
  * Check if an error is a rate limit error (429)
  */
 function isRateLimitError(error: unknown): boolean {
@@ -95,6 +85,19 @@ function isRateLimitError(error: unknown): boolean {
     return msg.includes("429") || msg.includes("rate limit") || msg.includes("too many requests");
   }
   return false;
+}
+
+/**
+ * Parse retry delay from error message (e.g., "try again in 11 seconds")
+ */
+function parseRetryDelay(error: unknown): number | null {
+  if (error instanceof Error) {
+    const match = error.message.match(/try again in (\d+) seconds?/i);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  return null;
 }
 
 /**
@@ -113,13 +116,9 @@ export async function callRegistryFunction(
 
   const stacksNetwork = network === "mainnet" ? "mainnet" : "testnet";
 
-  const maxRetries = options?.maxRetries ?? 3;
-  const baseDelay = options?.baseDelay ?? 1000;
-  const maxDelay = options?.maxDelay ?? 30000;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const result = await fetchCallReadOnlyFunction({
+  return withRetry(
+    async () => {
+      return await fetchCallReadOnlyFunction({
         contractAddress: address,
         contractName: name,
         functionName,
@@ -127,97 +126,11 @@ export async function callRegistryFunction(
         senderAddress: address,
         network: stacksNetwork,
       });
-
-      return result;
-    } catch (error) {
-      // Check if this is a rate limit error
-      if (!isRateLimitError(error)) {
-        throw error; // Not a rate limit, rethrow immediately
-      }
-
-      // If this was the last attempt, rethrow
-      if (attempt === maxRetries) {
-        throw error;
-      }
-
-      // Parse retry delay from error message or use exponential backoff
-      let delay: number;
-      if (error instanceof Error) {
-        const retryAfter = parseRetryDelay(error.message);
-        if (retryAfter !== null && retryAfter > 0) {
-          // Use the suggested delay with small jitter
-          delay = Math.min(retryAfter * 1000 + Math.random() * 500, maxDelay);
-        } else {
-          // Exponential backoff with jitter
-          delay = Math.min(baseDelay * Math.pow(2, attempt) + Math.random() * baseDelay, maxDelay);
-        }
-      } else {
-        delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
-      }
-
-      await sleep(delay);
-    }
-  }
-
-  // Should not reach here
-  throw new Error("Unexpected error in callRegistryFunction retry logic");
-}
-
-/**
- * Convert Clarity response to JSON with proper typing
- */
-export function clarityToJson(cv: ClarityValue): unknown {
-  return cvToJSON(cv);
-}
-
-/**
- * Build uint Clarity value
- */
-export function uint(n: number | bigint): ClarityValue {
-  return uintCV(n);
-}
-
-/**
- * Build principal Clarity value
- */
-export function principal(p: string): ClarityValue {
-  return principalCV(p);
-}
-
-/**
- * Build buffer Clarity value from hex string
- */
-export function buffer(hex: string): ClarityValue {
-  const cleanHex = strip0x(hex);
-  return bufferCV(hexToBytes(cleanHex));
-}
-
-/**
- * Build string-utf8 Clarity value
- */
-export function stringUtf8(s: string): ClarityValue {
-  return stringUtf8CV(s);
-}
-
-/**
- * Build optional none
- */
-export function none(): ClarityValue {
-  return noneCV();
-}
-
-/**
- * Build optional some
- */
-export function some(cv: ClarityValue): ClarityValue {
-  return someCV(cv);
-}
-
-/**
- * Build list of Clarity values
- */
-export function list(items: ClarityValue[]): ClarityValue {
-  return listCV(items);
+    },
+    options,
+    isRateLimitError,
+    parseRetryDelay
+  );
 }
 
 /**
@@ -307,36 +220,57 @@ export function extractTypedValue(result: unknown): unknown {
 
 
 /**
- * Error code descriptions for all registries
+ * Call a registry function and extract an optional value (for some/none returns)
+ * This helper encapsulates the common pattern: call → cvToJSON → isSome/isNone → extract
+ *
+ * @returns { found: boolean, value: T | null } - found=true if some, found=false if none
  */
-export const ERROR_CODES: Record<number, string> = {
-  // Identity Registry (1000-1003)
-  1000: "Not authorized",
-  1001: "Agent not found",
-  1002: "Agent already exists",
-  1003: "Metadata set failed",
+export async function callAndExtractOptional<T = unknown>(
+  network: ERC8004Network,
+  registry: "identity" | "reputation" | "validation",
+  functionName: string,
+  functionArgs: ClarityValue[] = []
+): Promise<{ found: boolean; value: T | null }> {
+  try {
+    const result = await callRegistryFunction(network, registry, functionName, functionArgs);
+    const json = cvToJSON(result);
 
-  // Validation Registry (2000-2005)
-  2000: "Not authorized",
-  2001: "Agent not found",
-  2002: "Validation not found",
-  2003: "Validation already exists",
-  2004: "Invalid validator (cannot be self)",
-  2005: "Invalid response score (exceeds 100)",
+    if (isNone(json)) {
+      return { found: false, value: null };
+    }
 
-  // Reputation Registry (3000-3010)
-  3000: "Not authorized",
-  3001: "Agent not found",
-  3002: "Feedback not found",
-  3003: "Feedback already revoked",
-  3004: "Invalid score (exceeds 100)",
-  3005: "Self-feedback not allowed",
-  3006: "Invalid index",
-  3007: "Signature verification failed",
-  3008: "Authorization expired",
-  3009: "Index limit exceeded",
-  3010: "Empty feedback URI",
-};
+    if (!isSome(json)) {
+      throw new Error("Unexpected response format: expected optional type");
+    }
+
+    const extracted = extractValue(json);
+    const value = extractTypedValue(extracted) as T;
+    return { found: true, value };
+  } catch (error) {
+    throw new Error(`Failed to call ${registry}.${functionName}: ${String(error)}`);
+  }
+}
+
+
+/**
+ * Call a registry function and return the JSON result directly (for tuple/list returns)
+ * This helper encapsulates: call → cvToJSON → return
+ *
+ * @returns The JSON representation of the Clarity value
+ */
+export async function callAndExtractDirect(
+  network: ERC8004Network,
+  registry: "identity" | "reputation" | "validation",
+  functionName: string,
+  functionArgs: ClarityValue[] = []
+): Promise<unknown> {
+  try {
+    const result = await callRegistryFunction(network, registry, functionName, functionArgs);
+    return cvToJSON(result);
+  } catch (error) {
+    throw new Error(`Failed to call ${registry}.${functionName}: ${String(error)}`);
+  }
+}
 
 
 /**

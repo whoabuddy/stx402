@@ -168,37 +168,52 @@ async function updateIndexes(kv: KVNamespace, entry: RegistryEntry): Promise<voi
   let statusIndex: string[] = statusData ? JSON.parse(statusData) : [];
   const entryId = `${entry.owner}:${entry.id}`;
 
-  // Remove from old status indexes
+  // Parallelize removal from old status indexes
+  const cleanupWrites = [];
   for (const status of ["unverified", "verified", "rejected"] as RegistryStatus[]) {
     if (status !== entry.status) {
       const oldStatusKey = RegistryKeys.indexStatus(status);
-      const oldData = await kv.get(oldStatusKey);
-      if (oldData) {
-        const oldIndex: string[] = JSON.parse(oldData);
-        const filtered = oldIndex.filter((id) => id !== entryId);
-        if (filtered.length !== oldIndex.length) {
-          await kv.put(oldStatusKey, JSON.stringify(filtered));
-        }
-      }
+      cleanupWrites.push(
+        kv.get(oldStatusKey).then((oldData) => {
+          if (oldData) {
+            const oldIndex: string[] = JSON.parse(oldData);
+            const filtered = oldIndex.filter((id) => id !== entryId);
+            if (filtered.length !== oldIndex.length) {
+              return kv.put(oldStatusKey, JSON.stringify(filtered));
+            }
+          }
+          return Promise.resolve();
+        })
+      );
     }
   }
+  await Promise.all(cleanupWrites);
+
+  // Parallelize current status and category index writes
+  const indexWrites = [];
 
   // Add to current status index
   if (!statusIndex.includes(entryId)) {
     statusIndex.push(entryId);
-    await kv.put(statusKey, JSON.stringify(statusIndex));
+    indexWrites.push(kv.put(statusKey, JSON.stringify(statusIndex)));
   }
 
   // Update category index if category exists
   if (entry.category) {
     const catKey = RegistryKeys.indexCategory(entry.category);
-    const catData = await kv.get(catKey);
-    let catIndex: string[] = catData ? JSON.parse(catData) : [];
-    if (!catIndex.includes(entryId)) {
-      catIndex.push(entryId);
-      await kv.put(catKey, JSON.stringify(catIndex));
-    }
+    indexWrites.push(
+      kv.get(catKey).then((catData) => {
+        const catIndex: string[] = catData ? JSON.parse(catData) : [];
+        if (!catIndex.includes(entryId)) {
+          catIndex.push(entryId);
+          return kv.put(catKey, JSON.stringify(catIndex));
+        }
+        return Promise.resolve();
+      })
+    );
   }
+
+  await Promise.all(indexWrites);
 }
 
 // List all registry entries (minimal data for free endpoint)
@@ -234,23 +249,22 @@ export async function listAllEntries(
   const limit = options?.limit || 50;
   const paged = allIndex.slice(offset, offset + limit);
 
-  // Fetch minimal data for each entry
-  const entries: RegistryEntryMinimal[] = [];
-  for (const idx of paged) {
-    const entry = await getRegistryEntry(kv, idx.owner, idx.urlHash);
-    if (entry) {
-      entries.push({
-        id: entry.id,
-        url: entry.url,
-        name: entry.name,
-        category: entry.category,
-        status: entry.status,
-        owner: entry.owner,
-        registeredAt: entry.registeredAt,
-        updatedAt: entry.updatedAt,
-      });
-    }
-  }
+  // Fetch minimal data for each entry in parallel
+  const entryPromises = paged.map((idx) => getRegistryEntry(kv, idx.owner, idx.urlHash));
+  const fetchedEntries = await Promise.all(entryPromises);
+
+  const entries: RegistryEntryMinimal[] = fetchedEntries
+    .filter((entry): entry is RegistryEntry => entry !== null)
+    .map((entry) => ({
+      id: entry.id,
+      url: entry.url,
+      name: entry.name,
+      category: entry.category,
+      status: entry.status,
+      owner: entry.owner,
+      registeredAt: entry.registeredAt,
+      updatedAt: entry.updatedAt,
+    }));
 
   return { entries, total };
 }
@@ -263,13 +277,13 @@ export async function listEntriesByOwner(
   const prefix = RegistryKeys.ownerPrefix(owner);
   const list = await kv.list({ prefix });
 
-  const entries: RegistryEntry[] = [];
-  for (const key of list.keys) {
-    const data = await kv.get(key.name);
-    if (data) {
-      entries.push(JSON.parse(data) as RegistryEntry);
-    }
-  }
+  // Fetch all entries in parallel
+  const dataPromises = list.keys.map((key) => kv.get(key.name));
+  const dataResults = await Promise.all(dataPromises);
+
+  const entries: RegistryEntry[] = dataResults
+    .filter((data): data is string => data !== null)
+    .map((data) => JSON.parse(data) as RegistryEntry);
 
   return entries;
 }
@@ -285,15 +299,17 @@ export async function listEntriesByStatus(
   if (!statusData) return [];
 
   const entryIds: string[] = JSON.parse(statusData);
-  const entries: RegistryEntry[] = [];
 
-  for (const entryId of entryIds) {
+  // Fetch all entries in parallel
+  const entryPromises = entryIds.map((entryId) => {
     const [owner, urlHash] = entryId.split(":");
-    const entry = await getRegistryEntry(kv, owner, urlHash);
-    if (entry) {
-      entries.push(entry);
-    }
-  }
+    return getRegistryEntry(kv, owner, urlHash);
+  });
+  const fetchedEntries = await Promise.all(entryPromises);
+
+  const entries: RegistryEntry[] = fetchedEntries.filter(
+    (entry): entry is RegistryEntry => entry !== null
+  );
 
   return entries;
 }
