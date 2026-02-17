@@ -1,5 +1,6 @@
 import type { AppContext } from "../types";
 import { getNavCSS, getNavHTML } from "../components/nav";
+import { getPageShellCSS } from "../components/page-shell";
 import { BaseEndpoint } from "./BaseEndpoint";
 
 export class GuidePage extends BaseEndpoint {
@@ -125,23 +126,7 @@ function generateGuideHTML(): string {
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
     ${getNavCSS()}
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0a0a0f;
-      color: #e4e4e7;
-      min-height: 100vh;
-      line-height: 1.6;
-    }
-    .container { max-width: 1600px; margin: 0 auto; padding: 24px; }
-    h1 .accent { color: #f7931a; }
-    h1 {
-      font-size: 32px;
-      font-weight: 700;
-      color: #fafafa;
-      margin-bottom: 8px;
-    }
-    .subtitle { color: #71717a; margin-bottom: 32px; font-size: 18px; }
+    ${getPageShellCSS()}
     .categories-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

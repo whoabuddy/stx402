@@ -3,6 +3,7 @@ import { ENDPOINT_TIERS } from "../utils/pricing";
 import { getDashboardMetrics, type EndpointMetrics } from "../middleware/metrics";
 import { listAllEntries, type RegistryEntryMinimal } from "../utils/registry";
 import { getNavCSS, getNavHTML } from "../components/nav";
+import { getPageShellCSS } from "../components/page-shell";
 import { BaseEndpoint } from "./BaseEndpoint";
 
 // Extract category from path (e.g., /registry/probe → Registry)
@@ -157,36 +158,7 @@ function generateDashboardHTML(data: {
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
     ${getNavCSS()}
-    :root {
-      --bg-primary: #09090b;
-      --bg-card: #0f0f12;
-      --bg-hover: #18181b;
-      --border: rgba(255,255,255,0.06);
-      --border-hover: rgba(255,255,255,0.1);
-      --text-primary: #fafafa;
-      --text-secondary: #a1a1aa;
-      --text-muted: #71717a;
-      --accent: #f7931a;
-      --accent-dim: rgba(247, 147, 26, 0.12);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-    }
-    .container { max-width: 1600px; margin: 0 auto; padding: 24px; }
-    h1 {
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-    h1 .accent { color: var(--accent); }
-    .subtitle { color: var(--text-muted); margin-bottom: 32px; font-size: 18px; }
+    ${getPageShellCSS()}
     .warning {
       background: #422006;
       border: 1px solid #f59e0b;
@@ -201,31 +173,6 @@ function generateDashboardHTML(data: {
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 16px;
       margin-bottom: 32px;
-    }
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      transition: all 0.2s ease;
-    }
-    .card:hover {
-      border-color: var(--border-hover);
-      transform: translateY(-2px);
-    }
-    .card h3 {
-      color: var(--text-muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 10px;
-      font-weight: 500;
-    }
-    .card .value {
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.02em;
     }
     .card .value.stx { color: #06b6d4; }
     .card .value.sbtc { color: var(--accent); }
@@ -475,13 +422,9 @@ function generateDashboardHTML(data: {
 
     /* Mobile optimizations */
     @media (max-width: 600px) {
-      .container { padding: 16px; }
       .section-nav { gap: 6px; margin-bottom: 20px; }
       .section-nav a { padding: 8px 12px; font-size: 12px; }
       .summary { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .card { padding: 16px; border-radius: 12px; }
-      .card h3 { font-size: 10px; margin-bottom: 6px; }
-      .card .value { font-size: 20px; word-break: break-word; }
       .tier-badges { gap: 4px; margin-top: 8px; }
       .tier-badge { font-size: 9px; padding: 3px 6px; }
       .section-title { font-size: 16px; }
@@ -502,7 +445,6 @@ function generateDashboardHTML(data: {
     /* Extra small screens */
     @media (max-width: 380px) {
       .summary { grid-template-columns: 1fr; }
-      .card .value { font-size: 24px; }
       .section-nav a { padding: 6px 10px; font-size: 11px; }
     }
 
