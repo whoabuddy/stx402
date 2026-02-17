@@ -145,23 +145,28 @@ const INFO_ENDPOINTS: InfoEndpointTest[] = [
       try {
         const data = JSON.parse(body);
 
-        // Check v2 format
-        if (data.x402Version !== 2) return false;
-        if (!Array.isArray(data.accepts) || data.accepts.length === 0) return false;
+        // Check V2 format
+        if (data.version !== "2.0") return false;
+        if (!Array.isArray(data.items) || data.items.length === 0) return false;
 
-        // Check first entry has rich output schema
-        const firstEntry = data.accepts[0];
-        if (!firstEntry.outputSchema?.input || !firstEntry.outputSchema?.output) return false;
+        // Check service metadata
+        if (typeof data.service !== "object" || !data.service.name || !data.service.url) return false;
 
-        // Verify input schema has method and type
-        const input = firstEntry.outputSchema.input;
-        if (input.type !== "http") return false;
-        if (!["GET", "POST", "DELETE"].includes(input.method)) return false;
+        // Check lastUpdated is ISO 8601
+        if (!data.lastUpdated || isNaN(Date.parse(data.lastUpdated))) return false;
 
-        // Verify output schema has type and example
-        const output = firstEntry.outputSchema.output;
-        if (output.type !== "json") return false;
-        if (typeof output.example !== "object" || output.example === null) return false;
+        // Check first item has V2 structure
+        const firstItem = data.items[0];
+        if (!firstItem.resource?.url || !firstItem.resource?.mimeType) return false;
+        if (!Array.isArray(firstItem.paymentRequirements) || firstItem.paymentRequirements.length === 0) return false;
+
+        // Verify payment requirement has CAIP-2 network and amount
+        const firstReq = firstItem.paymentRequirements[0];
+        if (!firstReq.network?.startsWith("stacks:")) return false;
+        if (!firstReq.amount || !firstReq.scheme) return false;
+
+        // Check Bazaar extension
+        if (!firstItem.extensions?.bazaar) return false;
 
         return true;
       } catch {
