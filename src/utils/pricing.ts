@@ -156,7 +156,10 @@ export function getEndpointTier(path: string): PricingTier {
     }
   }
 
-  // Default to simple tier
+  // Default to simple tier (log for debugging)
+  console.warn(
+    `[pricing] No tier match for path: ${path} (normalized: ${normalizedPath}). Defaulting to "simple" tier.`
+  );
   return "simple";
 }
 
