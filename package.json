@@ -15,12 +15,12 @@
     "@stacks/common": "^7.3.1",
     "@stacks/network": "^7.3.1",
     "@stacks/transactions": "^7.3.1",
-    "@stacks/wallet-sdk": "^7.2.0",
     "chanfana": "^3.0.0",
     "hono": "^4.11.3",
     "x402-stacks": "^2.0.1"
   },
   "devDependencies": {
+    "@stacks/wallet-sdk": "^7.2.0",
     "@types/node": "^25.0.3",
     "patch-package": "^8.0.1",
     "wrangler": "^4.56.0"
