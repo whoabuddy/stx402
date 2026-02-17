@@ -95,7 +95,21 @@ function buildPaymentErrorResponse(
   };
 }
 
-// Helper to classify errors from facilitator (V2 error codes)
+/**
+ * Classify payment errors from facilitator into structured error codes.
+ *
+ * Uses order-dependent pattern matching - more specific patterns first:
+ * 1. Network/connection errors (fetch, timeout) - transient, retry soon
+ * 2. Facilitator unavailable (503, service unavailable)
+ * 3. V2 error codes (insufficient funds, expired, amount too low)
+ * 4. Invalid payment (signature, recipient mismatch)
+ * 5. Broadcast/transaction failures
+ * 6. Generic facilitator errors (500, 502)
+ * 7. Unknown error (fallback)
+ *
+ * @param errorReason - Error message from facilitator or exception
+ * @returns Classified error with code, message, HTTP status, and optional retry delay
+ */
 function classifyPaymentError(errorReason?: string): {
   code: PaymentErrorCode;
   message: string;
