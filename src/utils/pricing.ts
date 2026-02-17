@@ -170,8 +170,11 @@ export function getPaymentAmountForPath(
   return convertToSmallestUnit(amountStr, tokenType);
 }
 
-// Convert amount string to smallest unit (microSTX, sats, microUSDCx)
-function convertToSmallestUnit(amountStr: string, tokenType: TokenType): bigint {
+/**
+ * Convert human-readable amount to smallest unit (microSTX, sats, microUSDCx).
+ * Exported for use in x402-schema.ts.
+ */
+export function convertToSmallestUnit(amountStr: string, tokenType: TokenType): bigint {
   const amountNum = parseFloat(amountStr);
   switch (tokenType) {
     case "STX":

@@ -5,6 +5,8 @@
  * and automatic retry with exponential backoff on rate limits.
  */
 
+import { withRetry } from "./retry";
+
 export type NetworkType = "mainnet" | "testnet";
 
 /**
@@ -55,36 +57,27 @@ export function checkHiroRateLimit(response: Response): HiroRateLimitError | nul
 }
 
 /**
- * Sleep for a given number of milliseconds
+ * Check if a response is a rate limit error (for withRetry)
  */
-export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function isHiroRateLimitResponse(response: Response): boolean {
+  return response.status === 429;
 }
 
 /**
- * Calculate delay with exponential backoff and jitter
- * Uses the Retry-After header if available, otherwise exponential backoff
+ * Parse retry delay from Hiro rate limit response
  */
-function calculateDelay(
-  attempt: number,
-  retryAfterSeconds: number | null,
-  baseDelay: number,
-  maxDelay: number
-): number {
-  if (retryAfterSeconds !== null && retryAfterSeconds > 0) {
-    // Use Retry-After header value (convert to ms) with small jitter
-    const jitter = Math.random() * 500;
-    return Math.min(retryAfterSeconds * 1000 + jitter, maxDelay);
+function parseHiroRetryDelay(response: Response): number | null {
+  if (response.status === 429) {
+    const retryAfter = response.headers.get("Retry-After");
+    if (retryAfter) {
+      return parseInt(retryAfter, 10);
+    }
   }
-
-  // Exponential backoff: baseDelay * 2^attempt with jitter
-  const exponentialDelay = baseDelay * Math.pow(2, attempt);
-  const jitter = Math.random() * baseDelay;
-  return Math.min(exponentialDelay + jitter, maxDelay);
+  return null;
 }
 
 /**
- * Wrapper for fetch that handles Hiro API rate limits with automatic retry
+ * Wrapper for fetch that handles Hiro API rate limits with automatic retry.
  *
  * Features:
  * - Automatic retry on 429 (rate limit) responses
@@ -101,57 +94,52 @@ export async function hiroFetch(
   url: string,
   options?: HiroFetchOptions
 ): Promise<Response> {
-  const maxRetries = options?.maxRetries ?? 3;
-  const baseDelay = options?.baseDelay ?? 1000;
-  const maxDelay = options?.maxDelay ?? 30000;
-
   // Extract standard RequestInit options
   const fetchOptions: RequestInit = { ...options };
   delete (fetchOptions as HiroFetchOptions).maxRetries;
   delete (fetchOptions as HiroFetchOptions).baseDelay;
   delete (fetchOptions as HiroFetchOptions).maxDelay;
 
-  let lastError: (Error & { rateLimitError: HiroRateLimitError }) | null = null;
+  // Use withRetry but we need to handle Response objects, not errors
+  // So we use a custom pattern here
+  return withRetry(
+    async () => {
+      const response = await fetch(url, fetchOptions);
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const response = await fetch(url, fetchOptions);
+      const rateLimitError = checkHiroRateLimit(response);
+      if (rateLimitError) {
+        // Throw an error so withRetry can catch it
+        const error = new Error(rateLimitError.error) as Error & {
+          rateLimitError: HiroRateLimitError;
+        };
+        error.rateLimitError = rateLimitError;
+        throw error;
+      }
 
-    const rateLimitError = checkHiroRateLimit(response);
-    if (!rateLimitError) {
       return response;
+    },
+    options,
+    (error: unknown) => {
+      // Check if this is our rate limit error
+      return (
+        error !== null &&
+        typeof error === "object" &&
+        "rateLimitError" in error
+      );
+    },
+    (error: unknown) => {
+      // Extract retry delay from our custom error
+      if (
+        error !== null &&
+        typeof error === "object" &&
+        "rateLimitError" in error
+      ) {
+        const rateLimitError = (error as { rateLimitError: HiroRateLimitError })
+          .rateLimitError;
+        return rateLimitError.retryAfter;
+      }
+      return null;
     }
-
-    // If this was the last attempt, throw the error
-    if (attempt === maxRetries) {
-      const error = new Error(
-        `${rateLimitError.error} (exhausted ${maxRetries} retries)`
-      ) as Error & { rateLimitError: HiroRateLimitError };
-      error.rateLimitError = rateLimitError;
-      throw error;
-    }
-
-    // Calculate delay and wait before retry
-    const delay = calculateDelay(
-      attempt,
-      rateLimitError.retryAfter,
-      baseDelay,
-      maxDelay
-    );
-
-    // Store error in case we need it later
-    lastError = new Error(rateLimitError.error) as Error & {
-      rateLimitError: HiroRateLimitError;
-    };
-    lastError.rateLimitError = rateLimitError;
-
-    await sleep(delay);
-  }
-
-  // Should not reach here, but just in case
-  if (lastError) {
-    throw lastError;
-  }
-
-  throw new Error("Unexpected error in hiroFetch retry logic");
+  );
 }
 

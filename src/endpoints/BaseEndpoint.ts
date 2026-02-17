@@ -25,9 +25,10 @@ export type AuthResult =
 
 export class BaseEndpoint extends OpenAPIRoute {
   /**
-   * Get the network from query parameter with consistent default
+   * Get the ERC-8004 agent registry network from query parameter (mainnet or testnet).
+   * Defaults to testnet if not specified.
    */
-  protected getNetwork(c: AppContext): ERC8004Network {
+  protected getAgentNetwork(c: AppContext): ERC8004Network {
     return (c.req.query("network") || "testnet") as ERC8004Network;
   }
 
@@ -94,7 +95,7 @@ export class BaseEndpoint extends OpenAPIRoute {
   protected getPayerAddress(c: AppContext): string | null {
     const settleResult = c.get("settleResult") as SettlementResponseV2 | undefined;
     const paymentPayload = c.get("paymentPayload") as PaymentPayloadV2 | undefined;
-    const network = (c.env?.X402_NETWORK ?? "mainnet") as "mainnet" | "testnet";
+    const network = c.env.X402_NETWORK as "mainnet" | "testnet";
 
     // V2: Use 'payer' field from settlement result
     if (settleResult?.payer) {
@@ -106,7 +107,6 @@ export class BaseEndpoint extends OpenAPIRoute {
       const signedTx = paymentPayload.payload.transaction;
       const hash160 = extractSenderHash160FromSignedTx(signedTx);
       if (hash160) {
-        const network = c.env.X402_NETWORK as "mainnet" | "testnet";
         const addressVersion = network === "mainnet" ? 22 : 26;
         return Address.stringify({ hash160, type: addressVersion });
       }

@@ -60,7 +60,7 @@ export class AgentLookup extends BaseEndpoint {
 
   async handle(c: AppContext) {
     const tokenType = this.getTokenType(c);
-    const network = this.getNetwork(c);
+    const network = this.getAgentNetwork(c);
     const log = c.var.logger;
 
     log.info("Agent lookup request", { network, tokenType });
