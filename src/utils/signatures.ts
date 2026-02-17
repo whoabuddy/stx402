@@ -195,9 +195,9 @@ export function verifyStructuredSignature(
   }
 }
 
-// Address version constants for c32check encoding
-const ADDRESS_VERSION_MAINNET_SINGLE_SIG = 22; // SP prefix
-const ADDRESS_VERSION_TESTNET_SINGLE_SIG = 26; // ST prefix
+// Address version constants for c32check encoding (c32check address type, NOT TransactionVersion)
+export const ADDRESS_VERSION_MAINNET_SINGLE_SIG = 22; // SP prefix
+export const ADDRESS_VERSION_TESTNET_SINGLE_SIG = 26; // ST prefix
 
 // Convert a compressed public key to a Stacks address
 function publicKeyToAddress(publicKey: string, network: "mainnet" | "testnet" = "mainnet"): string {

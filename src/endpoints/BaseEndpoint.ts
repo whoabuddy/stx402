@@ -12,6 +12,8 @@ import {
   isTimestampValid,
   getChallenge,
   consumeChallenge,
+  ADDRESS_VERSION_MAINNET_SINGLE_SIG,
+  ADDRESS_VERSION_TESTNET_SINGLE_SIG,
   type SignatureRequest,
   type SignedAction,
 } from "../utils/signatures";
@@ -107,7 +109,9 @@ export class BaseEndpoint extends OpenAPIRoute {
       const signedTx = paymentPayload.payload.transaction;
       const hash160 = extractSenderHash160FromSignedTx(signedTx);
       if (hash160) {
-        const addressVersion = network === "mainnet" ? 22 : 26;
+        const addressVersion = network === "mainnet"
+          ? ADDRESS_VERSION_MAINNET_SINGLE_SIG
+          : ADDRESS_VERSION_TESTNET_SINGLE_SIG;
         return Address.stringify({ hash160, type: addressVersion });
       }
     }
