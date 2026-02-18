@@ -44,8 +44,8 @@ const CAIP2_NETWORK: Record<"mainnet" | "testnet", NetworkV2> = {
 
 // Payment error codes for client debugging
 export type PaymentErrorCode =
-  | "FACILITATOR_UNAVAILABLE"  // 503 - facilitator is down
-  | "FACILITATOR_ERROR"        // 502 - facilitator returned error
+  | "RELAY_UNAVAILABLE"        // 503 - relay is down
+  | "SETTLEMENT_ERROR"         // 502 - relay returned error or settlement failed
   | "PAYMENT_INVALID"          // 400 - bad signature, wrong recipient, etc.
   | "INSUFFICIENT_FUNDS"       // 402 - wallet needs funding
   | "PAYMENT_EXPIRED"          // 402 - nonce expired, sign fresh payment
@@ -96,18 +96,18 @@ function buildPaymentErrorResponse(
 }
 
 /**
- * Classify payment errors from facilitator into structured error codes.
+ * Classify payment errors from relay settlement into structured error codes.
  *
  * Uses order-dependent pattern matching - more specific patterns first:
  * 1. Network/connection errors (fetch, timeout) - transient, retry soon
- * 2. Facilitator unavailable (503, service unavailable)
+ * 2. Relay unavailable (503, service unavailable)
  * 3. V2 error codes (insufficient funds, expired, amount too low)
- * 4. Invalid payment (signature, recipient mismatch)
- * 5. Broadcast/transaction failures
- * 6. Generic facilitator errors (500, 502)
+ * 4. Invalid payment (signature, recipient mismatch, unsupported scheme)
+ * 5. Broadcast/transaction failures (TRANSACTION_PENDING = retryable)
+ * 6. Generic relay/settlement errors (500, 502)
  * 7. Unknown error (fallback)
  *
- * @param errorReason - Error message from facilitator or exception
+ * @param errorReason - Error message from relay or exception
  * @returns Classified error with code, message, HTTP status, and optional retry delay
  */
 function classifyPaymentError(errorReason?: string): {
@@ -128,21 +128,21 @@ function classifyPaymentError(errorReason?: string): {
   ) {
     return {
       code: "NETWORK_ERROR",
-      message: "Network error communicating with payment facilitator",
+      message: "Network error communicating with payment relay",
       httpStatus: 502,
       retryAfter: 5,
     };
   }
 
-  // Facilitator unavailable - retry later
+  // Relay unavailable - retry later
   if (
     errorStr.includes("503") ||
     errorStr.includes("service unavailable") ||
-    errorStr.includes("facilitator") && errorStr.includes("unavailable")
+    (errorStr.includes("relay") && errorStr.includes("unavailable"))
   ) {
     return {
-      code: "FACILITATOR_UNAVAILABLE",
-      message: "Payment facilitator temporarily unavailable",
+      code: "RELAY_UNAVAILABLE",
+      message: "Payment relay temporarily unavailable",
       httpStatus: 503,
       retryAfter: 30,
     };
@@ -195,6 +195,7 @@ function classifyPaymentError(errorReason?: string): {
     errorStr.includes(X402_ERROR_CODES.RECIPIENT_MISMATCH) ||
     errorStr.includes(X402_ERROR_CODES.SENDER_MISMATCH) ||
     errorStr.includes(X402_ERROR_CODES.INVALID_SCHEME) ||
+    errorStr.includes(X402_ERROR_CODES.UNSUPPORTED_SCHEME) ||
     errorStr.includes(X402_ERROR_CODES.INVALID_X402_VERSION) ||
     errorStr.includes("invalid") ||
     errorStr.includes("signature") ||
@@ -208,6 +209,19 @@ function classifyPaymentError(errorReason?: string): {
     };
   }
 
+  // Transaction pending - relay is still polling, retry after delay
+  if (
+    errorStr.includes(X402_ERROR_CODES.TRANSACTION_PENDING) ||
+    errorStr.includes("pending")
+  ) {
+    return {
+      code: "SETTLEMENT_ERROR",
+      message: "Transaction pending confirmation, please retry",
+      httpStatus: 502,
+      retryAfter: 15,
+    };
+  }
+
   // Broadcast/transaction failures
   if (
     errorStr.includes(X402_ERROR_CODES.BROADCAST_FAILED) ||
@@ -215,14 +229,14 @@ function classifyPaymentError(errorReason?: string): {
     errorStr.includes(X402_ERROR_CODES.TRANSACTION_NOT_FOUND)
   ) {
     return {
-      code: "FACILITATOR_ERROR",
-      message: "Transaction broadcast failed: " + (errorReason || "try again"),
+      code: "SETTLEMENT_ERROR",
+      message: "Settlement failed: " + (errorReason || "try again"),
       httpStatus: 502,
       retryAfter: 10,
     };
   }
 
-  // Facilitator returned an error response
+  // Relay returned an error response
   if (
     errorStr.includes("500") ||
     errorStr.includes("502") ||
@@ -231,8 +245,8 @@ function classifyPaymentError(errorReason?: string): {
     errorStr.includes("error")
   ) {
     return {
-      code: "FACILITATOR_ERROR",
-      message: "Payment facilitator error",
+      code: "SETTLEMENT_ERROR",
+      message: "Payment relay error",
       httpStatus: 502,
       retryAfter: 10,
     };
@@ -277,7 +291,7 @@ export const x402PaymentMiddleware = () => {
       address: c.env.X402_SERVER_ADDRESS,
       network: CAIP2_NETWORK[legacyNetwork],
       legacyNetwork,
-      facilitatorUrl: c.env.X402_FACILITATOR_URL,
+      relayUrl: c.env.X402_FACILITATOR_URL,
     };
 
     const pricingTier = getEndpointTier(c.req.path);
@@ -367,13 +381,13 @@ export const x402PaymentMiddleware = () => {
     }
 
     // Use V2 verifier
-    const verifier = new X402PaymentVerifier(config.facilitatorUrl);
+    const verifier = new X402PaymentVerifier(config.relayUrl);
 
     // Settle payment
     let settleResult: SettlementResponseV2;
     const paymentLog = c.var.logger.child({ tokenType });
     paymentLog.debug("settlePayment starting (V2)", {
-      facilitatorUrl: config.facilitatorUrl,
+      relayUrl: config.relayUrl,
       expectedRecipient: config.address,
       minAmount: config.minAmount.toString(),
       network: config.network,
