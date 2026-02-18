@@ -649,7 +649,7 @@ function generateToolboxHTML(): string {
       let amount = null;
       let payTo = null;
       let network = null;
-      let facilitator = null;
+      let relayUrl = null;
       let tokens = [];
 
       if (info.accepts && Array.isArray(info.accepts)) {
@@ -658,6 +658,7 @@ function generateToolboxHTML(): string {
         amount = first.maxAmountRequired || first.maxAmount;
         payTo = first.payTo;
         network = first.network;
+        relayUrl = first.facilitatorUrl || null;
 
         // Extract all tokens
         info.accepts.forEach(a => {
@@ -674,7 +675,6 @@ function generateToolboxHTML(): string {
         amount = info.maxAmountRequired || info.maxAmount;
         payTo = info.payTo;
         network = info.network;
-        facilitator = info.facilitator;
 
         const tokenName = info.tokenType || 'STX';
         tokens.push({ name: tokenName, amount: amount });
@@ -704,7 +704,10 @@ function generateToolboxHTML(): string {
       html += '<h3>Payment Details</h3>';
       html += '<div class="info-row"><span class="info-label">Pay To</span><span class="info-value">' + (payTo ? escapeHtml(payTo.slice(0,12) + '...' + payTo.slice(-8)) : 'Unknown') + '</span></div>';
       html += '<div class="info-row"><span class="info-label">Network</span><span class="info-value">' + (network || 'mainnet') + '</span></div>';
-      html += '<div class="info-row"><span class="info-label">Facilitator</span><span class="info-value"><a href="https://facilitator.x402stacks.xyz" target="_blank">facilitator.x402stacks.xyz</a></span></div>';
+      if (relayUrl) {
+        const relayHost = relayUrl.replace(/^https?:\\/\\//, '');
+        html += '<div class="info-row"><span class="info-label">Relay</span><span class="info-value"><a href="' + escapeHtml(relayUrl) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(relayHost) + '</a></span></div>';
+      }
       html += '</div>';
 
       // Code example
