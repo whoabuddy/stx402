@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/whoabuddy/stx402/compare/v1.1.0...v1.2.0) (2026-02-18)
+
+
+### Features
+
+* route settlement through aibtc relay ([#44](https://github.com/whoabuddy/stx402/issues/44)) ([93b26fe](https://github.com/whoabuddy/stx402/commit/93b26fe2b0de13d528057ec1fe0c3603cfd3ac53))
+
 ## [1.1.0](https://github.com/whoabuddy/stx402/compare/v1.0.1...v1.1.0) (2026-02-17)
 
 
