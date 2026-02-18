@@ -704,7 +704,7 @@ function generateToolboxHTML(): string {
       html += '<h3>Payment Details</h3>';
       html += '<div class="info-row"><span class="info-label">Pay To</span><span class="info-value">' + (payTo ? escapeHtml(payTo.slice(0,12) + '...' + payTo.slice(-8)) : 'Unknown') + '</span></div>';
       html += '<div class="info-row"><span class="info-label">Network</span><span class="info-value">' + (network || 'mainnet') + '</span></div>';
-      html += '<div class="info-row"><span class="info-label">Facilitator</span><span class="info-value"><a href="https://facilitator.x402stacks.xyz" target="_blank">facilitator.x402stacks.xyz</a></span></div>';
+      html += '<div class="info-row"><span class="info-label">Relay</span><span class="info-value"><a href="https://x402-relay.aibtc.com" target="_blank">x402-relay.aibtc.com</a></span></div>';
       html += '</div>';
 
       // Code example
