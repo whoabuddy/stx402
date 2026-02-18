@@ -116,14 +116,14 @@ export function isNonceConflict(errorText: string): boolean {
 }
 
 /**
- * Check if error is retryable (transient network/facilitator issues)
+ * Check if error is retryable (transient network/relay issues)
  */
 export function isRetryableError(status: number, errorCode?: string, errorMessage?: string): boolean {
   // HTTP status codes that are retryable
   if ([429, 500, 502, 503, 504].includes(status)) return true;
 
   // Error codes that are retryable
-  const retryableCodes = ["NETWORK_ERROR", "FACILITATOR_UNAVAILABLE", "FACILITATOR_ERROR", "UNKNOWN_ERROR"];
+  const retryableCodes = ["NETWORK_ERROR", "RELAY_UNAVAILABLE", "SETTLEMENT_ERROR", "UNKNOWN_ERROR"];
   if (errorCode && retryableCodes.includes(errorCode)) return true;
 
   // Message patterns that are retryable
