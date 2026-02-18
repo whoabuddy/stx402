@@ -43,7 +43,7 @@
   ],
   // Environment variables for X402 payment configuration
   "vars": {
-    "X402_FACILITATOR_URL": "https://facilitator.stacksx402.com", // X402 payment facilitator endpoint
+    "X402_FACILITATOR_URL": "https://x402-relay.aibtc.com", // X402 relay endpoint (routes settlement via aibtc relay)
     "X402_NETWORK": "mainnet", // Stacks network: "mainnet" or "testnet"
     "X402_SERVER_ADDRESS": "SP31JEZWX4S131326VKM05QKJ0TDGNVVE0CDWWVA2" // Payment recipient address (testnet: "ST31JEZWX4S131326VKM05QKJ0TDGNVVE0DGNM4BP")
   },
@@ -79,7 +79,7 @@
         }
       ],
       "vars": {
-        "X402_FACILITATOR_URL": "https://facilitator.stacksx402.com",
+        "X402_FACILITATOR_URL": "https://x402-relay.aibtc.dev",
         "X402_NETWORK": "testnet", // Staging uses testnet
         "X402_SERVER_ADDRESS": "ST31JEZWX4S131326VKM05QKJ0TDGNVVE0DGNM4BP" // Testnet payment address
       },
