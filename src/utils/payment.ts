@@ -80,7 +80,7 @@ export function payerMatchesAddress(
   signedTxHex: string | null,
   expectedAddress: string
 ): boolean {
-  // V2: Use 'payer' field from settlement result (preferred - from facilitator)
+  // V2: Use 'payer' field from settlement result (preferred - from relay)
   if (settleResult?.payer) {
     if (addressesMatchByHash160(settleResult.payer, expectedAddress)) {
       return true;
