@@ -649,7 +649,6 @@ function generateToolboxHTML(): string {
       let amount = null;
       let payTo = null;
       let network = null;
-      let facilitator = null;
       let tokens = [];
 
       if (info.accepts && Array.isArray(info.accepts)) {
@@ -674,7 +673,6 @@ function generateToolboxHTML(): string {
         amount = info.maxAmountRequired || info.maxAmount;
         payTo = info.payTo;
         network = info.network;
-        facilitator = info.facilitator;
 
         const tokenName = info.tokenType || 'STX';
         tokens.push({ name: tokenName, amount: amount });
